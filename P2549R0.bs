@@ -273,7 +273,7 @@ namespace std {
         friend constexpr void swap(unexpected& x, unexpected& y) noexcept(noexcept(x.swap(y)));
 
     private:
-        E <i>val</i>; // <i>exposition only</i>
+        E <del><i>val</i></del><ins><i>unex</i></ins>; // <i>exposition only</i>
     };
 
     template&lt;class E&gt; unexpected(E) -&gt; unexpected&lt;E&gt;;
@@ -286,14 +286,14 @@ constexpr const E& <del>value</del><ins>error</ins>() const& noexcept;
 constexpr E& <del>value</del><ins>error</ins>() & noexcept;
 </pre>
 
-*Returns*: <code><i>val</i></code>.
+*Returns*: <code><del><i>val</i></del><ins><i>unex</i></ins></code>.
 
 <pre>
 constexpr E&& <del>value</del><ins>error</ins>() && noexcept;
 constexpr const E&& <del>value</del><ins>error</ins>() const&& noexcept;
 </pre>
 
-*Returns*: <code>std::move(<i>val</i>)</code>.
+*Returns*: <code>std::move(<del><i>val</i></del><ins><i>unex</i></ins>)</code>.
 
 ### 20.9.3.2.5 Equality operator [expected.un.eq] ### {#expected.un.eq}
 ```cpp
