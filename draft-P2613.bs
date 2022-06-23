@@ -1,14 +1,14 @@
 <pre class='metadata'>
-Title: Add the missing empty() to mdspan
-H1: Add the missing <code>empty()</code> to <code>mdspan</code>
-Shortname: DXXXX
-Revision: 0
+Title: Add the missing empty to mdspan
+H1: Add the missing <code>empty</code> to <code>mdspan</code>
+Shortname: D2613
+Revision: 1
 Audience: LEWG, LWG
 Status: D
 Group: WG21
 !Target: C++23
-URL: https://wg21.link/DXXXXR0
-!Source: <a href="https://github.com/Mick235711/wg21-papers/blob/main/draft-empty.bs">github.com/Mick235711/wg21-papers/blob/main/draft-empty.bs</a>
+URL: https://wg21.link/D2613R1
+!Source: <a href="https://github.com/Mick235711/wg21-papers/blob/main/draft-P2613.bs">github.com/Mick235711/wg21-papers/blob/main/draft-P2613.bs</a>
 !Issue Tracking: <a href="https://github.com/Mick235711/wg21-papers/issues">GitHub Mick235711/wg21-papers</a>
 Editor: Yihe Li, winmikedows@hotmail.com
 No abstract: true
