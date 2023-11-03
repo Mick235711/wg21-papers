@@ -2,12 +2,12 @@
 Title: = delete("should have a reason");
 H1: <code>= delete("should have a reason");</code>
 Shortname: D2573
-Revision: 1
+Revision: 2
 Audience: EWGI, EWG
 Status: D
 Group: WG21
 !Target: C++26
-URL: https://wg21.link/D2573R1
+URL: https://wg21.link/D2573R2
 !Source: <a href="https://github.com/Mick235711/wg21-papers/blob/main/P2573/draft-P2573.bs">github.com/Mick235711/wg21-papers/blob/main/P2573/draft-P2573.bs</a>
 !Issue Tracking: <a href="https://github.com/Mick235711/wg21-papers/issues">GitHub Mick235711/wg21-papers</a>
 Editor: Yihe Li, winmikedows@hotmail.com
@@ -32,6 +32,7 @@ by also introducing an optional message component.
 - Retargeted to C++26.
 - Rebase onto [[!N4958]], which includes [[P2361R6]] so remove a note for it.
 - Since [[P2741R3]] had been adopted in Varna (2023-06), add a section for it.
+- Add previous poll result for [[!N4186]].
 
 ## R0 ## {#r0}
 - Initial revision.
@@ -244,9 +245,9 @@ namespace std {
         constexpr unique_ptr<T> make_unique(Args&&... args);
     template<class T> // T is U[]
         constexpr unique_ptr<T> make_unique(size_t n);
-    template<class T, class... Args> // T is U\[N]
+    template<class T, class... Args> // T is U[N]
         unspecified make_unique(Args&&...) = delete(
-            "make_unique<U\[N]>(...) is not supported; perhaps you mean make_unique<U[]>(N) instead?");
+            "make_unique<U[N]>(...) is not supported; perhaps you mean make_unique<U[]>(N) instead?");
 }
 
 // [basic.string.general]
@@ -276,7 +277,14 @@ There have been three previous example of user-customisable error messages prese
 
 This proposal naturally fits in the same category of providing reasons/friendly messages alongside the original diagnostics and can use a lot of the existing wordings.
 
-A previous proposal, [[!N4186]], proposed the exactly same thing, and is received favorably by EWG in Urbana (2014-11) via ([[EWG152]]). However, there is no further progress on that proposal, and
+A previous proposal, [[!N4186]], proposed the exactly same thing, and is received favorably by EWG in Urbana (2014-11) (see [[EWG152]]):
+> **Poll:** Is this a problem worth solving?
+> <table>
+>     <thead><tr><td>SF</td><td>F</td><td>N</td><td>A</td><td>SA</td></tr></thead>
+>     <tbody><tr><td>13</td><td>5</td><td>1</td><td>3</td><td>2</td></tr></tbody>
+> </table>
+
+However, there is no further progress on that proposal, and
 thus this proposal aims to continue the work in this direction.
 
 ## Syntax and Semantics ## {#syntax-semantics}
@@ -357,7 +365,7 @@ for the invocation `make_unique<int[5]>()` (so that message come with concrete t
 
 During Varna (2023-06), [[P2741R3]] is adopted into the C++26 standard, giving `static_assert` the ability to accept a user-generated string-like object as the message parameter.
 However, I'm not sure if the corresponding support can be directly added to this feature, since `static_assert` is a standalone statement, and this feature is currently an attachment to a function declaration,
-which may lead to execution order issues. Therefore, currently I do not propose `= delete(constexpr-string-expression)` as parts this proposal.
+which may lead to execution order issues. Therefore, currently I do not propose `= delete(constexpr-string-expression)` as parts of this proposal.
 I felt that the support for it should come together with a separate proposal to add user-generated message support to `[[deprecated]]` and `[[nodiscard]]` too.
 
 ## Target Vehicle ## {#target-vehicle}

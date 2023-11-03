@@ -1564,7 +1564,7 @@ Possible extra rowspan handling
   <meta content="Bikeshed version 82ce88815, updated Thu Sep 7 16:33:55 2023 -0700" name="generator">
   <link href="https://wg21.link/D2573R1" rel="canonical">
   <link href="https://isocpp.org/favicon.ico" rel="icon">
-  <meta content="d99b9c49f0b655390dfb11816a448644e8b7e060" name="document-revision">
+  <meta content="2980cd71bf514eccffb89d9c6bacd616d3520290" name="document-revision">
 <style>
 table, th, td { border:1px solid grey; }
 </style>
@@ -2185,6 +2185,8 @@ by also introducing an optional message component.</p>
      <p>Rebase onto <a data-link-type="biblio" href="#biblio-n4958" title="Working Draft, Programming Languages — C++">[N4958]</a>, which includes <a data-link-type="biblio" href="#biblio-p2361r6" title="Unevaluated strings">[P2361R6]</a> so remove a note for it.</p>
     <li data-md>
      <p>Since <a data-link-type="biblio" href="#biblio-p2741r3" title="user-generated static_assert messages">[P2741R3]</a> had been adopted in Varna (2023-06), add a section for it.</p>
+    <li data-md>
+     <p>Add previous poll result for <a data-link-type="biblio" href="#biblio-n4186" title="Supporting Custom Diagnostics and SFINAE">[N4186]</a>.</p>
    </ul>
    <h3 class="heading settled" data-level="1.2" id="r0"><span class="secno">1.2. </span><span class="content">R0</span><a class="self-link" href="#r0"></a></h3>
    <ul>
@@ -2369,9 +2371,9 @@ to implement these messages as non-breaking QoI features.</strong></p>
         <c- k>constexpr</c-> <c- n>unique_ptr</c-><c- o>&lt;</c-><c- n>T</c-><c- o>></c-> <c- n>make_unique</c-><c- p>(</c-><c- n>Args</c-><c- o>&amp;&amp;</c-><c- p>...</c-> <c- n>args</c-><c- p>);</c->
     <c- k>template</c-><c- o>&lt;</c-><c- k>class</c-> <c- nc>T</c-><c- o>></c-> <c- c1>// T is U[]</c->
         <c- k>constexpr</c-> <c- n>unique_ptr</c-><c- o>&lt;</c-><c- n>T</c-><c- o>></c-> <c- n>make_unique</c-><c- p>(</c-><c- b>size_t</c-> <c- n>n</c-><c- p>);</c->
-    <c- k>template</c-><c- o>&lt;</c-><c- k>class</c-> <c- nc>T</c-><c- p>,</c-> <c- k>class</c-><c- p>...</c-> <c- n>Args</c-><c- o>></c-> <c- c1>// T is U\[N]</c->
+    <c- k>template</c-><c- o>&lt;</c-><c- k>class</c-> <c- nc>T</c-><c- p>,</c-> <c- k>class</c-><c- p>...</c-> <c- n>Args</c-><c- o>></c-> <c- c1>// T is U[N]</c->
         <c- n>unspecified</c-> <c- n>make_unique</c-><c- p>(</c-><c- n>Args</c-><c- o>&amp;&amp;</c-><c- p>...)</c-> <c- o>=</c-> <c- k>delete</c-><c- p>(</c->
-            <c- s>"make_unique&lt;U\[N]>(...) is not supported; perhaps you mean make_unique&lt;U[]>(N) instead?"</c-><c- p>);</c->
+            <c- s>"make_unique&lt;U[N]>(...) is not supported; perhaps you mean make_unique&lt;U[]>(N) instead?"</c-><c- p>);</c->
 <c- p>}</c->
 
 <c- c1>// [basic.string.general]</c->
@@ -2400,7 +2402,27 @@ can explain the removal reason and also point towards the new API. Standard libr
      <p>C++20 <code class="highlight"><c- p>[[</c-><c- n>nodiscard</c-><c- p>(</c-><c- s>"with reason"</c-><c- p>)]]</c-></code>, by <a data-link-type="biblio" href="#biblio-p1301r4" title="[[nodiscard(&quot;should have a reason&quot;)]]">[P1301R4]</a>.</p>
    </ul>
    <p>This proposal naturally fits in the same category of providing reasons/friendly messages alongside the original diagnostics and can use a lot of the existing wordings.</p>
-   <p>A previous proposal, <a data-link-type="biblio" href="#biblio-n4186" title="Supporting Custom Diagnostics and SFINAE">[N4186]</a>, proposed the exactly same thing, and is received favorably by EWG in Urbana (2014-11) via (<a data-link-type="biblio" href="#biblio-ewg152" title="N4186 Supporting Custom Diagnostics and SFINAE">[EWG152]</a>). However, there is no further progress on that proposal, and
+   <p>A previous proposal, <a data-link-type="biblio" href="#biblio-n4186" title="Supporting Custom Diagnostics and SFINAE">[N4186]</a>, proposed the exactly same thing, and is received favorably by EWG in Urbana (2014-11) (see <a data-link-type="biblio" href="#biblio-ewg152" title="N4186 Supporting Custom Diagnostics and SFINAE">[EWG152]</a>):</p>
+   <blockquote>
+    <p><strong>Poll:</strong> Is this a problem worth solving?</p>
+    <table>
+     <thead>
+      <tr>
+       <td>SF
+       <td>F
+       <td>N
+       <td>A
+       <td>SA
+     <tbody>
+      <tr>
+       <td>13
+       <td>5
+       <td>1
+       <td>3
+       <td>2
+    </table>
+   </blockquote>
+   <p>However, there is no further progress on that proposal, and
 thus this proposal aims to continue the work in this direction.</p>
    <h3 class="heading settled" data-level="4.2" id="syntax-semantics"><span class="secno">4.2. </span><span class="content">Syntax and Semantics</span><a class="self-link" href="#syntax-semantics"></a></h3>
     The syntax I prefer is <code class="highlight"><c- o>=</c-> <c- k>delete</c-><c- p>(</c-><c- s>"with reason"</c-><c- p>);</c-></code>, in other words, an optional argument clause after the <code class="highlight"><c- k>delete</c-></code> keyword where the only argument allowed is a single <em>string-literal</em>. 
@@ -2462,7 +2484,7 @@ This paper does not change this by only proposing to make such "deleted with rea
    <p>for the invocation <code class="highlight"><c- n>make_unique</c-><c- o>&lt;</c-><c- b>int</c-><c- p>[</c-><c- mi>5</c-><c- p>]</c-><c- o>></c-><c- p>()</c-></code> (so that message come with concrete types). I do not oppose such extensions, and this proposal does not prevent supporting <code class="highlight"><c- o>=</c-> <c- k>delete</c-><c- p>(</c-><c- n>constant_string</c-><c- p>)</c-></code> in the future either.</p>
    <p>During Varna (2023-06), <a data-link-type="biblio" href="#biblio-p2741r3" title="user-generated static_assert messages">[P2741R3]</a> is adopted into the C++26 standard, giving <code class="highlight"><c- k>static_assert</c-></code> the ability to accept a user-generated string-like object as the message parameter.
 However, I’m not sure if the corresponding support can be directly added to this feature, since <code class="highlight"><c- k>static_assert</c-></code> is a standalone statement, and this feature is currently an attachment to a function declaration,
-which may lead to execution order issues. Therefore, currently I do not propose <code class="highlight"><c- o>=</c-> <c- k>delete</c-><c- p>(</c-><c- k>constexpr</c-><c- o>-</c-><c- n>string</c-><c- o>-</c-><c- n>expression</c-><c- p>)</c-></code> as parts this proposal.
+which may lead to execution order issues. Therefore, currently I do not propose <code class="highlight"><c- o>=</c-> <c- k>delete</c-><c- p>(</c-><c- k>constexpr</c-><c- o>-</c-><c- n>string</c-><c- o>-</c-><c- n>expression</c-><c- p>)</c-></code> as parts of this proposal.
 I felt that the support for it should come together with a separate proposal to add user-generated message support to <code class="highlight"><c- p>[[</c-><c- n>deprecated</c-><c- p>]]</c-></code> and <code class="highlight"><c- p>[[</c-><c- n>nodiscard</c-><c- p>]]</c-></code> too.</p>
    <h3 class="heading settled" data-level="4.6" id="target-vehicle"><span class="secno">4.6. </span><span class="content">Target Vehicle</span><a class="self-link" href="#target-vehicle"></a></h3>
     This proposal targets C++26. 
