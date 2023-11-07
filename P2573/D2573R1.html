@@ -1564,7 +1564,7 @@ Possible extra rowspan handling
   <meta content="Bikeshed version 82ce88815, updated Thu Sep 7 16:33:55 2023 -0700" name="generator">
   <link href="https://wg21.link/D2573R1" rel="canonical">
   <link href="https://isocpp.org/favicon.ico" rel="icon">
-  <meta content="2980cd71bf514eccffb89d9c6bacd616d3520290" name="document-revision">
+  <meta content="ceb809d65f8518dfd1dc9e731a10b9679b70f126" name="document-revision">
 <style>
 table, th, td { border:1px solid grey; }
 </style>
@@ -2095,7 +2095,7 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
   <div class="head">
    <p data-fill-with="logo"></p>
    <h1 class="p-name no-ref" id="title">D2573R1<br><code class="highlight"><c- o>=</c-> <c- k>delete</c-><c- p>(</c-><c- s>"should have a reason"</c-><c- p>);</c-></code></h1>
-   <h2 class="no-num no-toc no-ref heading settled" id="profile-and-date"><span class="content">Draft Proposal, <time class="dt-updated" datetime="2023-11-02">2023-11-02</time></span></h2>
+   <h2 class="no-num no-toc no-ref heading settled" id="profile-and-date"><span class="content">Draft Proposal, <time class="dt-updated" datetime="2023-11-06">2023-11-06</time></span></h2>
    <div data-fill-with="spec-metadata">
     <dl>
      <dt>This version:
@@ -2103,7 +2103,7 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
      <dt class="editor">Author:
      <dd class="editor p-author h-card vcard"><a class="p-name fn u-email email" href="mailto:winmikedows@hotmail.com">Yihe Li</a>
      <dt>Audience:
-     <dd>SG17, EWG
+     <dd>EWG
      <dt>Project:
      <dd>ISO/IEC 14882 Programming Languages — C++, ISO/IEC JTC1/SC22/WG21
      <dt>Target:
@@ -2144,6 +2144,7 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
         <li><a href="#alt-syntax"><span class="secno">4.3.1</span> <span class="content">Alternative Syntax</span></a>
         <li><a href="#semantics"><span class="secno">4.3.2</span> <span class="content">Overriding Semantics</span></a>
         <li><a href="#unevaluated-strings"><span class="secno">4.3.3</span> <span class="content">Locales and Unevaluated Strings</span></a>
+        <li><a href="#claim-of-syntax-space"><span class="secno">4.3.4</span> <span class="content">Claim of Syntax Space</span></a>
        </ol>
       <li><a href="#proposal-scope"><span class="secno">4.4</span> <span class="content">Proposal Scope</span></a>
       <li><a href="#extensions"><span class="secno">4.5</span> <span class="content">Future Extensions</span></a>
@@ -2187,6 +2188,30 @@ by also introducing an optional message component.</p>
      <p>Since <a data-link-type="biblio" href="#biblio-p2741r3" title="user-generated static_assert messages">[P2741R3]</a> had been adopted in Varna (2023-06), add a section for it.</p>
     <li data-md>
      <p>Add previous poll result for <a data-link-type="biblio" href="#biblio-n4186" title="Supporting Custom Diagnostics and SFINAE">[N4186]</a>.</p>
+    <li data-md>
+     <p>In Kona (2023-11), EWGI sees D2573R1 and forwarded it to EWG with the following poll:</p>
+   </ul>
+   <p><strong>Poll:</strong> Given the committee’s limited time, EWGI believes P2573R1 is sufficiently developed and motivated to forward to EWG (and mark for LEWG).</p>
+   <table>
+    <thead>
+     <tr>
+      <td>SF
+      <td>F
+      <td>N
+      <td>A
+      <td>SA
+    <tbody>
+     <tr>
+      <td>4
+      <td>4
+      <td>3
+      <td>0
+      <td>0
+   </table>
+   <p><strong>Outcome:</strong> Consensus 🎉</p>
+   <ul>
+    <li data-md>
+     <p>Add several notes on topics discussed in EWGI meeting.</p>
    </ul>
    <h3 class="heading settled" data-level="1.2" id="r0"><span class="secno">1.2. </span><span class="content">R0</span><a class="self-link" href="#r0"></a></h3>
    <ul>
@@ -2471,6 +2496,22 @@ the hesitancy is basically that the <em>string-literal</em>s being accepted in t
 things like <code class="highlight"><c- o>=</c-> <c- k>delete</c-><c- p>(</c->L<c- s>"Wide reason"</c-><c- p>);</c-></code>. 
    <p>However, this is not a problem unique to this proposal. This problem also applies to the other three existing examples, and there is <a data-link-type="biblio" href="#biblio-p2361r6" title="Unevaluated strings">[P2361R6]</a> to solve this problem in general. Therefore I do not see any reason locales of unevaluated strings should be an obstacle.</p>
    <p>As for the problem of displaying text that cannot be represented in the execution character set, this paper follows the existing <a data-link-type="biblio" href="#biblio-p2246r1" title="Character encoding of diagnostic text">[P2246R1]</a> changes to <code class="highlight"><c- k>static_assert</c-></code> wording and use "should" to allow flexibility.</p>
+   <h4 class="heading settled" data-level="4.3.4" id="claim-of-syntax-space"><span class="secno">4.3.4. </span><span class="content">Claim of Syntax Space</span><a class="self-link" href="#claim-of-syntax-space"></a></h4>
+    During EWGI review of this paper, some people expressed concern on the possibility of this proposal "claiming the syntax space" of possible further enhancement to <code class="highlight"><c- o>=</c-> <c- k>delete</c-></code>. Namely, it is possible for a future proposal to alter <code class="highlight"><c- o>=</c-> <c- k>delete</c-></code> the same way we altered <code class="highlight"><c- k>explicit</c-></code> in C++20, to give it an optional constant argument that
+can express conditional <code class="highlight"><c- o>=</c-> <c- k>delete</c-></code>. Thus, the following code may become a possibility in future expansion: 
+<pre class="language-cpp highlight"><c- b>void</c-> <c- nf>foo</c-><c- p>()</c-> <c- o>=</c-> <c- k>delete</c-> <c- p>(</c-><c- k>sizeof</c-><c- p>(</c-><c- b>int</c-><c- p>)</c-> <c- o>!=</c-> <c- mi>4</c-><c- p>);</c->
+</pre>
+   <p>I think this argument is ungrounded for two reasons:</p>
+   <ul>
+    <li data-md>
+     <p>First of all, this proposal do not actually claim the full syntax space for the argument after <code class="highlight"><c- o>=</c-> <c- k>delete</c-></code>. Since in the C++ grammar, <em>string-literal</em>s have more priority
+than ordinary <em>expression</em>s, it is still possible to add the ability to put an arbitrary constant boolean expression here. The semantics will simply be to prefer this proposal’s effect
+if a string literal is passed.</p>
+    <li data-md>
+     <p>Secondly, I feel that <code class="highlight"><c- o>=</c-> <c- k>delete</c-> <c- p>(</c-><c- o>&lt;</c-><c- n>conditional</c-><c- o>-</c-><c- n>expression</c-><c- o>></c-><c- p>)</c-></code> is not a viable future direction, since you can express essentially the same meaning with <code class="highlight"><c- k>requires</c-></code> today. Granted, <code class="highlight"><c- k>requires</c-></code>’s semantics
+are different from what <code class="highlight"><c- o>=</c-> <c- k>delete</c-></code> does, since the former SFINAE-away the function while the latter does not affect overload resolution at all. But I still find it hard to come up with a compelling use case
+for conditional delete that cannot be achieved by concepts.</p>
+   </ul>
    <h3 class="heading settled" data-level="4.4" id="proposal-scope"><span class="secno">4.4. </span><span class="content">Proposal Scope</span><a class="self-link" href="#proposal-scope"></a></h3>
     This proposal is a pure language extension proposal with no library changes involved and is a pure addition, so no breaking changes are involved.
 It is intended practice that exchanging <code class="highlight"><c- o>=</c-> <c- k>delete</c-><c- p>;</c-></code> for <code class="highlight"><c- o>=</c-> <c- k>delete</c-><c- p>(</c-><c- s>"message"</c-><c- p>);</c-></code> will have no breakage and no user-noticeable effect except for the diagnostic messages. 
@@ -2486,6 +2527,10 @@ This paper does not change this by only proposing to make such "deleted with rea
 However, I’m not sure if the corresponding support can be directly added to this feature, since <code class="highlight"><c- k>static_assert</c-></code> is a standalone statement, and this feature is currently an attachment to a function declaration,
 which may lead to execution order issues. Therefore, currently I do not propose <code class="highlight"><c- o>=</c-> <c- k>delete</c-><c- p>(</c-><c- k>constexpr</c-><c- o>-</c-><c- n>string</c-><c- o>-</c-><c- n>expression</c-><c- p>)</c-></code> as parts of this proposal.
 I felt that the support for it should come together with a separate proposal to add user-generated message support to <code class="highlight"><c- p>[[</c-><c- n>deprecated</c-><c- p>]]</c-></code> and <code class="highlight"><c- p>[[</c-><c- n>nodiscard</c-><c- p>]]</c-></code> too.</p>
+   <p>Some people suggested considering the same message parameter for other keywords in the language, such as <code class="highlight"><c- k>final</c-><c- p>(</c-><c- s>"reason"</c-><c- p>)</c-></code> or <code class="highlight"><c- k>explicit</c-><c- p>(</c-><c- o>&lt;</c-><c- n>cond</c-><c- o>></c-><c- p>,</c-> <c- s>"reason"</c-><c- p>)</c-></code>. While such constructs might be useful, I felt that this may quickly escalate to a general facility
+that supports a custom message for every ill-formed program, and that is a step too far in my opinion. <code class="highlight"><c- o>=</c-> <c- k>delete</c-></code> is different from those two keywords in the sense that it might be used as a transitional method (to be added after the introduction of API to indicate deprecation),
+while the other two constructs are usually set in stone after initial API. Furthermore, the applicable scope of <code class="highlight"><c- k>final</c-></code> (only on classes and virtual member functions) and <code class="highlight"><c- k>explicit</c-></code> (only on constructors) are both much more narrow than <code class="highlight"><c- o>=</c-> <c- k>delete</c-></code> (which can be applied on any function),
+so I think just a controlled introduction of <code class="highlight"><c- o>=</c-> <c- k>delete</c-></code> should be most beneficial to users of the language without introducing too much novelty.</p>
    <h3 class="heading settled" data-level="4.6" id="target-vehicle"><span class="secno">4.6. </span><span class="content">Target Vehicle</span><a class="self-link" href="#target-vehicle"></a></h3>
     This proposal targets C++26. 
    <h3 class="heading settled" data-level="4.7" id="feature-test-macro"><span class="secno">4.7. </span><span class="content">Feature Test Macro</span><a class="self-link" href="#feature-test-macro"></a></h3>

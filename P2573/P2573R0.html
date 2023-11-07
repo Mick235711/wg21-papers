@@ -2,7 +2,7 @@
  <head>
   <meta content="text/html; charset=utf-8" http-equiv="Content-Type">
   <meta content="width=device-width, initial-scale=1, shrink-to-fit=no" name="viewport">
-  <title>P2573R0: &lt;code>= delete("should have a reason");&lt;/code></title>
+  <title>P2573R0: = delete("should have a reason");</title>
 <style data-fill-with="stylesheet">/******************************************************************************
  *                   Style sheet for the W3C specifications                   *
  *
@@ -1238,14 +1238,15 @@ Possible extra rowspan handling
 			grid-column: 2;
 			width: auto;
 			margin-right: 1rem;
+			border-bottom: 3px solid transparent;
+			margin-bottom: -3px;
 		}
 		#toc .content:hover,
 		#toc .content:focus {
 			background: rgba(75%, 75%, 75%, .25);
 			background: var(--a-hover-bg);
-			border-bottom: 3px solid #054572;
-			border-bottom: 3px solid var(--toclink-underline);
-			margin-bottom: -3px;
+			border-bottom-color: #054572;
+			border-bottom-color: var(--toclink-underline);
 		}
 		#toc li li li .content {
 			margin-left: 1rem;
@@ -1560,15 +1561,14 @@ Possible extra rowspan handling
     blockquote c-[vi] { color: inherit; } /* Name.Variable.Instance */
     blockquote c-[il] { color: inherit; } /* Literal.Number.Integer.Long */
   </style>
-  <meta content="Bikeshed version fb1e763a4, updated Tue Mar 1 13:13:50 2022 -0800" name="generator">
+  <meta content="Bikeshed version 82ce88815, updated Thu Sep 7 16:33:55 2023 -0700" name="generator">
   <link href="https://wg21.link/P2573R0" rel="canonical">
   <link href="https://isocpp.org/favicon.ico" rel="icon">
-  <meta content="e553392ffb79263871cb13eadd985ca3cca4be77" name="document-revision">
+  <meta content="ceb809d65f8518dfd1dc9e731a10b9679b70f126" name="document-revision">
 <style>
 table, th, td { border:1px solid grey; }
 </style>
-<style>/* style-autolinks */
-
+<style>/* Boilerplate: style-autolinks */
 .css.css, .property.property, .descriptor.descriptor {
     color: var(--a-normal-text);
     font-size: inherit;
@@ -1628,8 +1628,17 @@ pre .property::before, pre .property::after {
 
 [data-link-type=biblio] {
     white-space: pre;
-}</style>
-<style>/* style-colors */
+}
+
+@media (prefers-color-scheme: dark) {
+    :root {
+        --selflink-text: black;
+        --selflink-bg: silver;
+        --selflink-hover-text: white;
+    }
+}
+</style>
+<style>/* Boilerplate: style-colors */
 
 /* Any --*-text not paired with a --*-bg is assumed to have a transparent bg */
 :root {
@@ -1737,168 +1746,7 @@ pre .property::before, pre .property::after {
     --outdated-shadow: red;
 
     --editedrec-bg: darkorange;
-}</style>
-<style>/* style-counters */
-
-body {
-    counter-reset: example figure issue;
 }
-.issue {
-    counter-increment: issue;
-}
-.issue:not(.no-marker)::before {
-    content: "Issue " counter(issue);
-}
-
-.example {
-    counter-increment: example;
-}
-.example:not(.no-marker)::before {
-    content: "Example " counter(example);
-}
-.invalid.example:not(.no-marker)::before,
-.illegal.example:not(.no-marker)::before {
-    content: "Invalid Example" counter(example);
-}
-
-figcaption {
-    counter-increment: figure;
-}
-figcaption:not(.no-marker)::before {
-    content: "Figure " counter(figure) " ";
-}</style>
-<style>/* style-issues */
-
-a[href].issue-return {
-    float: right;
-    float: inline-end;
-    color: var(--issueheading-text);
-    font-weight: bold;
-    text-decoration: none;
-}
-</style>
-<style>/* style-md-lists */
-
-/* This is a weird hack for me not yet following the commonmark spec
-   regarding paragraph and lists. */
-[data-md] > :first-child {
-    margin-top: 0;
-}
-[data-md] > :last-child {
-    margin-bottom: 0;
-}</style>
-<style>/* style-selflinks */
-
-:root {
-    --selflink-text: white;
-    --selflink-bg: gray;
-    --selflink-hover-text: black;
-}
-.heading, .issue, .note, .example, li, dt {
-    position: relative;
-}
-a.self-link {
-    position: absolute;
-    top: 0;
-    left: calc(-1 * (3.5rem - 26px));
-    width: calc(3.5rem - 26px);
-    height: 2em;
-    text-align: center;
-    border: none;
-    transition: opacity .2s;
-    opacity: .5;
-}
-a.self-link:hover {
-    opacity: 1;
-}
-.heading > a.self-link {
-    font-size: 83%;
-}
-li > a.self-link {
-    left: calc(-1 * (3.5rem - 26px) - 2em);
-}
-dfn > a.self-link {
-    top: auto;
-    left: auto;
-    opacity: 0;
-    width: 1.5em;
-    height: 1.5em;
-    background: var(--selflink-bg);
-    color: var(--selflink-text);
-    font-style: normal;
-    transition: opacity .2s, background-color .2s, color .2s;
-}
-dfn:hover > a.self-link {
-    opacity: 1;
-}
-dfn > a.self-link:hover {
-    color: var(--selflink-hover-text);
-}
-
-a.self-link::before            { content: "¶"; }
-.heading > a.self-link::before { content: "§"; }
-dfn > a.self-link::before      { content: "#"; }
-</style>
-<style>/* style-syntax-highlighting */
-
-code.highlight { padding: .1em; border-radius: .3em; }
-pre.highlight, pre > code.highlight { display: block; padding: 1em; margin: .5em 0; overflow: auto; border-radius: 0; }
-
-.highlight:not(.idl) { background: rgba(0, 0, 0, .03); }
-c-[a] { color: #990055 } /* Keyword.Declaration */
-c-[b] { color: #990055 } /* Keyword.Type */
-c-[c] { color: #708090 } /* Comment */
-c-[d] { color: #708090 } /* Comment.Multiline */
-c-[e] { color: #0077aa } /* Name.Attribute */
-c-[f] { color: #669900 } /* Name.Tag */
-c-[g] { color: #222222 } /* Name.Variable */
-c-[k] { color: #990055 } /* Keyword */
-c-[l] { color: #000000 } /* Literal */
-c-[m] { color: #000000 } /* Literal.Number */
-c-[n] { color: #0077aa } /* Name */
-c-[o] { color: #999999 } /* Operator */
-c-[p] { color: #999999 } /* Punctuation */
-c-[s] { color: #a67f59 } /* Literal.String */
-c-[t] { color: #a67f59 } /* Literal.String.Single */
-c-[u] { color: #a67f59 } /* Literal.String.Double */
-c-[cp] { color: #708090 } /* Comment.Preproc */
-c-[c1] { color: #708090 } /* Comment.Single */
-c-[cs] { color: #708090 } /* Comment.Special */
-c-[kc] { color: #990055 } /* Keyword.Constant */
-c-[kn] { color: #990055 } /* Keyword.Namespace */
-c-[kp] { color: #990055 } /* Keyword.Pseudo */
-c-[kr] { color: #990055 } /* Keyword.Reserved */
-c-[ld] { color: #000000 } /* Literal.Date */
-c-[nc] { color: #0077aa } /* Name.Class */
-c-[no] { color: #0077aa } /* Name.Constant */
-c-[nd] { color: #0077aa } /* Name.Decorator */
-c-[ni] { color: #0077aa } /* Name.Entity */
-c-[ne] { color: #0077aa } /* Name.Exception */
-c-[nf] { color: #0077aa } /* Name.Function */
-c-[nl] { color: #0077aa } /* Name.Label */
-c-[nn] { color: #0077aa } /* Name.Namespace */
-c-[py] { color: #0077aa } /* Name.Property */
-c-[ow] { color: #999999 } /* Operator.Word */
-c-[mb] { color: #000000 } /* Literal.Number.Bin */
-c-[mf] { color: #000000 } /* Literal.Number.Float */
-c-[mh] { color: #000000 } /* Literal.Number.Hex */
-c-[mi] { color: #000000 } /* Literal.Number.Integer */
-c-[mo] { color: #000000 } /* Literal.Number.Oct */
-c-[sb] { color: #a67f59 } /* Literal.String.Backtick */
-c-[sc] { color: #a67f59 } /* Literal.String.Char */
-c-[sd] { color: #a67f59 } /* Literal.String.Doc */
-c-[se] { color: #a67f59 } /* Literal.String.Escape */
-c-[sh] { color: #a67f59 } /* Literal.String.Heredoc */
-c-[si] { color: #a67f59 } /* Literal.String.Interpol */
-c-[sx] { color: #a67f59 } /* Literal.String.Other */
-c-[sr] { color: #a67f59 } /* Literal.String.Regex */
-c-[ss] { color: #a67f59 } /* Literal.String.Symbol */
-c-[vc] { color: #0077aa } /* Name.Variable.Class */
-c-[vg] { color: #0077aa } /* Name.Variable.Global */
-c-[vi] { color: #0077aa } /* Name.Variable.Instance */
-c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
-</style>
-<style>/* style-darkmode */
 
 @media (prefers-color-scheme: dark) {
     :root {
@@ -2011,13 +1859,174 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
        which is quite common in practice... */
     img { background: white; }
 }
-@media (prefers-color-scheme: dark) {
-    :root {
-        --selflink-text: black;
-        --selflink-bg: silver;
-        --selflink-hover-text: white;
-    }
+</style>
+<style>/* Boilerplate: style-counters */
+body {
+    counter-reset: example figure issue;
 }
+.issue {
+    counter-increment: issue;
+}
+.issue:not(.no-marker)::before {
+    content: "Issue " counter(issue);
+}
+
+.example {
+    counter-increment: example;
+}
+.example:not(.no-marker)::before {
+    content: "Example " counter(example);
+}
+.invalid.example:not(.no-marker)::before,
+.illegal.example:not(.no-marker)::before {
+    content: "Invalid Example" counter(example);
+}
+
+figcaption {
+    counter-increment: figure;
+}
+figcaption:not(.no-marker)::before {
+    content: "Figure " counter(figure) " ";
+}
+</style>
+<style>/* Boilerplate: style-issues */
+a[href].issue-return {
+    float: right;
+    float: inline-end;
+    color: var(--issueheading-text);
+    font-weight: bold;
+    text-decoration: none;
+}
+</style>
+<style>/* Boilerplate: style-md-lists */
+/* This is a weird hack for me not yet following the commonmark spec
+   regarding paragraph and lists. */
+[data-md] > :first-child {
+    margin-top: 0;
+}
+[data-md] > :last-child {
+    margin-bottom: 0;
+}
+</style>
+<style>/* Boilerplate: style-selflinks */
+
+:root {
+    --selflink-text: white;
+    --selflink-bg: gray;
+    --selflink-hover-text: black;
+}
+.heading, .issue, .note, .example, li, dt {
+    position: relative;
+}
+a.self-link {
+    position: absolute;
+    top: 0;
+    left: calc(-1 * (3.5rem - 26px));
+    width: calc(3.5rem - 26px);
+    height: 2em;
+    text-align: center;
+    border: none;
+    transition: opacity .2s;
+    opacity: .5;
+}
+a.self-link:hover {
+    opacity: 1;
+}
+.heading > a.self-link {
+    font-size: 83%;
+}
+.example > a.self-link,
+.note > a.self-link,
+.issue > a.self-link {
+    /* These blocks are overflow:auto, so positioning outside
+       doesn't work. */
+    left: auto;
+    right: 0;
+}
+li > a.self-link {
+    left: calc(-1 * (3.5rem - 26px) - 2em);
+}
+dfn > a.self-link {
+    top: auto;
+    left: auto;
+    opacity: 0;
+    width: 1.5em;
+    height: 1.5em;
+    background: var(--selflink-bg);
+    color: var(--selflink-text);
+    font-style: normal;
+    transition: opacity .2s, background-color .2s, color .2s;
+}
+dfn:hover > a.self-link {
+    opacity: 1;
+}
+dfn > a.self-link:hover {
+    color: var(--selflink-hover-text);
+}
+
+a.self-link::before            { content: "¶"; }
+.heading > a.self-link::before { content: "§"; }
+dfn > a.self-link::before      { content: "#"; }
+</style>
+<style>/* Boilerplate: style-syntax-highlighting */
+
+code.highlight { padding: .1em; border-radius: .3em; }
+pre.highlight, pre > code.highlight { display: block; padding: 1em; margin: .5em 0; overflow: auto; border-radius: 0; }
+
+.highlight:not(.idl) { background: rgba(0, 0, 0, .03); }
+c-[a] { color: #990055 } /* Keyword.Declaration */
+c-[b] { color: #990055 } /* Keyword.Type */
+c-[c] { color: #708090 } /* Comment */
+c-[d] { color: #708090 } /* Comment.Multiline */
+c-[e] { color: #0077aa } /* Name.Attribute */
+c-[f] { color: #669900 } /* Name.Tag */
+c-[g] { color: #222222 } /* Name.Variable */
+c-[k] { color: #990055 } /* Keyword */
+c-[l] { color: #000000 } /* Literal */
+c-[m] { color: #000000 } /* Literal.Number */
+c-[n] { color: #0077aa } /* Name */
+c-[o] { color: #999999 } /* Operator */
+c-[p] { color: #999999 } /* Punctuation */
+c-[s] { color: #a67f59 } /* Literal.String */
+c-[t] { color: #a67f59 } /* Literal.String.Single */
+c-[u] { color: #a67f59 } /* Literal.String.Double */
+c-[cp] { color: #708090 } /* Comment.Preproc */
+c-[c1] { color: #708090 } /* Comment.Single */
+c-[cs] { color: #708090 } /* Comment.Special */
+c-[kc] { color: #990055 } /* Keyword.Constant */
+c-[kn] { color: #990055 } /* Keyword.Namespace */
+c-[kp] { color: #990055 } /* Keyword.Pseudo */
+c-[kr] { color: #990055 } /* Keyword.Reserved */
+c-[ld] { color: #000000 } /* Literal.Date */
+c-[nc] { color: #0077aa } /* Name.Class */
+c-[no] { color: #0077aa } /* Name.Constant */
+c-[nd] { color: #0077aa } /* Name.Decorator */
+c-[ni] { color: #0077aa } /* Name.Entity */
+c-[ne] { color: #0077aa } /* Name.Exception */
+c-[nf] { color: #0077aa } /* Name.Function */
+c-[nl] { color: #0077aa } /* Name.Label */
+c-[nn] { color: #0077aa } /* Name.Namespace */
+c-[py] { color: #0077aa } /* Name.Property */
+c-[ow] { color: #999999 } /* Operator.Word */
+c-[mb] { color: #000000 } /* Literal.Number.Bin */
+c-[mf] { color: #000000 } /* Literal.Number.Float */
+c-[mh] { color: #000000 } /* Literal.Number.Hex */
+c-[mi] { color: #000000 } /* Literal.Number.Integer */
+c-[mo] { color: #000000 } /* Literal.Number.Oct */
+c-[sb] { color: #a67f59 } /* Literal.String.Backtick */
+c-[sc] { color: #a67f59 } /* Literal.String.Char */
+c-[sd] { color: #a67f59 } /* Literal.String.Doc */
+c-[se] { color: #a67f59 } /* Literal.String.Escape */
+c-[sh] { color: #a67f59 } /* Literal.String.Heredoc */
+c-[si] { color: #a67f59 } /* Literal.String.Interpol */
+c-[sx] { color: #a67f59 } /* Literal.String.Other */
+c-[sr] { color: #a67f59 } /* Literal.String.Regex */
+c-[ss] { color: #a67f59 } /* Literal.String.Symbol */
+c-[vc] { color: #0077aa } /* Name.Variable.Class */
+c-[vg] { color: #0077aa } /* Name.Variable.Global */
+c-[vi] { color: #0077aa } /* Name.Variable.Instance */
+c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
+
 
 @media (prefers-color-scheme: dark) {
     .highlight:not(.idl) { background: rgba(255, 255, 255, .05); }
@@ -2096,7 +2105,7 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
      <dt>Audience:
      <dd>EWG
      <dt>Project:
-     <dd>ISO/IEC JTC1/SC22/WG21 14882: Programming Language — C++
+     <dd>ISO/IEC 14882 Programming Languages — C++, ISO/IEC JTC1/SC22/WG21
      <dt>Target:
      <dd>C++23
      <dt>Source:
@@ -2162,8 +2171,8 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
    </ol>
   </nav>
   <main>
-   <p>C++ had adopted the original <code class="highlight"><c- k>static_assert</c-></code> with message in C++11 by <a data-link-type="biblio" href="#biblio-n1720">[N1720]</a>, the <code class="highlight"><c- p>[[</c-><c- n>deprecated</c-><c- p>]]</c-></code> attribute with message in C++14 by <a data-link-type="biblio" href="#biblio-n3760">[N3760]</a>,
-and the <code class="highlight"><c- p>[[</c-><c- n>nodiscard</c-><c- p>]]</c-></code> attribute with message in C++20 by <a data-link-type="biblio" href="#biblio-p1301r4">[P1301R4]</a>. All of these introductions succeeded in introducing the ability to provide a user-defined message
+   <p>C++ had adopted the original <code class="highlight"><c- k>static_assert</c-></code> with message in C++11 by <a data-link-type="biblio" href="#biblio-n1720" title="Proposal to Add Static Assertions to the Core Language (Revision 3)">[N1720]</a>, the <code class="highlight"><c- p>[[</c-><c- n>deprecated</c-><c- p>]]</c-></code> attribute with message in C++14 by <a data-link-type="biblio" href="#biblio-n3760" title="[[deprecated]] attribute">[N3760]</a>,
+and the <code class="highlight"><c- p>[[</c-><c- n>nodiscard</c-><c- p>]]</c-></code> attribute with message in C++20 by <a data-link-type="biblio" href="#biblio-p1301r4" title="[[nodiscard(&quot;should have a reason&quot;)]]">[P1301R4]</a>. All of these introductions succeeded in introducing the ability to provide a user-defined message
 accompanying the generated diagnostic (warning or error), thus helping to communicate the exact intent and reasoning of the library author and generate more friendly diagnostics.
 This paper proposes to take a further step forward, and improve upon the other common and modern way of generating diagnostics, namely using <code class="highlight"><c- o>=</c-> <c- k>delete</c-></code> to delete a function,
 by also introducing an optional message component.</p>
@@ -2175,14 +2184,14 @@ by also introducing an optional message component.</p>
    </ul>
    <h2 class="heading settled" data-level="2" id="motivation"><span class="secno">2. </span><span class="content">Motivation</span><a class="self-link" href="#motivation"></a></h2>
    <p>Introduced in C++11, <code class="highlight"><c- o>=</c-> <c- k>default</c-></code> and <code class="highlight"><c- o>=</c-> <c- k>delete</c-></code> had joined <code class="highlight"><c- o>=</c-> <c- mi>0</c-></code> as possible alternative specification for a function body, instead of an ordinary brace-enclosed body of statements.
-The original motivation for deleted function declaration via <code class="highlight"><c- o>=</c-> <c- k>delete</c-></code> is to replace (and supersede) the C++98/03-era common practice of declaring special member functions as <code class="highlight"><c- k>private</c-></code> and not define them to disable their automatic generation. However, <code class="highlight"><c- o>=</c-> <c- k>delete</c-></code>'s addition had gained even greater power, for it is permitted to be used for any function, not just special members.
-The original paper, <a data-link-type="biblio" href="#biblio-n2346">[N2346]</a>, described the expected usage of deleted function as:</p>
+The original motivation for deleted function declaration via <code class="highlight"><c- o>=</c-> <c- k>delete</c-></code> is to replace (and supersede) the C++98/03-era common practice of declaring special member functions as <code class="highlight"><c- k>private</c-></code> and not define them to disable their automatic generation. However, <code class="highlight"><c- o>=</c-> <c- k>delete</c-></code>’s addition had gained even greater power, for it is permitted to be used for any function, not just special members.
+The original paper, <a data-link-type="biblio" href="#biblio-n2346" title="Defaulted and Deleted Functions">[N2346]</a>, described the expected usage of deleted function as:</p>
    <blockquote>
     <p>The primary power of this approach is twofold. First, use of default language facilities can be made an error by deleting the definition of functions that they require. Second, problematic conversions can be made an error by deleting the definition for the offending conversion (or overloaded function).</p>
    </blockquote>
    <p>Looking back at present, ten years after the introduction of deleted functions, we can confidently conclude that <code class="highlight"><c- o>=</c-> <c- k>delete</c-></code> had become one of the key C++11 features that greatly
 improved user experience on error usages of library functions and had been a success story of "Modern C++" revolution. We have seen relatively wide adoption both inside the standard library
-and in the wider community scope, with over 40k results for <code class="highlight"><c- o>=</c-> <c- k>delete</c-></code> in the <a data-link-type="biblio" href="#biblio-actcd19">[ACTCD19]</a> database. (Though, admittedly, the feature is still mostly used for member functions, especially its original motivation, disable SMFs.)</p>
+and in the wider community scope, with over 40k results for <code class="highlight"><c- o>=</c-> <c- k>delete</c-></code> in the <a data-link-type="biblio" href="#biblio-actcd19" title="Andrew&apos;s C/C++ Token Count Dataset 2019">[ACTCD19]</a> database. (Though, admittedly, the feature is still mostly used for member functions, especially its original motivation, disable SMFs.)</p>
    <p>There are several reasons we preferred deleted functions over the traditional <code class="highlight"><c- k>private</c-></code>-but-not-defined ones, including better semantics (<code class="highlight"><c- k>friend</c-></code> and other members are still unaccessible, turning a linker error into a compile-time error),
 better diagnostics (instead of cryptic "inaccessible function" errors, the user directly know that the function is deleted), and greater power (not just SMFs).
 As we are constantly striving to present a better and friendlier interface to the user of C++, this proposal wants to take the feature a step forward in the "better diagnostics" area:
@@ -2201,7 +2210,7 @@ should be included in the error message, such that the user will know the exact 
 Such a <code class="highlight"><c- o>=</c-> <c- k>delete</c-><c- p>(</c-><c- s>"message"</c-><c- p>);</c-></code> clause will be usable whenever the original <code class="highlight"><c- o>=</c-> <c- k>delete</c-><c- p>;</c-></code> clause is usable as a <em>function-body</em>.
 Thus the usage will look like this:</p>
 <pre class="language-cpp highlight"><c- b>void</c-> <c- nf>newapi</c-><c- p>();</c->
-<c- b>void</c-> <c- nf>oldapi</c-><c- p>()</c-> <c- o>=</c-> <c- k>delete</c-><c- p>(</c-><c- s>"This old API is outdated and already been removed. Please use newapi() instead."</c-><c- p>);</c->
+<c- b>void</c-> <c- n>oldapi</c-><c- p>()</c-> <c- o>=</c-> <c- k>delete</c-><c- p>(</c-><c- s>"This old API is outdated and already been removed. Please use newapi() instead."</c-><c- p>);</c->
 
 <c- k>template</c-><c- o>&lt;</c-><c- k>typename</c-> <c- nc>T</c-><c- o>></c->
 <c- k>struct</c-> <c- nc>A</c-> <c- p>{</c-><c- d>/* ... */</c-><c- p>};</c->
@@ -2217,9 +2226,9 @@ Thus the usage will look like this:</p>
     <c- n>MoveOnly</c-><c- o>&amp;</c-> <c- k>operator</c-><c- o>=</c-><c- p>(</c-><c- k>const</c-> <c- n>MoveOnly</c-><c- o>&amp;</c-><c- p>)</c-> <c- o>=</c-> <c- k>delete</c-><c- p>(</c-><c- s>"Copy-assignment is expensive; please use move assignment instead."</c-><c- p>);</c->
 <c- p>};</c->
 </pre>
-   There is a tony table of how a non-copyable class evolves from C++98 to this proposal, thus introducing the benefits of the proposal and the user-friendliness it brings.
+   <p>There is a tony table of how a non-copyable class evolves from C++98 to this proposal, thus introducing the benefits of the proposal and the user-friendliness it brings.
 All the examples (except the hypothetical one) are generated by x86-64 clang version 14.0.0 on Compiler Explorer.
-The usage client is 
+The usage client is</p>
 <pre class="language-cpp highlight"><c- b>int</c-> <c- nf>main</c-><c- p>()</c->
 <c- p>{</c->
     <c- n>NonCopyable</c-> <c- n>nc</c-><c- p>;</c->
@@ -2308,7 +2317,7 @@ The usage client is
       <td>
 <pre class="language-cpp highlight"><c- o>&lt;</c-><c- n>source</c-><c- o>>:</c-><c- mi>16</c-><c- o>:</c-><c- mi>17</c-><c- o>:</c-> <c- n>error</c-><c- o>:</c-> <c- n>call</c-> <c- n>to</c-> <c- n>deleted</c->
 <c- n>constructor</c-> <c- n>of</c-> '<c- n>NonCopyable</c->'<c- o>:</c-> <c- n>Since</c-> <c- k>this</c-> <c- k>class</c-> <c- nc>manages</c->
-<c- n>unique</c-> <c- n>resources</c-><c- p>,</c-> <c- n>copy</c-> <c- n>is</c-> <c- n>not</c-> <c- n>supported</c-><c- p>;</c-> <c- n>use</c-> <c- n>move</c-> <c- n>instead</c-><c- p>.</c->
+<c- n>unique</c-> <c- n>resources</c-><c- p>,</c-> <c- n>copy</c-> <c- n>is</c-> <c- k>not</c-> <c- n>supported</c-><c- p>;</c-> <c- n>use</c-> <c- n>move</c-> <c- n>instead</c-><c- p>.</c->
     <c- n>NonCopyable</c-> <c- n>nc2</c-> <c- o>=</c-> <c- n>nc</c-><c- p>;</c->
                 <c- o>^</c->     <c- o>~~</c->
 <c- o>&lt;</c-><c- n>source</c-><c- o>>:</c-><c- mi>8</c-><c- o>:</c-><c- mi>5</c-><c- o>:</c-> <c- n>note</c-><c- o>:</c-> '<c- n>NonCopyable</c->' <c- n>has</c-> <c- n>been</c->
@@ -2322,7 +2331,7 @@ The usage client is
     There are some discussion on alternative syntax below. 
    <h2 class="heading settled" data-level="3" id="usage-examples"><span class="secno">3. </span><span class="content">Usage Example</span><a class="self-link" href="#usage-examples"></a></h2>
    <h3 class="heading settled" data-level="3.1" id="stl-usage"><span class="secno">3.1. </span><span class="content">Standard Library</span><a class="self-link" href="#stl-usage"></a></h3>
-   <p>This part contains some concrete examples of how current deleted functions in the standard library can benefit from the new message parameter. All examples are based on <a data-link-type="biblio" href="#biblio-n4910">[N4910]</a>.</p>
+   <p>This part contains some concrete examples of how current deleted functions in the standard library can benefit from the new message parameter. All examples are based on <a data-link-type="biblio" href="#biblio-n4910" title="Working Draft, Standard for Programming Language C++">[N4910]</a>.</p>
    <p><strong>Note: As will be discussed below, the standard does not mandate any diagnostic text for deleted functions; a vendor has the freedom (and is encouraged by this proposal)
 to implement these messages as non-breaking QoI features.</strong></p>
 <pre class="language-cpp highlight"><c- c1>// [unique.ptr.single.general]</c->
@@ -2351,9 +2360,9 @@ to implement these messages as non-breaking QoI features.</strong></p>
         <c- k>constexpr</c-> <c- n>unique_ptr</c-><c- o>&lt;</c-><c- n>T</c-><c- o>></c-> <c- n>make_unique</c-><c- p>(</c-><c- n>Args</c-><c- o>&amp;&amp;</c-><c- p>...</c-> <c- n>args</c-><c- p>);</c->
     <c- k>template</c-><c- o>&lt;</c-><c- k>class</c-> <c- nc>T</c-><c- o>></c-> <c- c1>// T is U[]</c->
         <c- k>constexpr</c-> <c- n>unique_ptr</c-><c- o>&lt;</c-><c- n>T</c-><c- o>></c-> <c- n>make_unique</c-><c- p>(</c-><c- b>size_t</c-> <c- n>n</c-><c- p>);</c->
-    <c- k>template</c-><c- o>&lt;</c-><c- k>class</c-> <c- nc>T</c-><c- p>,</c-> <c- k>class</c-><c- p>...</c-> <c- n>Args</c-><c- o>></c-> <c- c1>// T is U[N]</c->
+    <c- k>template</c-><c- o>&lt;</c-><c- k>class</c-> <c- nc>T</c-><c- p>,</c-> <c- k>class</c-><c- p>...</c-> <c- n>Args</c-><c- o>></c-> <c- c1>// T is U\[N]</c->
         <c- n>unspecified</c-> <c- n>make_unique</c-><c- p>(</c-><c- n>Args</c-><c- o>&amp;&amp;</c-><c- p>...)</c-> <c- o>=</c-> <c- k>delete</c-><c- p>(</c->
-            <c- s>"make_unique&lt;U[N]>(...) is not supported; perhaps you mean make_unique&lt;U[]>(N) instead?"</c-><c- p>);</c->
+            <c- s>"make_unique&lt;U\[N]>(...) is not supported; perhaps you mean make_unique&lt;U[]>(N) instead?"</c-><c- p>);</c->
 <c- p>}</c->
 
 <c- c1>// [basic.string.general]</c->
@@ -2375,14 +2384,14 @@ can explain the removal reason and also point towards the new API. Standard libr
     There have been three previous example of user-customisable error messages presented currently in the C++ standard: 
    <ul>
     <li data-md>
-     <p>C++11 <code class="highlight"><c- k>static_assert</c-><c- p>(</c-><c- n>expr</c-><c- p>,</c-> <c- s>"message"</c-><c- p>)</c-></code>, by <a data-link-type="biblio" href="#biblio-n1720">[N1720]</a>.</p>
+     <p>C++11 <code class="highlight"><c- k>static_assert</c-><c- p>(</c-><c- n>expr</c-><c- p>,</c-> <c- s>"message"</c-><c- p>)</c-></code>, by <a data-link-type="biblio" href="#biblio-n1720" title="Proposal to Add Static Assertions to the Core Language (Revision 3)">[N1720]</a>.</p>
     <li data-md>
-     <p>C++14 <code class="highlight"><c- p>[[</c-><c- n>deprecated</c-><c- p>(</c-><c- s>"with reason"</c-><c- p>)]]</c-></code>, by <a data-link-type="biblio" href="#biblio-n3760">[N3760]</a>.</p>
+     <p>C++14 <code class="highlight"><c- p>[[</c-><c- n>deprecated</c-><c- p>(</c-><c- s>"with reason"</c-><c- p>)]]</c-></code>, by <a data-link-type="biblio" href="#biblio-n3760" title="[[deprecated]] attribute">[N3760]</a>.</p>
     <li data-md>
-     <p>C++20 <code class="highlight"><c- p>[[</c-><c- n>nodiscard</c-><c- p>(</c-><c- s>"with reason"</c-><c- p>)]]</c-></code>, by <a data-link-type="biblio" href="#biblio-p1301r4">[P1301R4]</a>.</p>
+     <p>C++20 <code class="highlight"><c- p>[[</c-><c- n>nodiscard</c-><c- p>(</c-><c- s>"with reason"</c-><c- p>)]]</c-></code>, by <a data-link-type="biblio" href="#biblio-p1301r4" title="[[nodiscard(&quot;should have a reason&quot;)]]">[P1301R4]</a>.</p>
    </ul>
    <p>This proposal naturally fits in the same category of providing reasons/friendly messages alongside the original diagnostics and can use a lot of the existing wordings.</p>
-   <p>A previous proposal, <a data-link-type="biblio" href="#biblio-n4186">[N4186]</a>, proposed the exactly same thing, and is received favorably by EWG in 2014. However, there is no further progress on that proposal, and
+   <p>A previous proposal, <a data-link-type="biblio" href="#biblio-n4186" title="Supporting Custom Diagnostics and SFINAE">[N4186]</a>, proposed the exactly same thing, and is received favorably by EWG in 2014. However, there is no further progress on that proposal, and
 thus this proposal aims to continue the work in this direction.</p>
    <h3 class="heading settled" data-level="4.2" id="syntax-semantics"><span class="secno">4.2. </span><span class="content">Syntax and Semantics</span><a class="self-link" href="#syntax-semantics"></a></h3>
     The syntax I prefer is <code class="highlight"><c- o>=</c-> <c- k>delete</c-><c- p>(</c-><c- s>"with reason"</c-><c- p>);</c-></code>, in other words, an optional argument clause after the <code class="highlight"><c- k>delete</c-></code> keyword where the only argument allowed is a single <em>string-literal</em>. 
@@ -2391,33 +2400,33 @@ Some additional semantics caveat is discussed in the Overriding Semantics sectio
    <h3 class="heading settled" data-level="4.3" id="alt-design"><span class="secno">4.3. </span><span class="content">Alternative Design and Issues</span><a class="self-link" href="#alt-design"></a></h3>
     This section lists the alternative design choices and possible arguments against this proposal that have been considered. 
    <h4 class="heading settled" data-level="4.3.1" id="alt-syntax"><span class="secno">4.3.1. </span><span class="content">Alternative Syntax</span><a class="self-link" href="#alt-syntax"></a></h4>
-    A previous proposal <a data-link-type="biblio" href="#biblio-p1267r0">[P1267R0]</a> proposed a <code class="highlight"><c- p>[[</c-><c- n>reason_not_used</c-><c- p>(</c-><c- s>"reason"</c-><c- p>)]]</c-></code> attribute to enhance the compiler error in SFINAE failure cases.
+    A previous proposal <a data-link-type="biblio" href="#biblio-p1267r0" title="Custom Constraint Diagnostics">[P1267R0]</a> proposed a <code class="highlight"><c- p>[[</c-><c- n>reason_not_used</c-><c- p>(</c-><c- s>"reason"</c-><c- p>)]]</c-></code> attribute to enhance the compiler error in SFINAE failure cases.
 While the motivation is similar, the problem it solved is slightly different as <code class="highlight"><c- o>=</c-> <c- k>delete</c-></code> in general does not affect overload resolution.
 In its "Future Directions" section, however, a series of <code class="highlight"><c- p>[[</c-><c- n>reason_xxx</c-><c- p>]]</c-></code> attributes were described, with the <code class="highlight"><c- p>[[</c-><c- n>reason_deleted</c-><c- p>(</c-><c- s>"reason"</c-><c- p>)]]</c-></code> described will have identical semantics with what this proposal proposes. This proposal proposes: 
-<pre class="language-cpp highlight"><c- b>void</c-> <c- nf>fun</c-><c- p>()</c-> <c- o>=</c-> <c- k>delete</c-><c- p>(</c-><c- s>"my reason"</c-><c- p>);</c->
+<pre class="language-cpp highlight"><c- b>void</c-> <c- n>fun</c-><c- p>()</c-> <c- o>=</c-> <c- k>delete</c-><c- p>(</c-><c- s>"my reason"</c-><c- p>);</c->
 </pre>
-   which in future-<a data-link-type="biblio" href="#biblio-p1267r0">[P1267R0]</a> world will be expressed as 
+   <p>which in future-<a data-link-type="biblio" href="#biblio-p1267r0" title="Custom Constraint Diagnostics">[P1267R0]</a> world will be expressed as</p>
 <pre class="language-cpp highlight"><c- p>[[</c-><c- n>reason_deleted</c-><c- p>(</c-><c- s>"my reason"</c-><c- p>)]]</c->
 <c- b>void</c-> <c- n>fun</c-><c- p>()</c-> <c- o>=</c-> <c- k>delete</c-><c- p>;</c->
 </pre>
    <p>Personally, comparing these two syntaxes, I prefer the proposed <code class="highlight"><c- o>=</c-> <c- k>delete</c-><c- p>(</c-><c- s>"reason"</c-><c- p>);</c-></code> one as it is more concise, less noisy, has reasoning closer to the actual deletion and does not
-have to repeat yourself by saying first, "I delete this function" then "the reason for delete is ..." twice. An advantage I can see for <a data-link-type="biblio" href="#biblio-p1267r0">[P1267R0]</a>-like solutions
+have to repeat yourself by saying first, "I delete this function" then "the reason for delete is ..." twice. An advantage I can see for <a data-link-type="biblio" href="#biblio-p1267r0" title="Custom Constraint Diagnostics">[P1267R0]</a>-like solutions
 is that if the committee decided to accept several <code class="highlight"><c- p>[[</c-><c- n>reason_xxx</c-><c- p>(</c-><c- s>"reason"</c-><c- p>)]]</c-></code> family (SFINAE, <code class="highlight"><c- k>private</c-></code>, <code class="highlight"><c- o>=</c-> <c- k>delete</c-></code>, etc.), then the attribute with the same prefix can
-be seen as more compatible with rest of the core language. However, since <a data-link-type="biblio" href="#biblio-p1267r0">[P1267R0]</a> is currently inactive, I will still propose the <code class="highlight"><c- o>=</c-> <c- k>delete</c-><c- p>(</c-><c- s>"reason"</c-><c- p>);</c-></code> syntax.</p>
+be seen as more compatible with rest of the core language. However, since <a data-link-type="biblio" href="#biblio-p1267r0" title="Custom Constraint Diagnostics">[P1267R0]</a> is currently inactive, I will still propose the <code class="highlight"><c- o>=</c-> <c- k>delete</c-><c- p>(</c-><c- s>"reason"</c-><c- p>);</c-></code> syntax.</p>
    <p>Of course, given that the <em>function-body</em> part of the grammar is relatively free, other (arcane?) syntax like <code class="highlight"><c- o>=</c-> <c- k>default</c-> <c- s>"reason"</c-><c- p>;</c-></code>, <code class="highlight"><c- o>=</c-> <c- k>default</c-><c- p>[</c-><c- s>"reason"</c-><c- p>]</c-></code> can be proposed;
 I haven’t explored these syntaxes since I think the syntax I’m proposing is the most natural one and is fitting the existing practices.</p>
    <h4 class="heading settled" data-level="4.3.2" id="semantics"><span class="secno">4.3.2. </span><span class="content">Overriding Semantics</span><a class="self-link" href="#semantics"></a></h4>
     One of the new issues brought up by this new syntax is the overriding problem: 
 <pre class="language-cpp highlight"><c- k>struct</c-> <c- nc>A</c->
 <c- p>{</c->
-    <c- k>virtual</c-> <c- b>void</c-> <c- nf>fun</c-><c- p>()</c-> <c- o>=</c-> <c- k>delete</c-><c- p>(</c-><c- s>"reason"</c-><c- p>);</c->
+    <c- k>virtual</c-> <c- b>void</c-> <c- n>fun</c-><c- p>()</c-> <c- o>=</c-> <c- k>delete</c-><c- p>(</c-><c- s>"reason"</c-><c- p>);</c->
 <c- p>};</c->
 <c- k>struct</c-> <c- nc>B</c-> <c- o>:</c-> <c- k>public</c-> <c- n>A</c->
 <c- p>{</c->
-    <c- b>void</c-> <c- nf>fun</c-><c- p>()</c-> <c- k>override</c-> <c- o>=</c-> <c- k>delete</c-><c- p>(</c-><c- s>"different reason"</c-><c- p>);</c->
+    <c- b>void</c-> <c- n>fun</c-><c- p>()</c-> <c- k>override</c-> <c- o>=</c-> <c- k>delete</c-><c- p>(</c-><c- s>"different reason"</c-><c- p>);</c->
 <c- p>};</c->
 </pre>
-   Should overriding with a different (or no) message parameter be supported? (Notice that you cannot override deleted functions with non-deleted ones or vice versa, so this is the only form.) 
+   <p>Should overriding with a different (or no) message parameter be supported? (Notice that you cannot override deleted functions with non-deleted ones or vice versa, so this is the only form.)</p>
    <p>I believe that this should be supported for the following reason:</p>
    <ul>
     <li data-md>
@@ -2426,11 +2435,11 @@ I haven’t explored these syntaxes since I think the syntax I’m proposing is 
      <p>Existing attributes allow this (and even went further, allow an overriding function to change from having attribute to not having).</p>
    </ul>
    <h4 class="heading settled" data-level="4.3.3" id="unevaluated-strings"><span class="secno">4.3.3. </span><span class="content">Locales and Unevaluated Strings</span><a class="self-link" href="#unevaluated-strings"></a></h4>
-    I heard that there had been already some discussion in the committee for this proposal, probably in the discussion phase of <a data-link-type="biblio" href="#biblio-p1267r0">[P1267R0]</a>;
+    I heard that there had been already some discussion in the committee for this proposal, probably in the discussion phase of <a data-link-type="biblio" href="#biblio-p1267r0" title="Custom Constraint Diagnostics">[P1267R0]</a>;
 the hesitancy is basically that the <em>string-literal</em>s being accepted in the structure is unrestricted, thus may raise some doubt on how to handle
 things like <code class="highlight"><c- o>=</c-> <c- k>delete</c-><c- p>(</c->L<c- s>"Wide reason"</c-><c- p>);</c-></code>. 
-   <p>However, this is not a problem unique to this proposal. This problem also applies to the other three existing examples, and there is <a data-link-type="biblio" href="#biblio-p2361r4">[P2361R4]</a> to solve this problem in general. Therefore I do not see any reason locales of unevaluated strings should be an obstacle.</p>
-   <p>As for the problem of displaying text that cannot be represented in the execution character set, this paper follows the existing <a data-link-type="biblio" href="#biblio-p2246r1">[P2246R1]</a> changes to <code class="highlight"><c- k>static_assert</c-></code> wording and use "should" to allow flexibility.</p>
+   <p>However, this is not a problem unique to this proposal. This problem also applies to the other three existing examples, and there is <a data-link-type="biblio" href="#biblio-p2361r4" title="Unevaluated strings">[P2361R4]</a> to solve this problem in general. Therefore I do not see any reason locales of unevaluated strings should be an obstacle.</p>
+   <p>As for the problem of displaying text that cannot be represented in the execution character set, this paper follows the existing <a data-link-type="biblio" href="#biblio-p2246r1" title="Character encoding of diagnostic text">[P2246R1]</a> changes to <code class="highlight"><c- k>static_assert</c-></code> wording and use "should" to allow flexibility.</p>
    <h3 class="heading settled" data-level="4.4" id="proposal-scope"><span class="secno">4.4. </span><span class="content">Proposal Scope</span><a class="self-link" href="#proposal-scope"></a></h3>
     This proposal is a pure language extension proposal with no library changes involved and is a pure addition, so no breaking changes are involved.
 It is intended practice that exchanging <code class="highlight"><c- o>=</c-> <c- k>delete</c-><c- p>;</c-></code> for <code class="highlight"><c- o>=</c-> <c- k>delete</c-><c- p>(</c-><c- s>"message"</c-><c- p>);</c-></code> will have no breakage and no user-noticeable effect except for the diagnostic messages. 
@@ -2439,10 +2448,10 @@ This paper does not change this by only proposing to make such "deleted with rea
    <p>This paper encourages vendors to apply any text they see fit for the purpose as a QoI, non-breaking feature.</p>
    <h3 class="heading settled" data-level="4.5" id="extensions"><span class="secno">4.5. </span><span class="content">Future Extensions</span><a class="self-link" href="#extensions"></a></h3>
     There have been suggestions on supporting arbitrary <em>constant-expression</em>s in <code class="highlight"><c- k>static_assert</c-></code> message parameter and other places so that we can generate something like 
-<pre class="language-cpp highlight"><c- n>make_unique</c-><c- o>&lt;</c-><c- b>int</c-><c- p>[</c-><c- mi>5</c-><c- p>]</c-><c- o>></c-><c- p>(...)</c-> <c- n>is</c-> <c- n>not</c-> <c- n>supported</c-><c- p>;</c-> <c- n>perhaps</c-> <c- n>you</c-> <c- n>mean</c-> <c- n>make_unique</c-><c- o>&lt;</c-><c- b>int</c-><c- p>[]</c-><c- o>></c-><c- p>(</c-><c- mi>5</c-><c- p>)</c-> <c- n>instead</c-><c- o>?</c->
+<pre class="language-cpp highlight"><c- n>make_unique</c-><c- o>&lt;</c-><c- b>int</c-><c- p>[</c-><c- mi>5</c-><c- p>]</c-><c- o>></c-><c- p>(...)</c-> <c- n>is</c-> <c- k>not</c-> <c- n>supported</c-><c- p>;</c-> <c- n>perhaps</c-> <c- n>you</c-> <c- n>mean</c-> <c- n>make_unique</c-><c- o>&lt;</c-><c- b>int</c-><c- p>[]</c-><c- o>></c-><c- p>(</c-><c- mi>5</c-><c- p>)</c-> <c- n>instead</c-><c- o>?</c->
 </pre>
-   for the invocation <code class="highlight"><c- n>make_unique</c-><c- o>&lt;</c-><c- b>int</c-><c- p>[</c-><c- mi>5</c-><c- p>]</c-><c- o>></c-><c- p>()</c-></code> (so that message come with concrete types). I do not oppose such extensions, and this proposal does not prevent supporting <code class="highlight"><c- o>=</c-> <c- k>delete</c-><c- p>(</c-><c- n>constant_string</c-><c- p>)</c-></code> in the future either.
-However, this is out of scope for this proposal. 
+   <p>for the invocation <code class="highlight"><c- n>make_unique</c-><c- o>&lt;</c-><c- b>int</c-><c- p>[</c-><c- mi>5</c-><c- p>]</c-><c- o>></c-><c- p>()</c-></code> (so that message come with concrete types). I do not oppose such extensions, and this proposal does not prevent supporting <code class="highlight"><c- o>=</c-> <c- k>delete</c-><c- p>(</c-><c- n>constant_string</c-><c- p>)</c-></code> in the future either.
+However, this is out of scope for this proposal.</p>
    <h3 class="heading settled" data-level="4.6" id="target-vehicle"><span class="secno">4.6. </span><span class="content">Target Vehicle</span><a class="self-link" href="#target-vehicle"></a></h3>
     Timing is hard. 
    <p>I’m fully aware that it is already very late in the C++23 cycle, with the design freeze already passed and the wording freeze coming in a few months. And since this feature is not a breaking change,
@@ -2455,11 +2464,11 @@ Furthermore, the wording changes are minimal, and the implementation is really e
     The previous works all bump the relevant attributes or feature testing macros to a new value to resemble the change. However, C++11 default and deleted functions don’t
 have a feature test macro, so I propose to include a new language feature testing macro <code class="highlight"><c- n>__cpp_deleted_function_with_reason</c-></code> (name can be changed) with the usual value. 
    <h2 class="heading settled" data-level="5" id="implementation"><span class="secno">5. </span><span class="content">Implementation Experience</span><a class="self-link" href="#implementation"></a></h2>
-   <p>An experimental implementation of the proposed feature is located in my Clang fork at <a data-link-type="biblio" href="#biblio-clang-implementation">[clang-implementation]</a>, which is capable of handling</p>
-<pre class="language-cpp highlight"><c- b>void</c-> <c- nf>foo</c-><c- p>()</c-> <c- o>=</c-> <c- k>delete</c-><c- p>(</c-><c- s>"Reason"</c-><c- p>);</c->
+   <p>An experimental implementation of the proposed feature is located in my Clang fork at <a data-link-type="biblio" href="#biblio-clang-implementation" title="Mick235711&apos;s Clang Fork">[clang-implementation]</a>, which is capable of handling</p>
+<pre class="language-cpp highlight"><c- b>void</c-> <c- n>foo</c-><c- p>()</c-> <c- o>=</c-> <c- k>delete</c-><c- p>(</c-><c- s>"Reason"</c-><c- p>);</c->
 <c- b>void</c-> <c- nf>fun</c-><c- p>()</c-> <c- p>{</c-><c- n>foo</c-><c- p>();}</c->
 </pre>
-   and output the following error message: (close to what I want; of course, there are other formats such as put reason on separate lines) 
+   <p>and output the following error message: (close to what I want; of course, there are other formats such as put reason on separate lines)</p>
 <pre class="language-cpp highlight"><c- n>propose</c-><c- p>.</c-><c- n>cpp</c-><c- o>:</c-><c- mi>2</c-><c- o>:</c-><c- mi>13</c-><c- o>:</c-> <c- n>error</c-><c- o>:</c-> <c- n>call</c-> <c- n>to</c-> <c- n>deleted</c-> <c- n>function</c-> '<c- n>foo</c->'<c- o>:</c-> <c- s>"Reason"</c->
 <c- b>void</c-> <c- n>fun</c-><c- p>()</c-> <c- p>{</c-><c- n>foo</c-><c- p>();}</c->
             <c- o>^~~</c->
@@ -2468,10 +2477,10 @@ have a feature test macro, so I propose to include a new language feature testin
      <c- o>^</c->
 <c- mi>1</c-> <c- n>error</c-> <c- n>generated</c-><c- p>.</c->
 </pre>
-   The implementation is <em>very</em> incomplete (no support for constructors, no feature-test macro, only a few testing, etc.), so it is only aimed at proving that the vendors can support
-the proposed feature relatively easily. 
+   <p>The implementation is <em>very</em> incomplete (no support for constructors, no feature-test macro, only a few testing, etc.), so it is only aimed at proving that the vendors can support
+the proposed feature relatively easily.</p>
    <h2 class="heading settled" data-level="6" id="wording"><span class="secno">6. </span><span class="content">Wording</span><a class="self-link" href="#wording"></a></h2>
-   <p>The wording below is based on <a data-link-type="biblio" href="#biblio-n4910">[N4910]</a>.</p>
+   <p>The wording below is based on <a data-link-type="biblio" href="#biblio-n4910" title="Working Draft, Standard for Programming Language C++">[N4910]</a>.</p>
    <p>Wording notes for CWG and editor:</p>
    <ul>
     <li data-md>
@@ -2480,7 +2489,7 @@ An alternative approach is to change [dcl.constexpr] to use the "deleted functio
     <li data-md>
      <p>The current wording is basically a combination of <code class="highlight"><c- k>static_assert</c-></code> ([dcl.pre]/10, for error instead of warning) and <code class="highlight"><c- p>[[</c-><c- n>nodiscard</c-><c- p>]]</c-></code> ([dcl.attr.nodiscard]).</p>
     <li data-md>
-     <p>Current wording makes use of <a data-link-type="biblio" href="#biblio-p2361r4">[P2361R4]</a>'s proposed <em>unevaluated-string</em>. If this proposal ends up landing before <a data-link-type="biblio" href="#biblio-p2361r4">[P2361R4]</a>, then please change all occurrences of <em>unevaluated-string</em> into <em>string-literal</em>.</p>
+     <p>Current wording makes use of <a data-link-type="biblio" href="#biblio-p2361r4" title="Unevaluated strings">[P2361R4]</a>'s proposed <em>unevaluated-string</em>. If this proposal ends up landing before <a data-link-type="biblio" href="#biblio-p2361r4" title="Unevaluated strings">[P2361R4]</a>, then please change all occurrences of <em>unevaluated-string</em> into <em>string-literal</em>.</p>
    </ul>
    <h3 class="heading settled" data-level="6.1" id="dcl.constexpr"><span class="secno">6.1. </span><span class="content">9.2.6 The <code class="highlight"><c- k>constexpr</c-></code> and <code class="highlight"><c- k>consteval</c-></code> specifiers [dcl.constexpr]</span><a class="self-link" href="#dcl.constexpr"></a></h3>
     Clause 4: 
@@ -2580,7 +2589,7 @@ The implicit odr-use ([basic.def.odr]) of a virtual function does not, by itself
       on = !document.body.classList.contains('toc-sidebar');
     }
 
-    /* Don’t scroll to compensate for the ToC if we’re above it already. */
+    /* Don't scroll to compensate for the ToC if we're above it already. */
     var headY = 0;
     var head = document.querySelector('.head');
     if (head) {
@@ -2611,16 +2620,16 @@ The implicit odr-use ([basic.def.odr]) of a virtual function does not, by itself
       }
       if (toggle.matches(':hover')) {
         /* Unfocus button when not using keyboard navigation,
-           because I don’t know where else to send the focus. */
+           because I don't know where else to send the focus. */
         toggle.blur();
       }
     }
   }
 
   function createSidebarToggle() {
-    /* Create the sidebar toggle in JS; it shouldn’t exist when JS is off. */
+    /* Create the sidebar toggle in JS; it shouldn't exist when JS is off. */
     var toggle = document.createElement('a');
-      /* This should probably be a button, but appearance isn’t standards-track.*/
+      /* This should probably be a button, but appearance isn't standards-track.*/
     toggle.id = 'toc-toggle';
     toggle.class = 'toc-toggle';
     toggle.href = '#toc';
@@ -2636,7 +2645,7 @@ The implicit odr-use ([basic.def.odr]) of a virtual function does not, by itself
     toggle.addEventListener('click', toggler, false);
 
 
-    /* Get <nav id=toc-nav>, or make it if we don’t have one. */
+    /* Get <nav id=toc-nav>, or make it if we don't have one. */
     var tocNav = document.getElementById('toc-nav');
     if (!tocNav) {
       tocNav = document.createElement('p');
@@ -2644,7 +2653,7 @@ The implicit odr-use ([basic.def.odr]) of a virtual function does not, by itself
       /* Prepend for better keyboard navigation */
       document.body.insertBefore(tocNav, document.body.firstChild);
     }
-    /* While we’re at it, make sure we have a Jump to Toc link. */
+    /* While we're at it, make sure we have a Jump to Toc link. */
     var tocJump = document.getElementById('toc-jump');
     if (!tocJump) {
       tocJump = document.createElement('a');
@@ -2672,7 +2681,7 @@ The implicit odr-use ([basic.def.odr]) of a virtual function does not, by itself
     }, false);
   }
   else {
-    console.warn("Can’t find Table of Contents. Please use <nav id='toc'> around the ToC.");
+    console.warn("Can't find Table of Contents. Please use <nav id='toc'> around the ToC.");
   }
 
   /* Wrap tables in case they overflow */
