@@ -1,18 +1,18 @@
 <pre class='metadata'>
 Title: = delete("should have a reason");
 H1: <code>= delete("should have a reason");</code>
-Shortname: D2573
+Shortname: P2573
 Revision: 2
 Audience: CWG
-Status: D
+Status: P
 Group: WG21
 !Target: C++26
-URL: https://wg21.link/D2573R2
-!Source: <a href="https://github.com/Mick235711/wg21-papers/blob/main/P2573/draft-P2573.bs">github.com/Mick235711/wg21-papers/blob/main/P2573/draft-P2573.bs</a>
+URL: https://wg21.link/P2573R2
+!Source: <a href="https://github.com/Mick235711/wg21-papers/blob/main/P2573/P2573R2.bs">github.com/Mick235711/wg21-papers/blob/main/P2573/P2573R2.bs</a>
 !Issue Tracking: <a href="https://github.com/Mick235711/wg21-papers/issues">GitHub Mick235711/wg21-papers</a>
 Editor: Yihe Li, winmikedows@hotmail.com
 No abstract: true
-Date: 2024-03-21
+Date: 2024-03-22
 Markup Shorthands: markdown yes
 </pre>
 
