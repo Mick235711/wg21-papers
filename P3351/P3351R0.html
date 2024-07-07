@@ -1564,7 +1564,7 @@ Possible extra rowspan handling
   <meta content="Bikeshed version d765c696b, updated Fri Mar 8 15:58:52 2024 -0800" name="generator">
   <link href="https://wg21.link/P3351R0" rel="canonical">
   <link href="https://isocpp.org/favicon.ico" rel="icon">
-  <meta content="1025ba8d75ff032bbe845b55385a03bf04408c9f" name="revision">
+  <meta content="ad37214d372992ccca552cfc872bddfe94ad69f1" name="revision">
   <meta content="dark light" name="color-scheme">
 <style>
 table, th, td { border:1px solid grey; }
@@ -2427,6 +2427,8 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
    <p>Similar to <code class="highlight"><c- n>views</c-><c- o>::</c-><c- n>transform</c-></code>, if and only if the input range is const-iterable and <code class="highlight"><c- n>func</c-></code> is <code class="highlight"><c- k>const</c-></code>-invocable.</p>
    <h4 class="heading settled" data-level="3.6.6" id="borrowed"><span class="secno">3.6.6. </span><span class="content">Borrowed</span><a class="self-link" href="#borrowed"></a></h4>
    <p>Never.</p>
+   <p>At least for now. Currently, <code class="highlight"><c- n>views</c-><c- o>::</c-><c- n>transform</c-></code> is never borrowed, but after <a data-link-type="biblio" href="#biblio-p3117r0" title="Extending Conditionally Borrowed">[P3117R0]</a> determined a suitable criteria for storing the function parameter in the iterator, it can be conditionally borrowed.</p>
+   <p>Theoretically, the same can be applied to <code class="highlight"><c- n>scan_view</c-></code> to make it conditionally borrowed by storing the function and the initial value inside the iterator. The author would like to wait until <a data-link-type="biblio" href="#biblio-p3117r0" title="Extending Conditionally Borrowed">[P3117R0]</a> lands to make this change though.</p>
    <h3 class="heading settled" data-level="3.7" id="feature-test-macro"><span class="secno">3.7. </span><span class="content">Feature Test Macro</span><a class="self-link" href="#feature-test-macro"></a></h3>
    <p>This proposal added a new feature test macro <code class="highlight"><c- n>__cpp_lib_ranges_scan</c-></code>, which signals the availability of all three adaptors.</p>
    <p>An alternate design is to introduce 3 macros, but the author felt such granularity is not needed.</p>
@@ -2881,6 +2883,8 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
    <dd>Barry Revzin. <a href="https://wg21.link/p2322r6"><cite>ranges::fold</cite></a>. 22 April 2022. URL: <a href="https://wg21.link/p2322r6">https://wg21.link/p2322r6</a>
    <dt id="biblio-p2441r2">[P2441R2]
    <dd>Barry Revzin. <a href="https://wg21.link/p2441r2"><cite>views::join_with</cite></a>. 28 January 2022. URL: <a href="https://wg21.link/p2441r2">https://wg21.link/p2441r2</a>
+   <dt id="biblio-p3117r0">[P3117R0]
+   <dd>Zach Laine, Barry Revzin. <a href="https://wg21.link/p3117r0"><cite>Extending Conditionally Borrowed</cite></a>. 15 February 2024. URL: <a href="https://wg21.link/p3117r0">https://wg21.link/p3117r0</a>
    <dt id="biblio-p3136r0">[P3136R0]
    <dd>Tim Song. <a href="https://wg21.link/p3136r0"><cite>Retiring niebloids</cite></a>. 15 February 2024. URL: <a href="https://wg21.link/p3136r0">https://wg21.link/p3136r0</a>
   </dl>
