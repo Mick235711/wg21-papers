@@ -2,17 +2,17 @@
 Title: views::scan
 H1: <code>views::scan</code>
 Shortname: D3351
-Revision: 0
+Revision: 1
 Audience: SG9, LEWG
 Status: D
 Group: WG21
 !Target: C++26
-URL: https://wg21.link/D3351R0
+URL: https://wg21.link/D3351R1
 !Source: <a href="https://github.com/Mick235711/wg21-papers/blob/main/P3351/draft-P3351.bs">github.com/Mick235711/wg21-papers/blob/main/P3351/draft-P3351.bs</a>
 !Issue Tracking: <a href="https://github.com/Mick235711/wg21-papers/issues">GitHub Mick235711/wg21-papers</a>
 Editor: Yihe Li, winmikedows@hotmail.com
 No abstract: true
-Date: 2024-07-06
+Date: 2024-08-19
 Markup Shorthands: markdown yes
 </pre>
 
@@ -29,6 +29,10 @@ To make common usage of this adaptor easier, this paper also proposes two additi
 The `views::scan` adaptor is classified as a Tier 1 item in the Ranges plan for C++26 ([[!P2760R1]]).
 
 # Revision History # {#revisions}
+
+## R1 ## {#r1}
+
+- Several wording fixes.
 
 ## R0 (2024-07 post-St. Louis Mailing) ## {#r0}
 
@@ -237,7 +241,15 @@ vec | views::prescan(0L, std::plus{});
 ```
 With the first choice, the resulting range's value type will be `int`, which would result in UB due to overflow. With the second choice the resulting value type will be `long` which is fine. (Unfortunately, if you used `views::scan` here it will still be UB, and that cannot be fixed.)
 
-Given that `ranges::fold_left[_first]` chose the second approach, the author for now also choose the second approach. I can be convinced otherwise though.
+The second choice also enables the following use case:
+```cpp
+// Assums that std::to_string also has an overload for std::string that just returns the argument
+std::vector<int> vec{1, 2, 3};
+vec | views::prescan("2", [](const auto& a, const auto& b) { return std::to_string(a) + std::to_string(b); })
+// ["2", "21", "212", "2123"]
+```
+
+Given that `ranges::fold_left[_first]` chose the second approach, the author thinks that the second approach is the correct one to pursue.
 
 ### Category ### {#category}
 
@@ -378,7 +390,7 @@ for (auto&& i : std::views::prescan(vec, 10, std::plus{})) {
 ```
 -- *end example*]
 
-4. The name `views::partial_sum` denotes a range adaptor object ([range.adaptor.object]). Given subexpressions `E`, the expression `views::partial_sum(E)` is expression-equivalent to `scan_view(E, std::plus{})`.
+4. The name `views::partial_sum` denotes a range adaptor object ([range.adaptor.object]). Given subexpression `E`, the expression `views::partial_sum(E)` is expression-equivalent to `scan_view(E, std::plus{})`.
 
 ## 26.7.�.2 Class template `scan_view` [range.scan.view] ## {#range.scan.view}
 
@@ -501,7 +513,7 @@ namespace std::ranges {
 1. If `Base` does not model `forward_range` there is no member `iterator_category`. Otherwise, the *typedef-name* `iterator_category` denotes:
 
 - `forward_iterator_tag` if `iterator_traits<iterator_t<Base>>::iterator_category` models `derived_from<forward_iterator_tag>` and `is_reference_v<invoke_result_t<maybe-const<Const, F>&, maybe-const<Const, T>&, range_reference_t<Base>>>` is `true`;
-- otherwise, `iterator_traits<iterator_t<Base>>::iterator_category`.
+- otherwise, `input_iterator_tag`.
 
 ```cpp
 constexpr iterator(Parent& parent, iterator_t<Base> current);
