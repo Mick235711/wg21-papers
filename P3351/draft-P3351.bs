@@ -32,7 +32,11 @@ The `views::scan` adaptor is classified as a Tier 1 item in the Ranges plan for 
 
 ## R1 ## {#r1}
 
-- Several wording fixes.
+- Several wording fixes:
+    - Added the missing `noexcept` to `end()`.
+    - Refactored the constraints of `scan_view` out into its own concept, such that it tests for both assignability from `range_reference_t<R>` and the invoke result of `f`.
+    - Replace `regular_invocable` with `invocable`.
+    - Pass by move in `scan_view`'s constructor and when invoking the function.
 
 ## R0 (2024-07 post-St. Louis Mailing) ## {#r0}
 
@@ -229,7 +233,7 @@ vec | views::prescan(1, std::plus{});
 Obviously, we expect the result to be `[1.0, 2.0, 3.5, 5.5]`, not `[1, 2, 3, 5]`, therefore for `prescan` we cannot just use the initial seed's type as the resulting range's reference/value type.
 
 There are two choices we can make: (for input range type `Rng`, function type `F` and initial seed type `T`)
-1. Just use the reference/value type of the input range. This is consistent with `std::partial_sum`.
+1. Just use the reference/value type of the input range. This is consistent with `std::partial_sum`. (range-v3 also chose this approach, using the input range's value type as the reference type of `scan_view`)
 2. Be a bit clever, and use `remove_cvref_t<invoke_result_t<F&, T&, ranges::range_reference_t<Rng>>>`. In other words, the return type of `func(init, *rng.begin())`.
 
 Note that the second option don't really covers all kind of functions, since it is entirely plausible that `func` will change its return type in every invocation. However, this should be enough for nearly all normal cases, and is the decision chosen by [[P2322R6]] for `ranges::fold_left[_first]`. For `views::scan`, this approach can also work, by returning the return type of `func(*rng.begin(), *rng.begin())`.
@@ -291,7 +295,7 @@ The author assumes that this is an oversight, since I cannot see any reason for 
 
 # Implementation Experience # {#implementation-experience}
 
-The author implemented this proposal in [Compiler Explorer](https://godbolt.org/z/vWhEr8vx5). No significant obstacles are observed.
+The author implemented this proposal in [Compiler Explorer](https://godbolt.org/z/Ybo9bKP5c). No significant obstacles are observed.
 
 Note that to save on implementation effort, `scan(rng, func)` is simply aliased to `prescan(next(rng.begin()), *rng.begin(), func)`, so they both shares a single underlying view.
 
@@ -303,13 +307,14 @@ Wording notes for LWG and editor:
 - The wording currently reflects Option 3 from the [why three adaptors](#why-three-adaptors) section, with name as `views::scan`, `prescan` and `partial_sum`.
 - `views::scan` and `views::prescan` use the same underlying `ranges::scan_view` to save on complexity and duplication of wording.
 - Currently, the three views' definition reside just after `views::transform`'s definition and synopsis, due to the author's perception that they are pretty similar.
+- The exposition-only concept `scannable` and `scannable-impl` is basically the same as `indirectly-binary-left-foldable` and `indirectly-binary-left-foldable-impl`; the only difference is that `F` is required to be move constructible instead of copy constructible.
 
 Wording questions to be resolved:
 - Should the view be called `scan_view` or `prescan_view`?
 - Currently, the current sum is cached in the iterator object (as implemented in range-v3). An alternative is to cache the current sum in the view object (as implemented in `tl::ranges`), such that each iterator only needs to hold a pointer to the parent view and an iterator to the current position. Which one should be chosen?
 - Two strategy exist to defer `scan` to `prescan`. First (used currently) is to define two constructors for `scan_view` that takes two and three arguments, and have one constructor delegates to the other. The other approach is to specify that `scan(E, F)` is expression-equivalent to `scan_view(E, *ranges::begin(E), F)`.
 - Due to never being a common range, `scan_view` simply have a single `end() const` member that returns `default_sentinel`. Is that the correct way to do this, or should I write two different `end()` function for both cases, with different constraints, but both returns `default_sentinel`? Or should I actually write a `sentinel<Const>` subclass that wraps the iterator?
-- The extra `bool IsInit` parameter and `assignable_from` requirement seems a bit clunky
+- The extra `bool IsInit` parameter seems a bit clunky.
 
 ## 17.3.2 Header `<version>` synopsis [version.syn] ## {#version.syn}
 
@@ -336,10 +341,7 @@ namespace std::ranges {
 
   <ins>// [range.scan], scan view
   template&lt;input_range V, typename T, move_constructible F&gt;
-    requires view&lt;V&gt; && is_object_v&lt;T&gt; && is_object_v&lt;F&gt; &&
-             regular_invocable&lt;F&, T&, range_reference_t&lt;V&gt;&gt; &&
-             assignable_from&lt;remove_cvref_t&lt;invoke_result_t&lt;F&, T&, range_reference_t&lt;V&gt;&gt;&gt;&, T&&gt; &&
-             <i>can-reference</i>&lt;invoke_result_t&lt;F&, T&, range_reference_t&lt;V&gt;&gt;&gt;
+    requires <i>see below</i>
   class scan_view; // freestanding
 
   namespace views {
@@ -396,11 +398,22 @@ for (auto&& i : std::views::prescan(vec, 10, std::plus{})) {
 
 ```cpp
 namespace std::ranges {
+  template<typename V, typename T, typename F, typename U>
+    concept scannable-impl =  // exposition only
+      movable<T> && movable<U> &&
+      convertible_to<T, U> && invocable<F&, U, range_reference_t<V>> &&
+      assignable_from<U&, invoke_result_t<F&, U, range_reference_t<V>>>;
+
+  template<typename V, typename T, typename F>
+    concept scannable =  // exposition only
+      invocable<F&, T, range_reference_t<V>> &&
+      convertible_to<invoke_result_t<F&, T, range_reference_t<V>>,
+             decay_t<invoke_result_t<F&, T, range_reference_t<V>>>> &&
+      scannable-impl<V, T, F,
+             decay_t<invoke_result_t<F&, T, range_reference_t<V>>>>;
+
   template<input_range V, typename T, move_constructible F, bool IsInit = false>
-    requires view<V> && is_object_v<T> && is_object_v<F> &&
-             regular_invocable<F&, T&, range_reference_t<V>> &&
-             assignable_from<remove_cvref_t<invoke_result_t<F&, T&, range_reference_t<V>>>&, T&> &&
-             can-reference<invoke_result_t<F&, T&, range_reference_t<V>>>
+    requires view<V> && is_object_v<T> && is_object_v<F> && scannable<V, T, F>
   class scan_view : public view_interface<scan_view<V, T, F, IsInit>> {
   private:
     // [range.scan.iterator], class template scan_view::iterator
@@ -413,16 +426,14 @@ namespace std::ranges {
   public:
     scan_view() requires default_initializable<V> && default_initializable<F> = default;
     constexpr explicit scan_view(V base, F fun) requires (!IsInit);
-    constexpr explicit scan_view(V base, const T& init, F fun) requires IsInit;
+    constexpr explicit scan_view(V base, T init, F fun) requires IsInit;
 
     constexpr V base() const & requires copy_constructible<V> { return base_; }
     constexpr V base() && { return std::move(base_); }
 
     constexpr iterator<false> begin();
     constexpr iterator<true> begin() const
-      requires range<const V> &&
-               regular_invocable<const F&, const T&, range_reference_t<const V>> &&
-               assignable_from<remove_cvref_t<invoke_result_t<const F&, const T&, range_reference_t<const V>>>&, const T&>;
+      requires range<const V> && scannable<const V, T, const F>;
 
     constexpr default_sentinel_t end() const noexcept { return default_sentinel; }
 
@@ -445,9 +456,9 @@ constexpr explicit scan_view(V base, F fun) requires (!IsInit);
 1. *Effects*: Initializes `base_` with `std::move(base)` and `fun_` with `std::move(fun)`.
 
 ```cpp
-constexpr explicit scan_view(V base, const T& init, F fun) requires IsInit;
+constexpr explicit scan_view(V base, T init, F fun) requires IsInit;
 ```
-2. *Effects*: Initializes `base_` with `std::move(base)`, `init_` with `init`, and `fun_` with `std::move(fun)`.
+2. *Effects*: Initializes `base_` with `std::move(base)`, `init_` with `std::move(init)`, and `fun_` with `std::move(fun)`.
 
 ```cpp
 constexpr iterator<false> begin();
@@ -456,8 +467,7 @@ constexpr iterator<false> begin();
 
 ```cpp
 constexpr iterator<true> begin() const
-  requires range<const V> &&
-           regular_invocable<const F&, const T&, range_reference_t<const V>>;
+  requires range<const V> && scannable<const V, T, const F>;
 ```
 4. *Effects*: Equivalent to: `return iterator<true>{*this, ranges::begin(base_)};`
 
@@ -466,17 +476,14 @@ constexpr iterator<true> begin() const
 ```cpp
 namespace std::ranges {
   template<input_range V, typename T, move_constructible F, bool IsInit>
-    requires view<V> && is_object_v<T> && is_object_v<F> &&
-             regular_invocable<F&, T&, range_reference_t<V>> &&
-             assignable_from<remove_cvref_t<invoke_result_t<F&, T&, range_reference_t<V>>>&, T&> &&
-             can-reference<invoke_result_t<F&, T&, range_reference_t<V>>>
+    requires view<V> && is_object_v<T> && is_object_v<F> && scannable<V, T, F>
   template<bool Const>
   class scan_view<V, T, F, IsInit>::iterator {
   private:
     using Parent = maybe-const<Const, scan_view>; // exposition only
     using Base = maybe-const<Const, V>; // exposition only
-    using RefType = invoke_result_t<maybe-const<Const, F>&, maybe-const<Const, T>&, range_reference_t<Base>>; // exposition only
-    using SumType = remove_cvref_t<RefType>; // exposition only
+    using RefType = invoke_result_t<maybe-const<Const, F>&, T, range_reference_t<Base>>; // exposition only
+    using SumType = decay_t<RefType>; // exposition only
 
     iterator_t<Base> current_ = iterator_t<Base>(); // exposition only
     Parent* parent_ = nullptr; // exposition only
@@ -552,7 +559,7 @@ constexpr iterator& operator++();
 if (!is_init_) { ++current_; }
 else { is_init_ = false; }
 if (current_ != ranges::end(parent_->base_)) {
-  sum_ = invoke(*parent_->fun_, *sum_, *current_);
+  sum_ = invoke(*parent_->fun_, std::move(*sum_), *current_);
 }
 return *this;
 ```
