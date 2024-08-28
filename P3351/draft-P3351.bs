@@ -12,7 +12,7 @@ URL: https://wg21.link/D3351R1
 !Issue Tracking: <a href="https://github.com/Mick235711/wg21-papers/issues">GitHub Mick235711/wg21-papers</a>
 Editor: Yihe Li, winmikedows@hotmail.com
 No abstract: true
-Date: 2024-08-19
+Date: 2024-08-28
 Markup Shorthands: markdown yes
 </pre>
 
@@ -424,7 +424,7 @@ namespace std::ranges {
                regular_invocable<const F&, const T&, range_reference_t<const V>> &&
                assignable_from<remove_cvref_t<invoke_result_t<const F&, const T&, range_reference_t<const V>>>&, const T&>;
 
-    constexpr default_sentinel_t end() const { return default_sentinel; }
+    constexpr default_sentinel_t end() const noexcept { return default_sentinel; }
 
     constexpr auto size() requires sized_range<V>
     { return ranges::size(base_) + (IsInit ? 1 : 0); }
