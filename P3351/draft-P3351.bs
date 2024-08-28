@@ -295,7 +295,7 @@ The author assumes that this is an oversight, since I cannot see any reason for 
 
 # Implementation Experience # {#implementation-experience}
 
-The author implemented this proposal in [Compiler Explorer](https://godbolt.org/z/Ybo9bKP5c). No significant obstacles are observed.
+The author implemented this proposal in [Compiler Explorer](https://godbolt.org/z/KrKj9GGEf). No significant obstacles are observed.
 
 Note that to save on implementation effort, `scan(rng, func)` is simply aliased to `prescan(next(rng.begin()), *rng.begin(), func)`, so they both shares a single underlying view.
 
@@ -315,6 +315,8 @@ Wording questions to be resolved:
 - Two strategy exist to defer `scan` to `prescan`. First (used currently) is to define two constructors for `scan_view` that takes two and three arguments, and have one constructor delegates to the other. The other approach is to specify that `scan(E, F)` is expression-equivalent to `scan_view(E, *ranges::begin(E), F)`.
 - Due to never being a common range, `scan_view` simply have a single `end() const` member that returns `default_sentinel`. Is that the correct way to do this, or should I write two different `end()` function for both cases, with different constraints, but both returns `default_sentinel`? Or should I actually write a `sentinel<Const>` subclass that wraps the iterator?
 - The extra `bool IsInit` parameter seems a bit clunky.
+- `regular_invocable` or `invocable`? Currently the wording uses the latter (following range-v3), but `transform_view` used the former.
+- The return type of `operator*()` seems unorthodox.
 
 ## 17.3.2 Header `<version>` synopsis [version.syn] ## {#version.syn}
 
@@ -400,7 +402,7 @@ for (auto&& i : std::views::prescan(vec, 10, std::plus{})) {
 namespace std::ranges {
   template<typename V, typename T, typename F, typename U>
     concept scannable-impl =  // exposition only
-      movable<T> && movable<U> &&
+      movable<U> &&
       convertible_to<T, U> && invocable<F&, U, range_reference_t<V>> &&
       assignable_from<U&, invoke_result_t<F&, U, range_reference_t<V>>>;
 
@@ -412,7 +414,7 @@ namespace std::ranges {
       scannable-impl<V, T, F,
              decay_t<invoke_result_t<F&, T, range_reference_t<V>>>>;
 
-  template<input_range V, typename T, move_constructible F, bool IsInit = false>
+  template<input_range V, move_constructible T, move_constructible F, bool IsInit = false>
     requires view<V> && is_object_v<T> && is_object_v<F> && scannable<V, T, F>
   class scan_view : public view_interface<scan_view<V, T, F, IsInit>> {
   private:
@@ -420,7 +422,7 @@ namespace std::ranges {
     template<bool> struct iterator; // exposition only
 
     V base_ = V(); // exposition only
-    non-propagating-cache<T> init_; // exposition only
+    movable-box<T> init_; // exposition only
     movable-box<F> fun_; // exposition only
 
   public:
@@ -475,7 +477,7 @@ constexpr iterator<true> begin() const
 
 ```cpp
 namespace std::ranges {
-  template<input_range V, typename T, move_constructible F, bool IsInit>
+  template<input_range V, move_constructible T, move_constructible F, bool IsInit>
     requires view<V> && is_object_v<T> && is_object_v<F> && scannable<V, T, F>
   template<bool Const>
   class scan_view<V, T, F, IsInit>::iterator {
@@ -488,7 +490,7 @@ namespace std::ranges {
     iterator_t<Base> current_ = iterator_t<Base>(); // exposition only
     Parent* parent_ = nullptr; // exposition only
     movable-box<SumType> sum_; // exposition only
-    bool is_init_ = false; // exposition only
+    bool is_init_ = IsInit; // exposition only
 
   public:
     using iterator_concept =
@@ -505,7 +507,7 @@ namespace std::ranges {
     constexpr const iterator_t<Base>& base() const & noexcept;
     constexpr iterator_t<Base> base() &&;
 
-    constexpr RefType operator*() const { return *sum_; }
+    constexpr const SumType& operator*() const { return *sum_; }
 
     constexpr iterator& operator++();
     constexpr void operator++(int);
@@ -525,7 +527,7 @@ namespace std::ranges {
 ```cpp
 constexpr iterator(Parent& parent, iterator_t<Base> current);
 ```
-2. *Effects*: Initializes `current_` with `std::move(current)`, `parent_` with `addressof(parent)`, and `is_init_` with `IsInit`. Then, equivalent to:
+2. *Effects*: Initializes `current_` with `std::move(current)` and `parent_` with `addressof(parent)`. Then, equivalent to:
 
 ```cpp
 if constexpr (IsInit) { sum_ = *parent_->init_; }
