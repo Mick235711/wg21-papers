@@ -1564,7 +1564,7 @@ Possible extra rowspan handling
   <meta content="Bikeshed version d765c696b, updated Fri Mar 8 15:58:52 2024 -0800" name="generator">
   <link href="https://wg21.link/P3351R1" rel="canonical">
   <link href="https://isocpp.org/favicon.ico" rel="icon">
-  <meta content="85302e013dfbb5e9d93abd537bf5c3d3ea026b1c" name="revision">
+  <meta content="31f7f584c49756962e4ec65a3766ee77ca76dea7" name="revision">
   <meta content="dark light" name="color-scheme">
 <style>
 table, th, td { border:1px solid grey; }
@@ -2120,7 +2120,7 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
     <li>
      <a href="#revisions"><span class="secno">1</span> <span class="content">Revision History</span></a>
      <ol class="toc">
-      <li><a href="#r1"><span class="secno">1.1</span> <span class="content">R1 (2024-10 pre-Wroclaw Mailing)</span></a>
+      <li><a href="#r1"><span class="secno">1.1</span> <span class="content">R1 (2024-10 pre-Wrocław Mailing)</span></a>
       <li><a href="#r0"><span class="secno">1.2</span> <span class="content">R0 (2024-07 post-St. Louis Mailing)</span></a>
      </ol>
     <li><a href="#motivation"><span class="secno">2</span> <span class="content">Motivation</span></a>
@@ -2175,7 +2175,7 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
    </ul>
    <p>The <code class="highlight"><c- n>views</c-><c- o>::</c-><c- n>scan</c-></code> adaptor is classified as a Tier 1 item in the Ranges plan for C++26 (<a data-link-type="biblio" href="#biblio-p2760r1" title="A Plan for C++26 Ranges">[P2760R1]</a>).</p>
    <h2 class="heading settled" data-level="1" id="revisions"><span class="secno">1. </span><span class="content">Revision History</span><a class="self-link" href="#revisions"></a></h2>
-   <h3 class="heading settled" data-level="1.1" id="r1"><span class="secno">1.1. </span><span class="content">R1 (2024-10 pre-Wroclaw Mailing)</span><a class="self-link" href="#r1"></a></h3>
+   <h3 class="heading settled" data-level="1.1" id="r1"><span class="secno">1.1. </span><span class="content">R1 (2024-10 pre-Wrocław Mailing)</span><a class="self-link" href="#r1"></a></h3>
    <ul>
     <li data-md>
      <p>Several wording fixes:</p>
@@ -2432,7 +2432,7 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
 </pre>
    <p>With the first choice, the resulting range’s value type will be <code class="highlight"><c- b>int</c-></code>, which would result in UB due to overflow. With the second choice the resulting value type will be <code class="highlight"><c- b>long</c-></code> which is fine. (Unfortunately, if you used <code class="highlight"><c- n>views</c-><c- o>::</c-><c- n>scan</c-></code> here it will still be UB, and that cannot be fixed.)</p>
    <p>The second choice also enables the following use case:</p>
-<pre class="language-cpp highlight"><c- c1>// Assums that std::to_string also has an overload for std::string that just returns the argument</c->
+<pre class="language-cpp highlight"><c- c1>// Assumes that std::to_string also has an overload for std::string that just returns the argument</c->
 <c- n>std</c-><c- o>::</c-><c- n>vector</c-><c- o>&lt;</c-><c- b>int</c-><c- o>></c-> <c- n>vec</c-><c- p>{</c-><c- mi>1</c-><c- p>,</c-> <c- mi>2</c-><c- p>,</c-> <c- mi>3</c-><c- p>};</c->
 <c- n>vec</c-> <c- o>|</c-> <c- n>views</c-><c- o>::</c-><c- n>prescan</c-><c- p>(</c-><c- s>"2"</c-><c- p>,</c-> <c- p>[](</c-><c- k>const</c-> <c- k>auto</c-><c- o>&amp;</c-> <c- n>a</c-><c- p>,</c-> <c- k>const</c-> <c- k>auto</c-><c- o>&amp;</c-> <c- n>b</c-><c- p>)</c-> <c- p>{</c-> <c- k>return</c-> <c- n>std</c-><c- o>::</c-><c- n>to_string</c-><c- p>(</c-><c- n>a</c-><c- p>)</c-> <c- o>+</c-> <c- n>std</c-><c- o>::</c-><c- n>to_string</c-><c- p>(</c-><c- n>b</c-><c- p>);</c-> <c- p>})</c->
 <c- c1>// ["2", "21", "212", "2123"]</c->

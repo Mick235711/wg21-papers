@@ -30,7 +30,7 @@ The `views::scan` adaptor is classified as a Tier 1 item in the Ranges plan for 
 
 # Revision History # {#revisions}
 
-## R1 (2024-10 pre-Wroclaw Mailing) ## {#r1}
+## R1 (2024-10 pre-Wrocław Mailing) ## {#r1}
 
 - Several wording fixes:
     - Added the missing `noexcept` to `end()`.
@@ -248,7 +248,7 @@ With the first choice, the resulting range's value type will be `int`, which wou
 
 The second choice also enables the following use case:
 ```cpp
-// Assums that std::to_string also has an overload for std::string that just returns the argument
+// Assumes that std::to_string also has an overload for std::string that just returns the argument
 std::vector<int> vec{1, 2, 3};
 vec | views::prescan("2", [](const auto& a, const auto& b) { return std::to_string(a) + std::to_string(b); })
 // ["2", "21", "212", "2123"]
