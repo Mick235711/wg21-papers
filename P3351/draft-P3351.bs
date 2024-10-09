@@ -12,7 +12,7 @@ URL: https://wg21.link/D3351R1
 !Issue Tracking: <a href="https://github.com/Mick235711/wg21-papers/issues">GitHub Mick235711/wg21-papers</a>
 Editor: Yihe Li, winmikedows@hotmail.com
 No abstract: true
-Date: 2024-09-24
+Date: 2024-10-09
 Markup Shorthands: markdown yes
 </pre>
 
@@ -282,6 +282,10 @@ Similar to `views::transform`, if and only if the input range is const-iterable 
 
 Never.
 
+At least for now. Currently, `views::transform` is never borrowed, but after [[P3117R0]] determined suitable criteria for storing the function parameter in the iterator, it can be conditionally borrowed.
+
+Theoretically, the same can be applied to `scan_view` to make it conditionally borrowed by storing the function and the initial value inside the iterator. However, the author would like to wait until [[P3117R0]] lands to make this change.
+
 ## Feature Test Macro ## {#feature-test-macro}
 
 This proposal added a new feature test macro `__cpp_lib_ranges_scan`, which signals the availability of all three adaptors.
@@ -390,7 +394,7 @@ for (auto&& i : std::views::scan(vec, std::plus{})) {
 ```cpp
 vector<int> vec{1, 2, 3, 4, 5};
 for (auto&& i : std::views::prescan(vec, 10, std::plus{})) {
-  std::print("{} ", i); // prints 11 13 16 20 25 
+  std::print("{} ", i); // prints 10 11 13 16 20 25 
 }
 ```
 -- *end example*]
