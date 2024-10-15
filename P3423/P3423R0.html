@@ -1564,7 +1564,7 @@ Possible extra rowspan handling
   <meta content="Bikeshed version d765c696b, updated Fri Mar 8 15:58:52 2024 -0800" name="generator">
   <link href="https://wg21.link/P3423R0" rel="canonical">
   <link href="https://isocpp.org/favicon.ico" rel="icon">
-  <meta content="296db6602f15569f7fda927821d27135df7be39a" name="revision">
+  <meta content="12020f3427e32cd3ad7c447ff1caf53057b38a92" name="revision">
   <meta content="dark light" name="color-scheme">
 <style>
 table, th, td { border:1px solid grey; }
@@ -2092,7 +2092,7 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
   <div class="head">
    <p data-fill-with="logo"></p>
    <h1 class="p-name no-ref" id="title">P3423R0<br>Extending User-Generated Diagnostic Messages</h1>
-   <h2 class="no-num no-toc no-ref heading settled" id="profile-and-date"><span class="content">Published Proposal, <time class="dt-updated" datetime="2024-10-14">2024-10-14</time></span></h2>
+   <h2 class="no-num no-toc no-ref heading settled" id="profile-and-date"><span class="content">Published Proposal, <time class="dt-updated" datetime="2024-10-15">2024-10-15</time></span></h2>
    <div data-fill-with="spec-metadata">
     <dl>
      <dt>This version:
@@ -2306,8 +2306,8 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
     <c- n>async</c-><c- p>(</c-><c- n>F</c-><c- o>&amp;&amp;</c-> <c- n>f</c-><c- p>,</c-> <c- n>Args</c-><c- o>&amp;&amp;</c-><c- p>...</c-> <c- n>args</c-><c- p>);</c->
     <c- k>template</c-><c- o>&lt;</c-><c- k>class</c-> <c- nc>F</c-><c- p>,</c-> <c- k>class</c-><c- p>...</c-> <c- n>Args</c-><c- o>></c->
     <c- p>[[</c-><c- n>nodiscard</c-><c- p>(</c-><c- n>format</c-><c- p>(</c->
-            <c- s>"The returning future&lt;{}> is discarded, which makes the given function of type {} always executes synchronously."</c-><c- p>,</c->
-            <c- n>meta</c-><c- o>::</c-><c- n>identifier_of</c-><c- p>(</c-><c- o>^^</c-><c- n>invoke_result_t</c-><c- o>&lt;</c-><c- n>decay_t</c-><c- o>&lt;</c-><c- n>F</c-><c- o>></c-><c- p>,</c-> <c- n>decay_t</c-><c- o>&lt;</c-><c- n>Args</c-><c- o>></c-><c- p>...</c-><c- o>></c-><c- p>),</c-> <c- n>meta</c-><c- o>::</c-><c- n>identifier_of</c-><c- p>(</c-><c- o>^^</c-><c- n>F</c-><c- p>)</c->
+        <c- s>"The returning future&lt;{}> is discarded, which makes the given function of type {} always executes synchronously."</c-><c- p>,</c->
+        <c- n>meta</c-><c- o>::</c-><c- n>identifier_of</c-><c- p>(</c-><c- o>^^</c-><c- n>invoke_result_t</c-><c- o>&lt;</c-><c- n>decay_t</c-><c- o>&lt;</c-><c- n>F</c-><c- o>></c-><c- p>,</c-> <c- n>decay_t</c-><c- o>&lt;</c-><c- n>Args</c-><c- o>></c-><c- p>...</c-><c- o>></c-><c- p>),</c-> <c- n>meta</c-><c- o>::</c-><c- n>identifier_of</c-><c- p>(</c-><c- o>^^</c-><c- n>F</c-><c- p>)</c->
     <c- p>))]]</c->
     <c- n>future</c-><c- o>&lt;</c-><c- n>invoke_result_t</c-><c- o>&lt;</c-><c- n>decay_t</c-><c- o>&lt;</c-><c- n>F</c-><c- o>></c-><c- p>,</c-> <c- n>decay_t</c-><c- o>&lt;</c-><c- n>Args</c-><c- o>></c-><c- p>...</c-><c- o>>></c->
     <c- n>async</c-><c- p>(</c-><c- n>launch</c-> <c- n>policy</c-><c- p>,</c-> <c- n>F</c-><c- o>&amp;&amp;</c-> <c- n>f</c-><c- p>,</c-> <c- n>Args</c-><c- o>&amp;&amp;</c-><c- p>...</c-> <c- n>args</c-><c- p>);</c->
