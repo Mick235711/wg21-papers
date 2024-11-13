@@ -2,18 +2,19 @@
 Title: views::scan
 H1: <code>views::scan</code>
 Shortname: D3351
-Revision: 1
+Revision: 2
 Audience: SG9
 Status: D
 Group: WG21
 !Target: C++26
-URL: https://wg21.link/D3351R1
+URL: https://wg21.link/D3351R2
 !Source: <a href="https://github.com/Mick235711/wg21-papers/blob/main/P3351/draft-P3351.bs">github.com/Mick235711/wg21-papers/blob/main/P3351/draft-P3351.bs</a>
 !Issue Tracking: <a href="https://github.com/Mick235711/wg21-papers/issues">GitHub Mick235711/wg21-papers</a>
 Editor: Yihe Li, winmikedows@hotmail.com
 No abstract: true
-Date: 2024-10-09
+Date: 2024-11-13
 Markup Shorthands: markdown yes
+Default Highlight: cpp
 </pre>
 
 <style>
@@ -30,6 +31,12 @@ The `views::scan` adaptor is classified as a Tier 1 item in the Ranges plan for 
 
 # Revision History # {#revisions}
 
+## R2 (2024-12 post-Wrocław Mailing) ## {#r2}
+
+- Fixed the mismatch template arguments for `scan_view` in synopsis.
+- Add *italics* for exposition-only concepts.
+- Rebase onto latest draft [[!N4993]].
+
 ## R1 (2024-10 pre-Wrocław Mailing) ## {#r1}
 
 - Several wording fixes:
@@ -37,7 +44,7 @@ The `views::scan` adaptor is classified as a Tier 1 item in the Ranges plan for 
     - Refactored the constraints of `scan_view` out into its own concept, such that it tests for both assignability from `range_reference_t<R>` and the invoke result of `f`.
     - Replace `regular_invocable` with `invocable`.
     - Pass by move in `scan_view`'s constructor and when invoking the function.
-- Rebase onto latest draft [[!N4988]].
+- Rebase onto latest draft [[N4988]].
 
 ## R0 (2024-07 post-St. Louis Mailing) ## {#r0}
 
@@ -235,7 +242,7 @@ Obviously, we expect the result to be `[1.0, 2.0, 3.5, 5.5]`, not `[1, 2, 3, 5]`
 
 There are two choices we can make: (for input range type `Rng`, function type `F` and initial seed type `T`)
 1. Just use the reference/value type of the input range. This is consistent with `std::partial_sum`. (range-v3 also chose this approach, using the input range's value type as the reference type of `scan_view`)
-2. Be a bit clever, and use `remove_cvref_t<invoke_result_t<F&, T&, ranges::range_reference_t<Rng>>>`. In other words, the return type of `func(init, *rng.begin())`.
+2. Be a bit clever, and use `decay_t<invoke_result_t<F&, T&, ranges::range_reference_t<Rng>>>`. In other words, the return type of `func(init, *rng.begin())`.
 
 Note that the second option don't really covers all kind of functions, since it is entirely plausible that `func` will change its return type in every invocation. However, this should be enough for nearly all normal cases, and is the decision chosen by [[P2322R6]] for `ranges::fold_left[_first]`. For `views::scan`, this approach can also work, by returning the return type of `func(*rng.begin(), *rng.begin())`.
 
@@ -306,13 +313,13 @@ Note that to save on implementation effort, `scan(rng, func)` is simply aliased 
 
 # Wording # {#wording}
 
-The wording below is based on [[!N4988]].
+The wording below is based on [[!N4993]].
 
 Wording notes for LWG and editor:
 - The wording currently reflects Option 3 from the [why three adaptors](#why-three-adaptors) section, with name as `views::scan`, `prescan` and `partial_sum`.
 - `views::scan` and `views::prescan` use the same underlying `ranges::scan_view` to save on complexity and duplication of wording.
 - Currently, the three views' definition reside just after `views::transform`'s definition and synopsis, due to the author's perception that they are pretty similar.
-- The exposition-only concept `scannable` and `scannable-impl` is basically the same as `indirectly-binary-left-foldable` and `indirectly-binary-left-foldable-impl`; the only difference is that `F` is required to be move constructible instead of copy constructible.
+- The exposition-only concept <code><i>scannable</i></code> and <code><i>scannable-impl</i></code> is basically the same as <code><i>indirectly-binary-left-foldable</i></code> and <code><i>indirectly-binary-left-foldable-impl</i></code>; the only difference is that `F` is required to be move constructible instead of copy constructible.
 
 Wording questions to be resolved:
 - Should the view be called `scan_view` or `prescan_view`?
@@ -330,7 +337,7 @@ In this clause's synopsis, insert a new macro definition in a place that respect
 <ins>#define __cpp_lib_ranges_scan 20XXYYL // freestanding, also in &lt;ranges&gt;</ins>
 </pre>
 
-## 26.2 Header `<ranges>` synopsis [ranges.syn] ## {#ranges.syn}
+## 25.2 Header `<ranges>` synopsis [ranges.syn] ## {#ranges.syn}
 
 Modify the synopsis as follows:
 <pre>
@@ -347,7 +354,7 @@ namespace std::ranges {
   namespace views { inline constexpr <i>unspecified</i> transform = <i>unspecified</i>; } // freestanding
 
   <ins>// [range.scan], scan view
-  template&lt;input_range V, typename T, move_constructible F&gt;
+  template&lt;input_range V, move_constructible T, move_constructible F, bool IsInit&gt;
     requires <i>see below</i>
   class scan_view; // freestanding
 
@@ -369,11 +376,11 @@ namespace std::ranges {
 }
 </pre>
 
-*Editor's Note: Add the following subclause to 26.7 Range adaptors [range.adaptors], after 26.7.9 Transform view [range.transform]*
+*Editor's Note: Add the following subclause to 25.7 Range adaptors [range.adaptors], after 25.7.9 Transform view [range.transform]*
 
-## 26.7.� Scan view [range.scan] ## {#range.scan}
+## 25.7.� Scan view [range.scan] ## {#range.scan}
 
-## 26.7.�.1 Overview [range.scan.overview] ## {#range.scan.overview}
+## 25.7.�.1 Overview [range.scan.overview] ## {#range.scan.overview}
 
 1. `scan_view` presents a view that accumulates the results of applying a transformation function to the current state and each element.
 
@@ -401,185 +408,182 @@ for (auto&& i : std::views::prescan(vec, 10, std::plus{})) {
 
 4. The name `views::partial_sum` denotes a range adaptor object ([range.adaptor.object]). Given subexpression `E`, the expression `views::partial_sum(E)` is expression-equivalent to `scan_view(E, std::plus{})`.
 
-## 26.7.�.2 Class template `scan_view` [range.scan.view] ## {#range.scan.view}
+## 25.7.�.2 Class template `scan_view` [range.scan.view] ## {#range.scan.view}
 
-```cpp
+<pre>
 namespace std::ranges {
-  template<typename V, typename T, typename F, typename U>
-    concept scannable-impl =  // exposition only
-      movable<U> &&
-      convertible_to<T, U> && invocable<F&, U, range_reference_t<V>> &&
-      assignable_from<U&, invoke_result_t<F&, U, range_reference_t<V>>>;
+  template&lt;typename V, typename T, typename F, typename U&gt;
+    concept <i>scannable-impl</i> =  // exposition only
+      movable&lt;U&gt; &&
+      convertible_to&lt;T, U&gt; && invocable&lt;F&, U, range_reference_t&lt;V&gt;&gt; &&
+      assignable_from&lt;U&, invoke_result_t&lt;F&, U, range_reference_t&lt;V&gt;&gt;&gt;;
 
-  template<typename V, typename T, typename F>
-    concept scannable =  // exposition only
-      invocable<F&, T, range_reference_t<V>> &&
-      convertible_to<invoke_result_t<F&, T, range_reference_t<V>>,
-             decay_t<invoke_result_t<F&, T, range_reference_t<V>>>> &&
-      scannable-impl<V, T, F,
-             decay_t<invoke_result_t<F&, T, range_reference_t<V>>>>;
+  template&lt;typename V, typename T, typename F&gt;
+    concept <i>scannable</i> =  // exposition only
+      invocable&lt;F&, T, range_reference_t&lt;V&gt;&gt; &&
+      convertible_to&lt;invoke_result_t&lt;F&, T, range_reference_t&lt;V&gt;&gt;,
+             decay_t&lt;invoke_result_t&lt;F&, T, range_reference_t&lt;V&gt;&gt;&gt;&gt; &&
+      <i>scannable-impl</i>&lt;V, T, F,
+             decay_t&lt;invoke_result_t&lt;F&, T, range_reference_t&lt;V&gt;&gt;&gt;&gt;;
 
-  template<input_range V, move_constructible T, move_constructible F, bool IsInit = false>
-    requires view<V> && is_object_v<T> && is_object_v<F> && scannable<V, T, F>
-  class scan_view : public view_interface<scan_view<V, T, F, IsInit>> {
+  template&lt;input_range V, move_constructible T, move_constructible F, bool IsInit = false&gt;
+    requires view&lt;V&gt; && is_object_v&lt;T&gt; && is_object_v&lt;F&gt; && <i>scannable</i>&lt;V, T, F&gt;
+  class scan_view : public view_interface&lt;scan_view&lt;V, T, F, IsInit&gt;&gt; {
   private:
-    // [range.scan.iterator], class template scan_view::iterator
-    template<bool> struct iterator; // exposition only
+    // [range.scan.iterator], class template scan_view::<i>iterator</i>
+    template&lt;bool&gt; struct <i>iterator</i>; // exposition only
 
-    V base_ = V(); // exposition only
-    movable-box<T> init_; // exposition only
-    movable-box<F> fun_; // exposition only
+    V <i>base_</i> = V(); // exposition only
+    <i>movable-box</i>&lt;T&gt; <i>init_</i>; // exposition only
+    <i>movable-box</i>&lt;F&gt; <i>fun_</i>; // exposition only
 
   public:
-    scan_view() requires default_initializable<V> && default_initializable<F> = default;
+    scan_view() requires default_initializable&lt;V&gt; && default_initializable&lt;F&gt; = default;
     constexpr explicit scan_view(V base, F fun) requires (!IsInit);
     constexpr explicit scan_view(V base, T init, F fun) requires IsInit;
 
-    constexpr V base() const & requires copy_constructible<V> { return base_; }
-    constexpr V base() && { return std::move(base_); }
+    constexpr V base() const & requires copy_constructible&lt;V&gt; { return <i>base_</i>; }
+    constexpr V base() && { return std::move(<i>base_</i>); }
 
-    constexpr iterator<false> begin();
-    constexpr iterator<true> begin() const
-      requires range<const V> && scannable<const V, T, const F>;
+    constexpr <i>iterator</i>&lt;false&gt; begin();
+    constexpr <i>iterator</i>&lt;true&gt; begin() const
+      requires range&lt;const V&gt; && <i>scannable</i>&lt;const V, T, const F&gt;;
 
     constexpr default_sentinel_t end() const noexcept { return default_sentinel; }
 
-    constexpr auto size() requires sized_range<V>
-    { return ranges::size(base_) + (IsInit ? 1 : 0); }
-    constexpr auto size() const requires sized_range<const V>
-    { return ranges::size(base_) + (IsInit ? 1 : 0); }
+    constexpr auto size() requires sized_range&lt;V&gt;;
+    constexpr auto size() const requires sized_range&lt;const V&gt;;
   };
 
-  template<class R, class F>
-    scan_view(R&&, F) -> scan_view<views::all_t<R>, range_value_t<R>, F, false>;
-  template<class R, class T, class F>
-    scan_view(R&&, T, F) -> scan_view<views::all_t<R>, T, F, true>;
+  template&lt;class R, class F&gt;
+    scan_view(R&&, F) -&gt; scan_view&lt;views::all_t&lt;R&gt;, range_value_t&lt;R&gt;, F, false&gt;;
+  template&lt;class R, class T, class F&gt;
+    scan_view(R&&, T, F) -&gt; scan_view&lt;views::all_t&lt;R&gt;, T, F, true&gt;;
 }
-```
+</pre>
 
 ```cpp
 constexpr explicit scan_view(V base, F fun) requires (!IsInit);
 ```
-1. *Effects*: Initializes `base_` with `std::move(base)` and `fun_` with `std::move(fun)`.
+1. *Effects*: Initializes <code><i>base_</i></code> with `std::move(base)` and <code><i>fun_</i></code> with `std::move(fun)`.
 
 ```cpp
 constexpr explicit scan_view(V base, T init, F fun) requires IsInit;
 ```
-2. *Effects*: Initializes `base_` with `std::move(base)`, `init_` with `std::move(init)`, and `fun_` with `std::move(fun)`.
+2. *Effects*: Initializes <code><i>base_</i></code> with `std::move(base)`, <code><i>init_</i></code> with `std::move(init)`, and <code><i>fun_</i></code> with `std::move(fun)`.
+
+<pre>
+constexpr <i>iterator</i>&lt;false&gt; begin();
+</pre>
+3. *Effects*: Equivalent to: <code>return <i>iterator</i>&lt;false&gt;{*this, ranges::begin(<i>base_</i>)};</code>
+
+<pre>
+constexpr <i>iterator</i>&lt;true&gt; begin() const
+  requires range&lt;const V&gt; && <i>scannable</i>&lt;const V, T, const F&gt;;
+</pre>
+4. *Effects*: Equivalent to: <code>return <i>iterator</i>&lt;true&gt;{*this, ranges::begin(<i>base_</i>)};</code>
 
 ```cpp
-constexpr iterator<false> begin();
+constexpr auto size() const requires sized_range<const V>
 ```
-3. *Effects*: Equivalent to: `return iterator<false>{*this, ranges::begin(base_)};`
+5. *Effects*: Equivalent to: <code>return ranges::size(<i>base_</i>) + (IsInit ? 1 : 0);</code>
 
 ```cpp
-constexpr iterator<true> begin() const
-  requires range<const V> && scannable<const V, T, const F>;
+constexpr auto size() requires sized_range<V>
 ```
-4. *Effects*: Equivalent to: `return iterator<true>{*this, ranges::begin(base_)};`
+6. *Effects*: Equivalent to: <code>return ranges::size(<i>base_</i>) + (IsInit ? 1 : 0);</code>
 
-## 26.7.�.3 Class template <code>scan_view::<i>iterator</i></code> [range.scan.iterator] ## {#range.scan.iterator}
+## 25.7.�.3 Class template <code>scan_view::<i>iterator</i></code> [range.scan.iterator] ## {#range.scan.iterator}
 
-```cpp
+<pre>
 namespace std::ranges {
-  template<input_range V, move_constructible T, move_constructible F, bool IsInit>
-    requires view<V> && is_object_v<T> && is_object_v<F> && scannable<V, T, F>
-  template<bool Const>
-  class scan_view<V, T, F, IsInit>::iterator {
+  template&lt;input_range V, move_constructible T, move_constructible F, bool IsInit&gt;
+    requires view&lt;V&gt; && is_object_v&lt;T&gt; && is_object_v&lt;F&gt; && <i>scannable</i>&lt;V, T, F&gt;
+  template&lt;bool Const&gt;
+  class scan_view&lt;V, T, F, IsInit&gt;::<i>iterator</i> {
   private:
-    using Parent = maybe-const<Const, scan_view>; // exposition only
-    using Base = maybe-const<Const, V>; // exposition only
-    using RefType = invoke_result_t<maybe-const<Const, F>&, T, range_reference_t<Base>>; // exposition only
-    using SumType = decay_t<RefType>; // exposition only
+    using <i>Parent</i> = <i>maybe-const</i>&lt;Const, scan_view&gt;; // exposition only
+    using <i>Base</i> = <i>maybe-const</i>&lt;Const, V&gt;; // exposition only
+    using <i>RefType</i> = invoke_result_t&lt;<i>maybe-const</i>&lt;Const, F&gt;&, T, range_reference_t&lt;<i>Base</i>&gt;&gt;; // exposition only
 
-    iterator_t<Base> current_ = iterator_t<Base>(); // exposition only
-    Parent* parent_ = nullptr; // exposition only
-    movable-box<SumType> sum_; // exposition only
-    bool is_init_ = IsInit; // exposition only
+    iterator_t&lt;<i>Base</i>&gt; <i>current_</i> = iterator_t&lt;<i>Base</i>&gt;(); // exposition only
+    <i>Parent</i>* <i>parent_</i> = nullptr; // exposition only
+    <i>movable-box</i>&lt;decay_t&lt;<i>RefType</i>&gt;&gt; <i>sum_</i>; // exposition only
+    bool <i>is_init_</i> = IsInit; // exposition only
 
   public:
     using iterator_concept =
-      conditional_t<forward_range<Base>, forward_iterator_tag, input_iterator_tag>;
-    using iterator_category = see below; // present only if Base models forward_range
-    using value_type = SumType;
-    using difference_type = range_difference_t<Base>;
+      conditional_t&lt;forward_range&lt;<i>Base</i>&gt;, forward_iterator_tag, input_iterator_tag&gt;;
+    using iterator_category = see below; // present only if <i>Base</i> models forward_range
+    using value_type = decay_t&lt;<i>RefType</i>&gt;;
+    using difference_type = range_difference_t&lt;<i>Base</i>&gt;;
 
-    iterator() requires default_initializable<iterator_t<Base>> = default;
-    constexpr iterator(Parent& parent, iterator_t<Base> current);
-    constexpr iterator(iterator<!Const> i)
-      requires Const && convertible_to<iterator_t<V>, iterator_t<Base>>;
+    <i>iterator</i>() requires default_initializable&lt;iterator_t&lt;<i>Base</i>&gt;&gt; = default;
+    constexpr <i>iterator</i>(<i>Parent</i>& parent, iterator_t&lt;<i>Base</i>&gt; current);
+    constexpr <i>iterator</i>(<i>iterator</i>&lt;!Const&gt; i)
+      requires Const && convertible_to&lt;iterator_t&lt;V&gt;, iterator_t&lt;<i>Base</i>&gt;&gt;;
 
-    constexpr const iterator_t<Base>& base() const & noexcept;
-    constexpr iterator_t<Base> base() &&;
+    constexpr const iterator_t&lt;<i>Base</i>&gt;& base() const & noexcept { return <i>current_</i>; }
+    constexpr iterator_t&lt;<i>Base</i>&gt; base() && { return std::move(<i>current_</i>); }
 
-    constexpr const SumType& operator*() const { return *sum_; }
+    constexpr const value_type& operator*() const { return *<i>sum_</i>; }
 
-    constexpr iterator& operator++();
+    constexpr <i>iterator</i>& operator++();
     constexpr void operator++(int);
-    constexpr iterator operator++(int) requires forward_range<Base>;
+    constexpr <i>iterator</i> operator++(int) requires forward_range&lt;<i>Base</i>&gt;;
 
-    friend constexpr bool operator==(const iterator& x, const iterator& y)
-      requires equality_comparable<iterator_t<Base>>;
-    friend constexpr bool operator==(const iterator& x, default_sentinel_t);
+    friend constexpr bool operator==(const <i>iterator</i>& x, const <i>iterator</i>& y)
+      requires equality_comparable&lt;iterator_t&lt;<i>Base</i>&gt;&gt;;
+    friend constexpr bool operator==(const <i>iterator</i>& x, default_sentinel_t);
   };
 }
-```
-1. If `Base` does not model `forward_range` there is no member `iterator_category`. Otherwise, the *typedef-name* `iterator_category` denotes:
+</pre>
+1. If <code><i>Base</i></code> does not model `forward_range` there is no member `iterator_category`. Otherwise, the *typedef-name* `iterator_category` denotes:
 
-- `forward_iterator_tag` if `iterator_traits<iterator_t<Base>>::iterator_category` models `derived_from<forward_iterator_tag>` and `is_reference_v<invoke_result_t<maybe-const<Const, F>&, maybe-const<Const, T>&, range_reference_t<Base>>>` is `true`;
+- `forward_iterator_tag` if <code>iterator_traits&lt;iterator_t&lt;<i>Base</i>&gt;&gt;::iterator_category</code> models `derived_from<forward_iterator_tag>` and <code>is_reference_v&lt;invoke_result_t&lt;<i>maybe-const</i>&lt;Const, F&gt;&, <i>maybe-const</i>&lt;Const, T&gt;&, range_reference_t&lt;<i>Base</i>&gt;&gt;&gt;</code> is `true`;
 - otherwise, `input_iterator_tag`.
 
-```cpp
-constexpr iterator(Parent& parent, iterator_t<Base> current);
-```
-2. *Effects*: Initializes `current_` with `std::move(current)` and `parent_` with `addressof(parent)`. Then, equivalent to:
+<pre>
+constexpr <i>iterator</i>(<i>Parent</i>& parent, iterator_t&lt;<i>Base</i>&gt; current);
+</pre>
+2. *Effects*: Initializes <code><i>current_</i></code> with `std::move(current)` and <code><i>parent_</i></code> with `addressof(parent)`. Then, equivalent to:
 
-```cpp
-if constexpr (IsInit) { sum_ = *parent_->init_; }
+<pre>
+if constexpr (IsInit) { <i>sum_</i> = *<i>parent_</i>-&gt;<i>init_</i>; }
 else {
-  if (current_ != ranges::end(parent_->base_)) { sum_ = *current_; }
+  if (<i>current_</i> != ranges::end(<i>parent_</i>-&gt;<i>base_</i>)) { <i>sum_</i> = *<i>current_</i>; }
 }
-```
+</pre>
 
-```cpp
-constexpr iterator(iterator<!Const> i)
-  requires Const && convertible_to<iterator_t<V>, iterator_t<Base>>;
-```
-3. *Effects*: Initializes `current_` with `std::move(i.current_)`, `parent_` with `i.parent_`, `sum_` with `std::move(i.sum_)`, and `is_init_` with `i.is_init_`.
+<pre>
+constexpr <i>iterator</i>(<i>iterator</i>&lt;!Const&gt; i)
+  requires Const && convertible_to&lt;iterator_t&lt;V&gt;, iterator_t&lt;<i>Base</i>&gt;&gt;;
+</pre>
+3. *Effects*: Initializes <code><i>current_</i></code> with <code>std::move(i.<i>current_</i>)</code>, <code><i>parent_</i></code> with <code>i.<i>parent_</i></code>, <code><i>sum_</i></code> with <code>std::move(i.<i>sum_</i>)</code>, and <code><i>is_init_</i></code> with <code>i.<i>is_init_</i></code>.
 
-```cpp
-constexpr const iterator_t<Base>& base() const & noexcept;
-```
-4. *Effects*: Equivalent to: `return current_;`
+<pre>
+constexpr <i>iterator</i>& operator++();
+</pre>
+4. *Effects*: Equivalent to:
 
-```cpp
-constexpr iterator_t<Base> base() &&;
-```
-5. *Effects*: Equivalent to: `return std::move(current_);`
-
-```cpp
-constexpr iterator& operator++();
-```
-6. *Effects*: Equivalent to:
-
-```cpp
-if (!is_init_) { ++current_; }
-else { is_init_ = false; }
-if (current_ != ranges::end(parent_->base_)) {
-  sum_ = invoke(*parent_->fun_, std::move(*sum_), *current_);
+<pre>
+if (!<i>is_init_</i>) { ++<i>current_</i>; }
+else { <i>is_init_</i> = false; }
+if (<i>current_</i> != ranges::end(<i>parent_</i>-&gt;<i>base_</i>)) {
+  <i>sum_</i> = invoke(*<i>parent_</i>-&gt;<i>fun_</i>, std::move(*<i>sum_</i>), *<i>current_</i>);
 }
 return *this;
-```
+</pre>
 
 ```cpp
 constexpr void operator++(int);
 ```
-7. *Effects*: Equivalent to `++*this`.
+5. *Effects*: Equivalent to `++*this`.
 
-```cpp
-constexpr iterator operator++(int) requires forward_range<Base>;
-```
-8. *Effects*: Equivalent to:
+<pre>
+constexpr <i>iterator</i> operator++(int) requires forward_range&lt;<i>Base</i>&gt;;
+</pre>
+6. *Effects*: Equivalent to:
 
 ```cpp
 auto tmp = *this;
@@ -587,14 +591,14 @@ auto tmp = *this;
 return tmp;
 ```
 
-```cpp
-friend constexpr bool operator==(const iterator& x, const iterator& y)
-  requires equality_comparable<iterator_t<Base>>;
-```
-9. *Effects*: Equivalent to: `return x.current_ == y.current_;`
+<pre>
+friend constexpr bool operator==(const <i>iterator</i>& x, const <i>iterator</i>& y)
+  requires equality_comparable&lt;iterator_t&lt;<i>Base</i>&gt;&gt;;
+</pre>
+7. *Effects*: Equivalent to: <code>return x.<i>current_</i> == y.<i>current_</i>;</code>
 
-```cpp
-friend constexpr bool operator==(const iterator& x, default_sentinel_t);
-```
-10. *Effects*: Equivalent to: `return x.current_ == ranges::end(x.parent_->base_);`
+<pre>
+friend constexpr bool operator==(const <i>iterator</i>& x, default_sentinel_t);
+</pre>
+8. *Effects*: Equivalent to: <code>return x.<i>current_</i> == ranges::end(x.<i>parent_</i>-&gt;<i>base_</i>);</code>
 
