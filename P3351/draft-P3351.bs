@@ -35,6 +35,7 @@ The `views::scan` adaptor is classified as a Tier 1 item in the Ranges plan for 
 
 - Fixed the mismatch template arguments for `scan_view` in synopsis.
 - Add *italics* for exposition-only concepts.
+- Add some minor correction and discussion on reference type.
 - Rebase onto latest draft [[!N4993]].
 
 ## R1 (2024-10 pre-Wrocław Mailing) ## {#r1}
@@ -242,7 +243,7 @@ Obviously, we expect the result to be `[1.0, 2.0, 3.5, 5.5]`, not `[1, 2, 3, 5]`
 
 There are two choices we can make: (for input range type `Rng`, function type `F` and initial seed type `T`)
 1. Just use the reference/value type of the input range. This is consistent with `std::partial_sum`. (range-v3 also chose this approach, using the input range's value type as the reference type of `scan_view`)
-2. Be a bit clever, and use `decay_t<invoke_result_t<F&, T&, ranges::range_reference_t<Rng>>>`. In other words, the return type of `func(init, *rng.begin())`.
+2. Be a bit clever, and use `decay_t<invoke_result_t<F&, T, ranges::range_reference_t<Rng>>>`. In other words, the return type of `func(init, *rng.begin())`.
 
 Note that the second option don't really covers all kind of functions, since it is entirely plausible that `func` will change its return type in every invocation. However, this should be enough for nearly all normal cases, and is the decision chosen by [[P2322R6]] for `ranges::fold_left[_first]`. For `views::scan`, this approach can also work, by returning the return type of `func(*rng.begin(), *rng.begin())`.
 
@@ -261,7 +262,7 @@ vec | views::prescan("2", [](const auto& a, const auto& b) { return std::to_stri
 // ["2", "21", "212", "2123"]
 ```
 
-Given that `ranges::fold_left[_first]` chose the second approach, the author thinks that the second approach is the correct one to pursue.
+Given that `ranges::fold_left[_first]` chose the second approach, the author thinks that the second approach is the correct one to pursue. In other words, the value type of `scan_view` will be `decay_t<invoke_result_t<F&, T, ranges::range_reference_t<Rng>>>`, and the reference type will be `const value_type&`.
 
 ### Category ### {#category}
 
@@ -328,7 +329,6 @@ Wording questions to be resolved:
 - Due to never being a common range, `scan_view` simply have a single `end() const` member that returns `default_sentinel`. Is that the correct way to do this, or should I write two different `end()` function for both cases, with different constraints, but both returns `default_sentinel`? Or should I actually write a `sentinel<Const>` subclass that wraps the iterator?
 - The extra `bool IsInit` parameter seems a bit clunky.
 - `regular_invocable` or `invocable`? Currently the wording uses the latter (following range-v3), but `transform_view` used the former.
-- The return type of `operator*()` seems unorthodox.
 
 ## 17.3.2 Header `<version>` synopsis [version.syn] ## {#version.syn}
 
@@ -504,18 +504,18 @@ namespace std::ranges {
   private:
     using <i>Parent</i> = <i>maybe-const</i>&lt;Const, scan_view&gt;; // exposition only
     using <i>Base</i> = <i>maybe-const</i>&lt;Const, V&gt;; // exposition only
-    using <i>RefType</i> = invoke_result_t&lt;<i>maybe-const</i>&lt;Const, F&gt;&, T, range_reference_t&lt;<i>Base</i>&gt;&gt;; // exposition only
+    using <i>ResultType</i> = decay_t&lt;invoke_result_t&lt;<i>maybe-const</i>&lt;Const, F&gt;&, T, range_reference_t&lt;<i>Base</i>&gt;&gt;&gt;; // exposition only
 
     iterator_t&lt;<i>Base</i>&gt; <i>current_</i> = iterator_t&lt;<i>Base</i>&gt;(); // exposition only
     <i>Parent</i>* <i>parent_</i> = nullptr; // exposition only
-    <i>movable-box</i>&lt;decay_t&lt;<i>RefType</i>&gt;&gt; <i>sum_</i>; // exposition only
+    <i>movable-box</i>&lt;<i>ResultType</i>&gt; <i>sum_</i>; // exposition only
     bool <i>is_init_</i> = IsInit; // exposition only
 
   public:
     using iterator_concept =
       conditional_t&lt;forward_range&lt;<i>Base</i>&gt;, forward_iterator_tag, input_iterator_tag&gt;;
-    using iterator_category = see below; // present only if <i>Base</i> models forward_range
-    using value_type = decay_t&lt;<i>RefType</i>&gt;;
+    using iterator_category = <i>see below</i>; // present only if <i>Base</i> models forward_range
+    using value_type = <i>ResultType</i>;
     using difference_type = range_difference_t&lt;<i>Base</i>&gt;;
 
     <i>iterator</i>() requires default_initializable&lt;iterator_t&lt;<i>Base</i>&gt;&gt; = default;
