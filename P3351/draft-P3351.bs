@@ -337,9 +337,11 @@ Wording questions to be resolved:
 - Should the view be called `scan_view` or `prescan_view`?
 - Currently, the current sum is cached in the iterator object (as implemented in range-v3). An alternative is to cache the current sum in the view object (as implemented in `tl::ranges`), such that each iterator only needs to hold a pointer to the parent view and an iterator to the current position. Which one should be chosen?
 - Two strategy exist to defer `scan` to `prescan`. First (used currently) is to define two constructors for `scan_view` that takes two and three arguments, and have one constructor delegates to the other. The other approach is to specify that `scan(E, F)` is expression-equivalent to `scan_view(E, *ranges::begin(E), F)`.
-- Due to never being a common range, `scan_view` simply have a single `end() const` member that returns `default_sentinel`. Is that the correct way to do this, or should I write two different `end()` function for both cases, with different constraints, but both returns `default_sentinel`? Or should I actually write a `sentinel<Const>` subclass that wraps the iterator?
+- Due to never being a common range, `scan_view` simply have a single `end() const` member that returns `default_sentinel`. Is that the correct way to do this, or should I just use the end iterator of the base range?
 - The extra `bool IsInit` parameter seems a bit clunky.
 - `regular_invocable` or `invocable`? Currently the wording uses the latter (following range-v3), but `transform_view` used the former.
+- Do we need `operator-` for `sized_sentinel_for`? Between two iterators of `scan_view` and/or between iterators of `scan_view` and iterators of base range? Between iterator and sentinel?
+    - range-v3's `partial_sum_view` does not have `operator-`, but `tl::ranges`'s does.
 
 ## 17.3.2 Header `<version>` synopsis [version.syn] ## {#version.syn}
 
