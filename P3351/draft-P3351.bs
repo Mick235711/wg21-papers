@@ -12,7 +12,7 @@ URL: https://wg21.link/D3351R2
 !Issue Tracking: <a href="https://github.com/Mick235711/wg21-papers/issues">GitHub Mick235711/wg21-papers</a>
 Editor: Yihe Li, winmikedows@hotmail.com
 No abstract: true
-Date: 2024-11-13
+Date: 2024-11-15
 Markup Shorthands: markdown yes
 Default Highlight: cpp
 </pre>
@@ -36,6 +36,7 @@ The `views::scan` adaptor is classified as a Tier 1 item in the Ranges plan for 
 - Fixed the mismatch template arguments for `scan_view` in synopsis.
 - Add *italics* for exposition-only concepts.
 - Add some minor correction and discussion on reference type.
+- Add some discussion on naming comflicts.
 - Rebase onto latest draft [[!N4993]].
 
 ## R1 (2024-10 pre-Wrocław Mailing) ## {#r1}
@@ -177,6 +178,16 @@ Summarized in a table:
 
 The author thinks `views::scan` and `views::partial_sum` are pretty good names. The former have prior example in `std::[in,ex]clusive_scan` and in Rust, and is a generic enough name that will not cause confusion. The latter also have prior example in `std::partial_sum`, and partial sum is definitely one of the canonical terms of describing this operation.
 
+However, one possible naming conflict recently has arisen: `std::scan` ([[P1729R5]]). Here, the name `scan` refers to a completely different concept: scanning user's input, and `std::scan` is proposed as an upgraded version of the `scanf` family and uses `std::format`-like syntax to parse variables from a given string input:
+```cpp
+auto result = std::scan<std::string, int>("answer = 42", "{} = {}");
+const auto& [key, value] = result->values();
+// key == "answer", value == 42
+```
+As noted above, this interpretation of the name `scan` also has precedence in the standard library: the `scanf` family, so this meaning also makes some sense.
+
+Notice that `std::scan` and `views::scan` do not conflict with each other since these two names are in different namespaces. However, it may be of interest to SG9/LEWG to rename `views::scan` to a different name in order to avoid user confusion about two unrelated facilities being named the same. In light of this, the following list of alternative names is provided for consideration:
+
 Alternative names considered for `views::scan`: (in order of decreasing preference)
 - `views::partial_fold` (suggested by [[P2214R2]], and makes the connection with `ranges::fold` clear): Pretty good name, since `scan` is just a `fold` with intermediate state saved. However, the correct analogy is actually `ranges::fold_left_first`, and `ranges::fold_left` actually corresponds to `views::prescan`, which the author felt may cause some confusion.
 - `views::accumulate`, `views::fold`, `views::fold_left`: The output is a range instead of a number, so using the same name probably is not accurate. The latter two also suffer from the same displaced correspondence problem.
@@ -193,7 +204,7 @@ Alternative naming schemes for all 3 or 4 adaptors proposed:
 
 **Option C**: Keep `views::scan`, but name `prescan` as `scan_init` (meaning providing an init parameter). Does not penalize the common case, but also inconsistent with `ranges::fold`. This option also have the advantage of being able to spell `partial_sum` and `partial_sum_init` as the two form of partial sums, instead of being forced to discard one.
 
-Overall, the author don't feel any of these options as particularly intriguing, and opt to propose the original naming of `scan`, `prescan` and `partial_sum`.
+Overall, the author doesn't find any of these options particularly intriguing and opts to propose the original naming of `scan`, `prescan`, and `partial_sum`. This does not actually conflict with `std::scan`, and besides, the standard library is already adopting two meanings of `scan` by introducing both `scanf` and `std::[in, ex]clusive_scan`, so it shouldn't be that much of a confusion risk to the users.
 
 ## Left or Right Fold? ## {#left-or-right-fold}
 
