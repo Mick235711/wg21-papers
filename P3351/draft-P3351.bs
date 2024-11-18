@@ -12,7 +12,7 @@ URL: https://wg21.link/D3351R2
 !Issue Tracking: <a href="https://github.com/Mick235711/wg21-papers/issues">GitHub Mick235711/wg21-papers</a>
 Editor: Yihe Li, winmikedows@hotmail.com
 No abstract: true
-Date: 2024-11-15
+Date: 2024-11-18
 Markup Shorthands: markdown yes
 Default Highlight: cpp
 </pre>
@@ -34,6 +34,7 @@ The `views::scan` adaptor is classified as a Tier 1 item in the Ranges plan for 
 ## R2 (2024-12 post-Wrocław Mailing) ## {#r2}
 
 - Fixed the mismatch template arguments for `scan_view` in synopsis.
+- Add STL algorithm to prior arts section, and also reformat the table.
 - Add *italics* for exposition-only concepts.
 - Add some minor correction and discussion on reference type.
 - Add some discussion on naming comflicts.
@@ -154,6 +155,7 @@ More alternative names are suggested in later sections.
 
 The scan adaptor/algorithm had made an appearance in many different libraries and languages:
 - range-v3 has a <a href="https://ericniebler.github.io/range-v3/structranges_1_1partial__sum__view.html">`views::partial_sum` adaptor</a> that don't take initial seeds, but takes arbitrary function parameter (defaults to `+`).
+- STL has `std::partial_sum` algorithm in `<numeric>` since C++98, and `std::[in, ex]clusive_scan` algorithms in `<numeric>` since C++17.
 - <a href="https://github.com/TartanLlama/ranges/blob/main/include/tl/partial_sum.hpp">`tl::ranges` also has an implementation of `views::partial_sum`.</a>
 - Python has an <a href="https://docs.python.org/3/library/itertools.html#itertools.accumulate">`itertools.accumulate` algorithm</a> that optionally takes initial seeds (with a named argument), and takes arbitrary function parameter (defaults to `+`).
     - Furthermore, NumPy provides <a href="https://numpy.org/doc/stable/reference/generated/numpy.cumsum.html">`cumsum` algorithm</a> that returns a partial sum (without function parameter), and an <a href="https://numpy.org/doc/stable/reference/generated/numpy.ufunc.accumulate.html">`ufunc.accumulate` algorithm</a> that performs arbitrary scans with arbitrary function parameter that have no default. Neither of those algorithms takes an initial seed.
@@ -161,16 +163,21 @@ The scan adaptor/algorithm had made an appearance in many different libraries an
 
 Summarized in a table:
 <table>
-    <thead><tr><td>Library</td><td>Signature</td><td>Function</td><td>With Default</td><td>Initial Seed</td></tr></thead>
+    <thead><tr><td>Library</td><td>Signature</td><td>Parameter</td><td>Function</td><td>With Default</td><td>Initial Seed</td></tr></thead>
     <tbody>
-        <tr><td>range-v3</td><td>`partial_sum(rng[, fun])`</td><td>✅</td><td>✅</td><td>❌</td></tr>
-        <tr><td>Python `itertools`</td><td>`accumulate(rng[, fun[, init=init]])`</td><td>✅</td><td>✅</td><td>✅</td></tr>
-        <tr><td rowspan="2">NumPy</td><td>`cumsum(rng)`</td><td>❌</td><td>N/A</td><td>❌</td></tr>
-        <tr><td>`<func>.accumulate(rng)`</td><td>✅</td><td>❌</td><td>❌</td></tr>
-        <tr><td>Rust</td><td>`iter.scan(init, func)`</td><td>✅</td><td>❌</td><td>✅</td></tr>
-        <tr><td rowspan="3">Proposed</td><td>`scan(rng, func)`</td><td>✅</td><td>❌</td><td>❌</td></tr>
-        <tr><td>`prescan(rng, init, func)`</td><td>✅</td><td>❌</td><td>✅</td></tr>
-        <tr><td>`partial_sum(rng)`</td><td>❌</td><td>N/A</td><td>❌</td></tr>
+        <tr><td colspan="6">Lazy Adaptors</td></tr>
+        <tr><td>range-v3 / `tl::ranges`</td><td>`partial_sum`</td><td>`(rng[, fun])`</td><td>✅</td><td>✅</td><td>❌</td></tr>
+        <tr><td rowspan="3">Proposed</td><td>`scan`</td><td>`(rng, func)`</td><td>✅</td><td>❌</td><td>❌</td></tr>
+        <tr><td>`prescan`</td><td>`(rng, init, func)`</td><td>✅</td><td>❌</td><td>✅</td></tr>
+        <tr><td>`partial_sum`</td><td>`(rng)`</td><td>❌</td><td>N/A</td><td>❌</td></tr>
+        <tr><td colspan="6">Eager Algorithms</td></tr>
+        <tr><td rowspan="3">STL</td><td>`std::partial_sum`</td><td>`(rng, out[, func])`</td><td>✅</td><td>✅</td><td>❌</td></tr>
+        <tr><td>`std::inclusive_scan`</td><td>`(rng, out[, func[, init]])`</td><td>✅</td><td>✅</td><td>✅</td></tr>
+        <tr><td>`std::exclusive_scan`</td><td>`(rng, out, init[, func])`</td><td>✅</td><td>✅</td><td>✅</td></tr>
+        <tr><td>Python `itertools`</td><td>`accumulate`</td><td>`(rng[, fun[, init=init]])`</td><td>✅</td><td>✅</td><td>✅</td></tr>
+        <tr><td rowspan="2">NumPy</td><td>`cumsum`</td><td>`(rng)`</td><td>❌</td><td>N/A</td><td>❌</td></tr>
+        <tr><td>`<func>.accumulate`</td><td>`(rng)`</td><td>✅</td><td>❌</td><td>❌</td></tr>
+        <tr><td>Rust</td><td>`iter.scan`</td><td>`(init, func)`</td><td>✅</td><td>❌</td><td>✅</td></tr>
     </tbody>
 </table>
 
@@ -198,7 +205,7 @@ Alternative names considered for `views::partial_sum`: (in order of decreasing p
 
 Alternative naming schemes for all 3 or 4 adaptors proposed:
 
-**Option A**: Name `views::scan` as `views::inclusive_scan`, and `prescan` as `exclusive_scan`. This will make the three adaptors have the same name as the three algorithms already existed in `<numerics>`, which may seems a good idea at first glance. However, `std::[in,ex]clusive_scan`, despite having a generic name, actually requires its function parameter to be associative (or, more precisely, allow for arbitrary order of executing the function on elements), which `scan` or `prescan` does not. So the author felt that reusing the same name may cause some misuse of algorithms.
+**Option A**: Name `views::scan` as `views::inclusive_scan`, and `prescan` as `exclusive_scan`. This will make the three adaptors have the same name as the three algorithms already existed in `<numerics>`, which may seems a good idea at first glance. However, `std::[in,ex]clusive_scan`, despite having a generic name, actually requires its function parameter to be associative (or, more precisely, allow for arbitrary order of executing the function on elements), which `scan` or `prescan` does not. So the author felt that reusing the same name may cause some misuse of algorithms. Moreover, this analogy is actually incorrect, since `std::exclusive_scan` ignores the last element of the input range, and `std::inclusive_scan` discards the provided init.
 
 **Option B**: Name `views::scan` as `views::scan_first`, and `prescan` as `scan`. This will make the naming consistent with the `ranges::fold` family, but penalize the more common form of without-initial-seed by making it longer and harder to type. This option also have the advantage of being able to spell `partial_sum_first` and `partial_sum` as the two form of partial sums, instead of being forced to discard one.
 
