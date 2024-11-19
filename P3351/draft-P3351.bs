@@ -34,14 +34,19 @@ The `views::scan` adaptor is classified as a Tier 1 item in the Ranges plan for 
 ## R2 (2024-12 post-Wrocław Mailing) ## {#r2}
 
 - Redesigned the entire paper, following SG9's feedback in Wrocław (2024-11). Significant changes since [[!P3351R1]] are:
+    - `views::scan` is now equivalent to `std::inclusive_scan`, both in terms of argument sequence (`rng, func, init`) and also the semantics. As a result, it now supports adding an optional initial value.
+    - The prior arts section is redesigned:
+        - Added STL algorithm to prior arts section, and also reformat the table.
+        - A section is added to survey other languages' naming on `scan` and `prescan` algorithms. (TODO)
     - A section is added to explore the equivalence between `views::scan` and `std::[in, ex]clusive_scan` in detail. (TODO)
-    - Group the wording question into different groups based on audience. (TODO)
-- Added poll results section.
-- Fixed the mismatch template arguments for `scan_view` in synopsis.
-- Add STL algorithm to prior arts section, and also reformat the table.
-- Add *italics* for exposition-only concepts.
-- Add some minor correction and discussion on reference type.
-- Add some discussion on naming comflicts.
+    - A section is added to explore the relationship with [[P3300R0]] and parallel range algorithms in general. (TODO)
+    - Group the wording question into different groups based on audience.
+- Added poll results section and several review results sections.
+- Added some minor correction and discussion on reference type.
+- Added some discussion on naming comflicts.
+- Several wording fixes:
+    - Fixed the mismatch template arguments for `scan_view` in synopsis.
+    - Add *italics* for exposition-only concepts.
 - Rebase onto latest draft [[!N4993]].
 
 ## R1 (2024-10 pre-Wrocław Mailing) ## {#r1}
@@ -236,6 +241,9 @@ On the one hand, `ranges::fold` provided both the left and the right fold versio
 
 Furthermore, all of the mentioned prior arts perform left scan, and it is hard to come up with a valid use case of right scan that cannot be easily covered by left scan. Therefore, the author only proposes left scan in this proposal.
 
+### SG9 Review, Wrocław (2024-11) ### {#left-right-sg9-review-wroclaw}
+SG9 agreed that only left scan is needed, since a right scan can be easily simulated by flipping the arguments of the function provided. The fundaemental difference between `fold` and `scan` here is that `fold` requires both reversing the range *and* flipping the arguments when changing from left to right, while `scan` only requires the latter.
+
 ## More Convenience Aliases ## {#more-convenience-aliases}
 
 Obviously, there are more aliases that can be provided besides `partial_sum`. The three most useful aliases are:
@@ -339,6 +347,22 @@ The author implemented this proposal in [Compiler Explorer](https://godbolt.org/
 
 Note that to save on implementation effort, `scan(rng, func)` is simply aliased to `prescan(next(rng.begin()), *rng.begin(), func)`, so they both shares a single underlying view.
 
+# Questions To Resolve # {#questions}
+## Questions for SG9 ## {#questions-for-sg9}
+- Should the naming be `views::inclusive_scan`?
+- Do we need `operator-` for `sized_sentinel_for`? Between two iterators of `scan_view` and/or between iterators of `scan_view` and iterators of base range? Between iterator and sentinel?
+    - range-v3's `partial_sum_view` does not have `operator-`, but `tl::ranges`'s does.
+
+## Questions for LEWG ## {#questions-for-lewg}
+- Should the view be called `scan_view` or `prescan_view`?
+- Currently, the current sum is cached in the iterator object (as implemented in range-v3). An alternative is to cache the current sum in the view object (as implemented in `tl::ranges`), such that each iterator only needs to hold a pointer to the parent view and an iterator to the current position. Which one should be chosen?
+- `regular_invocable` or `invocable`? Currently the wording uses the latter (following range-v3), but `transform_view` used the former.
+
+## Questions for LWG ## {#questions-for-lwg}
+- Two strategy exist to defer `scan` to `prescan`. First (used currently) is to define two constructors for `scan_view` that takes two and three arguments, and have one constructor delegates to the other. The other approach is to specify that `scan(E, F)` is expression-equivalent to `scan_view(E, *ranges::begin(E), F)`.
+- Due to never being a common range, `scan_view` simply have a single `end() const` member that returns `default_sentinel`. Is that the correct way to do this, or should I just use the end iterator of the base range?
+- The extra `bool IsInit` parameter seems a bit clunky.
+
 # Wording # {#wording}
 
 The wording below is based on [[!N4993]].
@@ -348,16 +372,6 @@ Wording notes for LWG and editor:
 - `views::scan` and `views::prescan` use the same underlying `ranges::scan_view` to save on complexity and duplication of wording.
 - Currently, the three views' definition reside just after `views::transform`'s definition and synopsis, due to the author's perception that they are pretty similar.
 - The exposition-only concept <code><i>scannable</i></code> and <code><i>scannable-impl</i></code> is basically the same as <code><i>indirectly-binary-left-foldable</i></code> and <code><i>indirectly-binary-left-foldable-impl</i></code>; the only difference is that `F` is required to be move constructible instead of copy constructible.
-
-Wording questions to be resolved:
-- Should the view be called `scan_view` or `prescan_view`?
-- Currently, the current sum is cached in the iterator object (as implemented in range-v3). An alternative is to cache the current sum in the view object (as implemented in `tl::ranges`), such that each iterator only needs to hold a pointer to the parent view and an iterator to the current position. Which one should be chosen?
-- Two strategy exist to defer `scan` to `prescan`. First (used currently) is to define two constructors for `scan_view` that takes two and three arguments, and have one constructor delegates to the other. The other approach is to specify that `scan(E, F)` is expression-equivalent to `scan_view(E, *ranges::begin(E), F)`.
-- Due to never being a common range, `scan_view` simply have a single `end() const` member that returns `default_sentinel`. Is that the correct way to do this, or should I just use the end iterator of the base range?
-- The extra `bool IsInit` parameter seems a bit clunky.
-- `regular_invocable` or `invocable`? Currently the wording uses the latter (following range-v3), but `transform_view` used the former.
-- Do we need `operator-` for `sized_sentinel_for`? Between two iterators of `scan_view` and/or between iterators of `scan_view` and iterators of base range? Between iterator and sentinel?
-    - range-v3's `partial_sum_view` does not have `operator-`, but `tl::ranges`'s does.
 
 ## 17.3.2 Header `<version>` synopsis [version.syn] ## {#version.syn}
 
