@@ -4,6 +4,8 @@ prescan -> exclusive_scan
 
 Needs integration/explore implications in P3300/parallel range algorithms context.
 
+SG9 don't really care about the conflicts between with-init and without-init; "user deserve what they got".
+
 We want a view with a convenient spelling for the semantics of `std::inclusive_scan` without initial value
 1-5-3-0-0
 

@@ -35,6 +35,7 @@ The `views::scan` adaptor is classified as a Tier 1 item in the Ranges plan for 
 
 - Redesigned the entire paper, following SG9's feedback in Wrocław (2024-11). Significant changes since [[!P3351R1]] are:
     - A section is added to explore the equivalence between `views::scan` and `std::[in, ex]clusive_scan` in detail. (TODO)
+    - Group the wording question into different groups based on audience. (TODO)
 - Added poll results section.
 - Fixed the mismatch template arguments for `scan_view` in synopsis.
 - Add STL algorithm to prior arts section, and also reformat the table.
@@ -153,6 +154,11 @@ There are several approaches we can adopt to handle this ambiguity:
 The author prefers Option 3 as it is the least surprising option that has no potential of conflicts. For now, the author decides that `scan` with an initial seed should be called `views::prescan`, as suggested in [[!P2760R1]], and `partial_sum` should not support initial seed at all. The rationale for this decision is that people who want `partial_sum` with initial seed can simply call `prescan(init, std::plus{})`, so instead of coming up a name that is potentially longer and harder to memorize the author felt that this is the best approach.
 
 More alternative names are suggested in later sections.
+
+### SG9 Review, Wrocław (2024-11) ### {#conflict-sg9-review-wroclaw}
+Members of SG9 expressed preference for Option 2, because of several reasons:
+- `std::inclusive_scan` put function before init, which also enables init value to be an optional parameter. This change makes `views::scan` completely equivalent in principle to `std::inclusive_scan` in functionality (sans the associativity issue).
+- After this change, although conflicts between range and binary functor can still arise, such case is rare in practice and not worth sacrificing a better name to support.
 
 ## Prior Art ## {#prior-art}
 
