@@ -12,7 +12,7 @@ URL: https://wg21.link/D3351R2
 !Issue Tracking: <a href="https://github.com/Mick235711/wg21-papers/issues">GitHub Mick235711/wg21-papers</a>
 Editor: Yihe Li, winmikedows@hotmail.com
 No abstract: true
-Date: 2024-11-18
+Date: 2024-11-19
 Markup Shorthands: markdown yes
 Default Highlight: cpp
 </pre>
@@ -33,6 +33,9 @@ The `views::scan` adaptor is classified as a Tier 1 item in the Ranges plan for 
 
 ## R2 (2024-12 post-Wrocław Mailing) ## {#r2}
 
+- Redesigned the entire paper, following SG9's feedback in Wrocław (2024-11). Significant changes since [[!P3351R1]] are:
+    - A section is added to explore the equivalence between `views::scan` and `std::[in, ex]clusive_scan` in detail. (TODO)
+- Added poll results section.
 - Fixed the mismatch template arguments for `scan_view` in synopsis.
 - Add STL algorithm to prior arts section, and also reformat the table.
 - Add *italics* for exposition-only concepts.
@@ -621,4 +624,50 @@ friend constexpr bool operator==(const <i>iterator</i>& x, const <i>iterator</i>
 friend constexpr bool operator==(const <i>iterator</i>& x, default_sentinel_t);
 </pre>
 8. *Effects*: Equivalent to: <code>return x.<i>current_</i> == ranges::end(x.<i>parent_</i>-&gt;<i>base_</i>);</code>
+
+# Poll Results # {#poll-results}
+## SG9 Review, Wrocław (2024-11) ## {#sg9-review-wroclaw}
+**Poll 1**: We want a view with a convenient spelling for the semantics of `std::inclusive_scan` without initial value.
+
+<table>
+    <thead><tr><td>Strongly Favor</td><td>Favor</td><td>Neutral</td><td>Against</td><td>Strongly Against</td></tr></thead>
+    <tbody><tr><td>1</td><td>5</td><td>3</td><td>0</td><td>0</td></tr></tbody>
+</table>
+
+- **Attendance**: 10
+- **Author's Position**: Favor
+- **Outcome**: Consensus.
+
+**Poll 2**: We want a view with a convenient spelling for the semantics of `std::inclusive_scan` with initial value.
+
+<table>
+    <thead><tr><td>Strongly Favor</td><td>Favor</td><td>Neutral</td><td>Against</td><td>Strongly Against</td></tr></thead>
+    <tbody><tr><td>1</td><td>7</td><td>1</td><td>0</td><td>0</td></tr></tbody>
+</table>
+
+- **Attendance**: 10
+- **Author's Position**: Favor
+- **Outcome**: Consensus. Stronger than Poll 1.
+
+**Poll 3**: We want a view with a convenient spelling for the semantics of `std::exclusive_scan` (which would always require an initial value).
+
+<table>
+    <thead><tr><td>Strongly Favor</td><td>Favor</td><td>Neutral</td><td>Against</td><td>Strongly Against</td></tr></thead>
+    <tbody><tr><td>0</td><td>3</td><td>6</td><td>1</td><td>0</td></tr></tbody>
+</table>
+
+- **Attendance**: 10
+- **Author's Position**: Against
+- **Outcome**: Weak consensus.
+
+**Poll 4**: We want a view with a convenient spelling for the semantics of `views::prescan` as proposed in the paper ([[!P3351R1]]) (`std::exclusive_scan` plus the final sum).
+
+<table>
+    <thead><tr><td>Strongly Favor</td><td>Favor</td><td>Neutral</td><td>Against</td><td>Strongly Against</td></tr></thead>
+    <tbody><tr><td>1</td><td>2</td><td>4</td><td>2</td><td>0</td></tr></tbody>
+</table>
+
+- **Attendance**: 10
+- **Author's Position**: Favor
+- **Outcome**: No consensus either way. Author's choice.
 
