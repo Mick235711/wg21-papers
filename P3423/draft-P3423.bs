@@ -2,17 +2,17 @@
 Title: Extending User-Generated Diagnostic Messages
 H1: Extending User-Generated Diagnostic Messages
 Shortname: D3423
-Revision: 0
-Audience: EWG
+Revision: 1
+Audience: EWGI, EWG
 Status: D
 Group: WG21
 !Target: C++26
-URL: https://wg21.link/D3423R0
+URL: https://wg21.link/D3423R1
 !Source: <a href="https://github.com/Mick235711/wg21-papers/blob/main/P3423/draft-P3423.bs">github.com/Mick235711/wg21-papers/blob/main/P3423/draft-P3423.bs</a>
 !Issue Tracking: <a href="https://github.com/Mick235711/wg21-papers/issues">GitHub Mick235711/wg21-papers</a>
 Editor: Yihe Li, winmikedows@hotmail.com
 No abstract: true
-Date: 2024-10-14
+Date: 2024-11-21
 Markup Shorthands: markdown yes
 </pre>
 
@@ -23,6 +23,11 @@ table, th, td { border:1px solid grey; }
 During Varna (2023-06), [[!P2741R3]] had been adopted into the C++26 working draft, which gave `static_assert` the ability to accept a user-generated string-like object as the message parameter. This extension allowed the user of `static_assert` to provide a more precise error message in compile time, thus significantly increasing the user-friendliness of libraries. This proposal, therefore, proposes to unify the language by allowing other constructs in the language that currently accept a message parameter, namely `[[nodiscard]]`, `[[deprecated]]`, and `= delete`, to also allow a user-generated string-like object as the provided message.
 
 # Revision History # {#revisions}
+
+## R1 (2024-12 post-Wrocław Mailing) ## {#r1}
+- Add discussion on instantiation timing of attributes, aka if SFINAE happens if the attribute argument clause results in invalid substitution.
+- Add polls section.
+- Rebase onto latest draft [[!N4993]].
 
 ## R0 (2024-10 pre-Wrocław Mailing) ## {#r0}
 - Initial revision.
@@ -112,7 +117,7 @@ Clearly, this new "potential best" error message is much superior to the previou
 
 ## Standard Library ## {#stl-usage}
 
-This part contains some concrete examples of how functions and classes in the standard library can benefit from the new flexibility of message parameters. All examples are based on [[!N4988]], and also assumes the existence of `constexpr std::format` ([[P3391R0]]) and Reflection ([[P2996R5]]).
+This part contains some concrete examples of how functions and classes in the standard library can benefit from the new flexibility of message parameters. All examples are based on [[!N4993]], and also assumes the existence of `constexpr std::format` ([[P3391R0]]) and Reflection ([[P2996R5]]).
 
 One thing to note here is that `[[deprecated]]` is never required on the deprecated features in the standard library. Similarly, `[[nodiscard]]` is regarded as QoI after the adoption of [[P2422R1]] in St. Louis (2024-06) and no longer appears in the standard library's specification. Therefore, all the following examples only resemble some possible use of the attributes by a standard library vendor. All the examples below that used `[[nodiscard]]` were marked as so in the specification before [[P2422R1]] landed.
 
@@ -356,7 +361,62 @@ consteval std::string_view oups() {
 void f() = delete(oups<false>()); // static_assert fires even though f() is not called
 [[deprecated(oups<false>())]] void f2(); // ditto
 ```
-One possible alternative is to treat this as SFINAE, but that is inconsistent with the behavior of `static_assert` and `[[assume]]` in the function body.
+However, when templates are involved, the situation is less obvious.
+As pointed out in [an issue submitted to CWG GitHub](https://github.com/cplusplus/CWG/issues/624), it is currently unclear if the *attribute-specifier-seq* that appears in a function declaration is in the immediate context and therefore contributes to overload resolution. This part of the function declaration is not in the deduction substitution loci (<a href="https://eel.is/c++draft/temp.deduct.general#7">[temp.deduct.general]/7</a>), so the standard currently does not specify the answer to this question. With the addition of user-provided argument to `[[nodiscard]]` and `[[deprecated]]`, we have to answer this question.
+
+Consider:
+```cpp
+template<bool B>
+consteval std::string_view get_message() {
+    static_assert(B);
+    return "message";
+}
+
+template<bool B>
+void f1(...) {} // 1A
+template<bool B>
+[[deprecated(get_message<B>())]]
+void f1(int) {} // 1B
+
+void test_f1() {
+    f1<false>(1); // #1
+}
+
+template<bool B>
+[[deprecated(get_message<B>())]]
+void f2(...) {} // 2A
+template<bool B>
+void f2(int) {} // 2B
+
+void test_f2() {
+    f2<false>(2); // #2
+}
+
+template<typename T>
+void f3(...) {} // 3A
+template<typename T>
+[[deprecated(get_message<T::value>())]]
+void f3(int) {} // 3B
+
+void test_f3() {
+    f3<int>(3); // #3
+}
+```
+The author think there are two approaches in general to determine the well-formedness of these three examples.
+
+The first approach is to make *attribute-specifier-seq* attached to a function part of its deduction substitution loci (i.e. in the immediate context). This makes them equivalent to return types ([equivalent Compiler Explorer](https://godbolt.org/z/sEhvPP1Te)), and thus:
+- #1 is ill-formed, since substitution into 1B instantiates `get_message<false>()`.
+- #2 is ill-formed, since substitution into 2A still instantiates `get_message<false>()`.
+- #3 is well-formed, since substituting into 3B will cause substitution to fail, and thus 3B will SFINAE-away and 3A is chosen by overload resolution.
+
+In other words, substitution into attribute (and `= delete`) happens before overload resolution, and any substitution failure is an error that cause the overload to drop out of overload resolution.
+
+Another approach is to make attributes and `= delete` to only be instantiated when overload resolution selects that function overload (i.e. not in the immediate context). This makes them equivalent to `noexcept(...)` (or, equivalently, `static_assert` with message in the body, [equivalent Compiler Explorer](https://godbolt.org/z/v5xWPYfnn)), and thus:
+- #1 is ill-formed, since overload resolution selects 1B and instantiates `get_message<false>()`.
+- #2 is well-formed, since overload resolution does not select 2B and `get_message` is not instantiated.
+- #3 is ill-formed, since substitution failure after overload resolution finishes is an immediate hard error.
+
+The author thinks that the second approach is more sensible, since `= delete` is conceptually a kind of function body, and the idea that `[[some_attribute]]` affects overload resolution is a bit nonsensical. The original response to [the issue](https://github.com/cplusplus/CWG/issues/624) agrees with this decision.
 
 ## Alternative Syntax Considered ## {#alternative-syntax}
 
@@ -455,11 +515,13 @@ the proposed feature relatively easily. No significant obstacles are observed du
 
 # Wording # {#wording}
 
-The wording below is based on [[!N4988]].
+The wording below is based on [[!N4993]].
 
 Wording notes for CWG and editor:
-- The wording below renames `static_assert-message` to `diagnostic-message`, which is now used as the grammar for the general diagnostic message parameter.
-- The phrase "text of the `diagnostic-message`" is treated as a word of power, and is referenced by other sections defining `= delete` and attributes to simplify the wording.
+- The wording below renames *static_assert-message* to *diagnostic-message*, which is now used as the grammar for the general diagnostic message parameter. (Should we actually move *diagnostic-message* to another place?)
+- The phrase "text of the *diagnostic-message*" is treated as a word of power, and is referenced by other sections defining `= delete` and attributes to simplify the wording.
+- The wording for attributes that makes them not a part of a function's immediate context comes in two parts: Note in <a href="https://eel.is/c++draft/temp.deduct.general#7">[temp.deduct.general]/7</a> and normative wording in <a href="https://eel.is/c++draft/temp.inst#14">[temp.inst]/14</a> are both adjusted to give attribute specifiers the same instantiation timing with `noexcept` specifiers. This part of the wording is inspired by similar wording in [[P2900R10]] that makes contract specifiers not part of immediate context.
+    - `= delete` is not worded since that is considered a kind of function body and thus follows the same rule already.
 
 ## 7.7 Constant expressions [expr.const] ## {#expr.const}
 
@@ -569,6 +631,20 @@ Paragraph 4:
 
 > The <i><del>unevaluated-string</del></i><ins>text of the <i>diagnostic-message</i> ([dcl.pre])</ins> in a `nodiscard` *attribute-argument-clause* should be used in the message of the warning as the rationale for why the result should not be discarded.
 
+## 13.9.2 Implicit instantiation [temp.inst] ## {#temp.inst}
+
+Paragraph 14:
+
+> The *noexcept-specifier* <ins>and *attribute-specifier-seq* </ins>of a function template specialization is not instantiated along with the function declaration; it is instantiated when needed ([except.spec]). If such a <del>*noexcept-specifier*</del><ins>specifier</ins> is needed but has not yet been
+instantiated, the dependent names are looked up, the semantics constraints are checked, and the instantiation of any template used in the <del>*noexcept-specifier*</del><ins>specifier</ins> is done as if it were being done as part of instantiating the declaration of the specialization at that point.
+
+## 13.10.3 Template argument deduction [temp.deduct] ## {#temp.deduct}
+### 13.10.3.1 General [temp.deduct.general] ### {#temp.deduct.general}
+
+Paragraph 7:
+
+> [*Note 4*: The equivalent substitution in exception<ins> and attribute</ins> specifications is done only when the <ins>corresponding </ins>*noexcept-specifier*<ins> or *attribute-specifier-seq*</ins> is instantiated, at which point a program is ill-formed if the substitution results in an invalid type or expression. — *end note*]
+
 ## 15.2 Conditional inclusion [cpp.cond] ## {#cpp.cond}
 
 In [tab:cpp.cond.ha], modify the rows as indicated, and substituting `20XXYYL` by the date of adoption.
@@ -608,6 +684,11 @@ In [tab:cpp.predefined.ft], modify the rows as indicated, and substituting `20XX
 </tr>
 </tbody>
 </table>
+
+# Poll Results # {#poll-results}
+## EWGI Review, Wrocław (2024-11) ## {#ewgi-review-wroclaw}
+
+TODO
 
 <pre class=biblio>
 {
