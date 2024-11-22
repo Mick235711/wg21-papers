@@ -1,0 +1,17 @@
+Streamline the presentation, focus on differences from static_assert/P2741
+"Make it one-slide change to EWG"
+"Make everything work like static_assert"
+"Too much detail, just say they work the same"
+Only have slides on immediate context, don't make it half-hour presentation
+
+Have you considered whether impl want to pull in <format>?
+Focus on when these expressions are parsed/instantiated/evaluated
+=> Come opininated to EWG, present your choice directly
+=> Probably no way to word otherwise anyway, so probably no options
+
+P3423R0 Extending User-Generated Diagnostic Messages: Forward to EWG.
+1-8-0-0-0
+
+TODO: Add parsing section
+The basic idea is that parsing/instantiating declaration needs to be done on first encountering the attribute/= delete, and also string-like check happens here.
+Then, only when the overload resolution selects this candidate, the instantiation of definition is done. Any substitution error is a hard error here.

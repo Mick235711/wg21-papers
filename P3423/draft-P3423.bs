@@ -3,7 +3,7 @@ Title: Extending User-Generated Diagnostic Messages
 H1: Extending User-Generated Diagnostic Messages
 Shortname: D3423
 Revision: 1
-Audience: EWGI, EWG
+Audience: EWG
 Status: D
 Group: WG21
 !Target: C++26
@@ -12,7 +12,7 @@ URL: https://wg21.link/D3423R1
 !Issue Tracking: <a href="https://github.com/Mick235711/wg21-papers/issues">GitHub Mick235711/wg21-papers</a>
 Editor: Yihe Li, winmikedows@hotmail.com
 No abstract: true
-Date: 2024-11-21
+Date: 2024-11-22
 Markup Shorthands: markdown yes
 </pre>
 
@@ -688,7 +688,14 @@ In [tab:cpp.predefined.ft], modify the rows as indicated, and substituting `20XX
 # Poll Results # {#poll-results}
 ## EWGI Review, Wrocław (2024-11) ## {#ewgi-review-wroclaw}
 
-TODO
+**Poll**: [[!P3423R0]] Extending User-Generated Diagnostic Messages: Forward to EWG.
+
+<table>
+    <thead><tr><td>Strongly Favor</td><td>Favor</td><td>Neutral</td><td>Against</td><td>Strongly Against</td></tr></thead>
+    <tbody><tr><td>1</td><td>8</td><td>0</td><td>0</td><td>0</td></tr></tbody>
+</table>
+
+- **Outcome**: Consensus.
 
 <pre class=biblio>
 {
