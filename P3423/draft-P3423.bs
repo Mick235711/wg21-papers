@@ -27,6 +27,7 @@ During Varna (2023-06), [[!P2741R3]] had been adopted into the C++26 working dra
 ## R1 (2024-12 post-Wrocław Mailing) ## {#r1}
 - Add discussion on instantiation timing of attributes, aka if SFINAE happens if the attribute argument clause results in invalid substitution.
 - Add polls section.
+- In Wrocław (2024-11), EWGI sees [[!P3423R0]] and forwarded it to EWG ([polls](#ewgi-review-wroclaw)). Audience is altered accordingly.
 - Rebase onto latest draft [[!N4993]].
 
 ## R0 (2024-10 pre-Wrocław Mailing) ## {#r0}
