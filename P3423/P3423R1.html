@@ -1564,7 +1564,7 @@ Possible extra rowspan handling
   <meta content="Bikeshed version 742f3d674, updated Mon Nov 4 14:56:54 2024 -0800" name="generator">
   <link href="https://wg21.link/P3423R1" rel="canonical">
   <link href="https://isocpp.org/favicon.ico" rel="icon">
-  <meta content="38c22505347a5d1a86e2b6df9b0d7f6b3e5a6272" name="revision">
+  <meta content="f6a7a290bfa70bc80f1a35c8fbc1da285e0bdac7" name="revision">
   <meta content="dark light" name="color-scheme">
 <style>
 table, th, td { border:1px solid grey; }
@@ -2281,7 +2281,7 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
    <p>Clearly, this new "potential best" error message is much superior to the previous best possible message, thus marking another big step forward for the user-friendliness of C++ error messages. To further expand this advantage, this proposal, therefore, proposes to allow the other three appearances of the message parameter in the core language to also accept user-generated string-like approaches. Such expansion not only unifies the language but also provides more opportunities for more friendly error/warning messages to be provided. Several examples of the possible diagnostics that will be allowed by this proposal can be seen in the Usage Examples section below.</p>
    <h2 class="heading settled" data-level="3" id="usage-examples"><span class="secno">3. </span><span class="content">Usage Example</span><a class="self-link" href="#usage-examples"></a></h2>
    <h3 class="heading settled" data-level="3.1" id="stl-usage"><span class="secno">3.1. </span><span class="content">Standard Library</span><a class="self-link" href="#stl-usage"></a></h3>
-   <p>This part contains some concrete examples of how functions and classes in the standard library can benefit from the new flexibility of message parameters. All examples are based on <a data-link-type="biblio" href="#biblio-n5001" title="Working Draft, Programming Languages — C++">[N5001]</a>, and also assumes the existence of <code class="highlight"><c- k>constexpr</c-> <c- n>std</c-><c- o>::</c-><c- n>format</c-></code> (<a data-link-type="biblio" href="#biblio-p3391r0" title="constexpr std::format">[P3391R0]</a>) and Reflection (<a data-link-type="biblio" href="#biblio-p2996r5" title="Reflection for C++26">[P2996R5]</a>).</p>
+   <p>This part contains some concrete examples of how functions and classes in the standard library can benefit from the new flexibility of message parameters. All examples are based on <a data-link-type="biblio" href="#biblio-n5001" title="Working Draft, Programming Languages — C++">[N5001]</a>, and also assumes the existence of <code class="highlight"><c- k>constexpr</c-> <c- n>std</c-><c- o>::</c-><c- n>format</c-></code> (<a data-link-type="biblio" href="#biblio-p3391r0" title="constexpr std::format">[P3391R0]</a>) and Reflection (<a data-link-type="biblio" href="#biblio-p2996r7" title="Reflection for C++26">[P2996R7]</a>).</p>
    <p>One thing to note here is that <code class="highlight"><c- p>[[</c-><c- n>deprecated</c-><c- p>]]</c-></code> is never required on the deprecated features in the standard library. Similarly, <code class="highlight"><c- p>[[</c-><c- n>nodiscard</c-><c- p>]]</c-></code> is regarded as QoI after the adoption of <a data-link-type="biblio" href="#biblio-p2422r1" title="Remove nodiscard annotations from the standard library specification">[P2422R1]</a> in St. Louis (2024-06) and no longer appears in the standard library’s specification. Therefore, all the following examples only resemble some possible use of the attributes by a standard library vendor. All the examples below that used <code class="highlight"><c- p>[[</c-><c- n>nodiscard</c-><c- p>]]</c-></code> were marked as so in the specification before <a data-link-type="biblio" href="#biblio-p2422r1" title="Remove nodiscard annotations from the standard library specification">[P2422R1]</a> landed.</p>
 <pre class="language-cpp highlight"><c- c1>// [memory.syn]</c->
 <c- k>namespace</c-> <c- nn>std</c-> <c- p>{</c->
@@ -2384,7 +2384,7 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
      <p>All of these examples are just a proof of concept on how user-friendly diagnostics is possible; in reality, due to the cost of pulling in the dependency on <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>format</c-></code> and <code class="highlight"><c- o>&lt;</c-><c- n>ranges</c-><c- o>></c-></code>, such a message is probably not feasible for most vendors.</p>
    </ul>
    <h3 class="heading settled" data-level="3.2" id="third-party-libraries"><span class="secno">3.2. </span><span class="content">Third-Party Libraries</span><a class="self-link" href="#third-party-libraries"></a></h3>
-   <p>A potential use case of the new flexibility to third-party library developers is to include the library name in every diagnostic emitted by the types and functions within the library. Although this is already achievable with the current fixed message parameter, adding the name to each message parameter is error-prone. A better approach is something like (assuming that <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>fixed_string</c-></code> (<a data-link-type="biblio" href="#biblio-p3094r3" title="std::basic_fixed_string">[P3094R3]</a>) exists):</p>
+   <p>A potential use case of the new flexibility to third-party library developers is to include the library name in every diagnostic emitted by the types and functions within the library. Although this is already achievable with the current fixed message parameter, adding the name to each message parameter is error-prone. A better approach is something like (assuming that <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>fixed_string</c-></code> (<a data-link-type="biblio" href="#biblio-p3094r5" title="std::basic_fixed_string">[P3094R5]</a>) exists):</p>
 <pre class="language-cpp highlight"><c- k>namespace</c-> <c- nn>my_lib</c->
 <c- p>{</c->
     <c- k>constexpr</c-> <c- n>std</c-><c- o>::</c-><c- n>fixed_string</c-> <c- n>lib_name</c-> <c- o>=</c-> <c- s>"myLib"</c-><c- p>;</c->
@@ -2595,9 +2595,9 @@ As pointed out in <a href="https://github.com/cplusplus/CWG/issues/624">an issue
 </pre>
    <p>This does sacrifice some convenience, but if desired, the distinction can be made such that for <code class="highlight"><c- p>[[</c-><c- n>nodiscard</c-><c- p>(</c-><c- n>expr</c-><c- p>)]]</c-></code>, if <code class="highlight"><c- n>expr</c-></code> is convertible to <code class="highlight"><c- b>bool</c-></code>, then conditional semantic is used; if <code class="highlight"><c- n>expr</c-></code> satisfies the string-like requirements, the message semantic is used. A tie-breaker between these two is obviously needed for types that satisfy both, but the author doesn’t think this is a huge conflict that forms an obstacle to this proposal.</p>
    <h3 class="heading settled" data-level="4.8" id="interaction-with-reflection"><span class="secno">4.8. </span><span class="content">Interaction with Reflection</span><a class="self-link" href="#interaction-with-reflection"></a></h3>
-   <p>Reflection (<a data-link-type="biblio" href="#biblio-p2996r5" title="Reflection for C++26">[P2996R5]</a>) is great and will probably come to C++ in the near future. It will also greatly aid in generating friendly diagnostic messages that display the template type argument’s name, as demonstrated in the Usage Examples section above.</p>
+   <p>Reflection (<a data-link-type="biblio" href="#biblio-p2996r7" title="Reflection for C++26">[P2996R7]</a>) is great and will probably come to C++ in the near future. It will also greatly aid in generating friendly diagnostic messages that display the template type argument’s name, as demonstrated in the Usage Examples section above.</p>
    <p>However, a natural question arises: should there be a reflection facility to get the message specified to <code class="highlight"><c- o>=</c-> <c- k>delete</c-></code> and attributes?</p>
-   <p>In the current reflection proposal (<a data-link-type="biblio" href="#biblio-p2996r5" title="Reflection for C++26">[P2996R5]</a>), there is one metafunction that queries whether the function is deleted: <code class="highlight"><c- n>meta</c-><c- o>::</c-><c- n>is_deleted</c-></code>. No attribute-reflecting mechanisms are proposed in <a data-link-type="biblio" href="#biblio-p2996r5" title="Reflection for C++26">[P2996R5]</a>, but there is ongoing work on reflecting attributes first by <a data-link-type="biblio" href="#biblio-p1887r1" title="Reflection on attributes">[P1887R1]</a> and currently by <a data-link-type="biblio" href="#biblio-p3385r0" title="Attributes reflection">[P3385R0]</a>. Should these proposals also propose the ability to query the message provided to the attributes and <code class="highlight"><c- o>=</c-> <c- k>delete</c-></code>?</p>
+   <p>In the current reflection proposal (<a data-link-type="biblio" href="#biblio-p2996r7" title="Reflection for C++26">[P2996R7]</a>), there is one metafunction that queries whether the function is deleted: <code class="highlight"><c- n>meta</c-><c- o>::</c-><c- n>is_deleted</c-></code>. No attribute-reflecting mechanisms are proposed in <a data-link-type="biblio" href="#biblio-p2996r7" title="Reflection for C++26">[P2996R7]</a>, but there is ongoing work on reflecting attributes first by <a data-link-type="biblio" href="#biblio-p1887r1" title="Reflection on attributes">[P1887R1]</a> and currently by <a data-link-type="biblio" href="#biblio-p3385r2" title="Attributes reflection">[P3385R2]</a>. Should these proposals also propose the ability to query the message provided to the attributes and <code class="highlight"><c- o>=</c-> <c- k>delete</c-></code>?</p>
    <p>The author thinks that they probably should (for instance, by letting <code class="highlight"><c- n>meta</c-><c- o>::</c-><c- n>display_name_of</c-></code> return the message or add a new <code class="highlight"><c- n>meta</c-><c- o>::</c-><c- n>message_of</c-></code>), but this is certainly outside the scope of this proposal. The message parameter already exists in these attributes, and this proposal does not add any new parameters to them, so the difficulty of supporting them should not change drastically.</p>
    <h3 class="heading settled" data-level="4.9" id="proposal-scope"><span class="secno">4.9. </span><span class="content">Proposal Scope</span><a class="self-link" href="#proposal-scope"></a></h3>
    <p>This proposal is a pure language extension proposal with no library changes involved. It is also a pure addition, so no breaking changes are involved.
@@ -2660,7 +2660,7 @@ the proposed feature relatively easily. No significant obstacles are observed du
     <li data-md>
      <p>The phrase "text of the <em>diagnostic-message</em>" is treated as a word of power, and is referenced by other sections defining <code class="highlight"><c- o>=</c-> <c- k>delete</c-></code> and attributes to simplify the wording.</p>
     <li data-md>
-     <p>The wording for attributes that makes them not a part of a function’s immediate context comes in two parts: Note in <a href="https://eel.is/c++draft/temp.deduct.general#7">[temp.deduct.general]/7</a> and normative wording in <a href="https://eel.is/c++draft/temp.inst#14">[temp.inst]/14</a> are both adjusted to give attribute specifiers the same instantiation timing with <code class="highlight"><c- k>noexcept</c-></code> specifiers. This part of the wording is inspired by similar wording in <a data-link-type="biblio" href="#biblio-p2900r10" title="Contracts for C++">[P2900R10]</a> that makes contract specifiers not part of immediate context.</p>
+     <p>The wording for attributes that makes them not a part of a function’s immediate context comes in two parts: Note in <a href="https://eel.is/c++draft/temp.deduct.general#7">[temp.deduct.general]/7</a> and normative wording in <a href="https://eel.is/c++draft/temp.inst#14">[temp.inst]/14</a> are both adjusted to give attribute specifiers the same instantiation timing with <code class="highlight"><c- k>noexcept</c-></code> specifiers. This part of the wording is inspired by similar wording in <a data-link-type="biblio" href="#biblio-p2900r12" title="Contracts for C++">[P2900R12]</a> that makes contract specifiers not part of immediate context.</p>
      <ul>
       <li data-md>
        <p><code class="highlight"><c- o>=</c-> <c- k>delete</c-></code> is not worded since that is considered a kind of function body and thus follows the same rule already.</p>
@@ -2735,7 +2735,12 @@ unevaluated operand ([expr.context]). — <em>end note</em>]</p>
     <p>A program that refers to a deleted function implicitly or explicitly, other than to declare it, is ill-formed.</p>
    </blockquote>
    <blockquote>
-    <p><em>Recommended practice</em>: The resulting diagnostic message should include the text of the <i><del>unevaluated-string</del><ins>diagnostic-message ([dcl.pre])</ins></i>, if one is supplied.</p>
+    <p>
+     <em>Recommended practice</em>: The resulting diagnostic message should include the text of the 
+     <del><i>unevaluated-string</i></del>
+     <ins><i>diagnostic-message</i> ([dcl.pre])</ins>
+     , if one is supplied.
+    </p>
    </blockquote>
    <blockquote>
     <p>[<em>Note 1</em>: This includes calling the function implicitly or explicitly and forming a pointer or pointer-to-member to the function.
@@ -3074,14 +3079,14 @@ instantiated, the dependent names are looked up, the semantics constraints are c
    <dd>Yihe Li. <a href="https://wg21.link/p2573r2"><cite>= delete("should have a reason");</cite></a>. 22 March 2024. URL: <a href="https://wg21.link/p2573r2">https://wg21.link/p2573r2</a>
    <dt id="biblio-p2593r1">[P2593R1]
    <dd>Barry Revzin. <a href="https://wg21.link/p2593r1"><cite>Allowing static_assert(false)</cite></a>. 20 January 2023. URL: <a href="https://wg21.link/p2593r1">https://wg21.link/p2593r1</a>
-   <dt id="biblio-p2900r10">[P2900R10]
-   <dd>Joshua Berne, Timur Doumler, Andrzej Krzemieński. <a href="https://wg21.link/p2900r10"><cite>Contracts for C++</cite></a>. 13 October 2024. URL: <a href="https://wg21.link/p2900r10">https://wg21.link/p2900r10</a>
-   <dt id="biblio-p2996r5">[P2996R5]
-   <dd>Barry Revzin, Wyatt Childers, Peter Dimov, Andrew Sutton, Faisal Vali, Daveed Vandevoorde, Dan Katz. <a href="https://wg21.link/p2996r5"><cite>Reflection for C++26</cite></a>. 14 August 2024. URL: <a href="https://wg21.link/p2996r5">https://wg21.link/p2996r5</a>
-   <dt id="biblio-p3094r3">[P3094R3]
-   <dd>Mateusz Pusz. <a href="https://wg21.link/p3094r3"><cite>std::basic_fixed_string</cite></a>. 20240630. URL: <a href="https://wg21.link/p3094r3">https://wg21.link/p3094r3</a>
-   <dt id="biblio-p3385r0">[P3385R0]
-   <dd>Aurelien Cassagnes, Aurelien Cassagnes, Roman Khoroshikh, Anders Johansson. <a href="https://wg21.link/p3385r0"><cite>Attributes reflection</cite></a>. 16 September 2024. URL: <a href="https://wg21.link/p3385r0">https://wg21.link/p3385r0</a>
+   <dt id="biblio-p2900r12">[P2900R12]
+   <dd>Joshua Berne, Timur Doumler, Andrzej Krzemieński. <a href="https://wg21.link/p2900r12"><cite>Contracts for C++</cite></a>. 17 December 2024. URL: <a href="https://wg21.link/p2900r12">https://wg21.link/p2900r12</a>
+   <dt id="biblio-p2996r7">[P2996R7]
+   <dd>Barry Revzin, Wyatt Childers, Peter Dimov, Andrew Sutton, Faisal Vali, Daveed Vandevoorde, Dan Katz. <a href="https://wg21.link/p2996r7"><cite>Reflection for C++26</cite></a>. 13 October 2024. URL: <a href="https://wg21.link/p2996r7">https://wg21.link/p2996r7</a>
+   <dt id="biblio-p3094r5">[P3094R5]
+   <dd>Mateusz Pusz. <a href="https://wg21.link/p3094r5"><cite>std::basic_fixed_string</cite></a>. 15 October 2024. URL: <a href="https://wg21.link/p3094r5">https://wg21.link/p3094r5</a>
+   <dt id="biblio-p3385r2">[P3385R2]
+   <dd>Aurelien Cassagnes, Roman Khoroshikh, Anders Johansson. <a href="https://wg21.link/p3385r2"><cite>Attributes reflection</cite></a>. 12 December 2024. URL: <a href="https://wg21.link/p3385r2">https://wg21.link/p3385r2</a>
    <dt id="biblio-p3391r0">[P3391R0]
    <dd>Barry Revzin. <a href="https://wg21.link/p3391r0"><cite>constexpr std::format</cite></a>. 12 September 2024. URL: <a href="https://wg21.link/p3391r0">https://wg21.link/p3391r0</a>
   </dl>

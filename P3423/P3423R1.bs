@@ -118,7 +118,7 @@ Clearly, this new "potential best" error message is much superior to the previou
 
 ## Standard Library ## {#stl-usage}
 
-This part contains some concrete examples of how functions and classes in the standard library can benefit from the new flexibility of message parameters. All examples are based on [[!N5001]], and also assumes the existence of `constexpr std::format` ([[P3391R0]]) and Reflection ([[P2996R5]]).
+This part contains some concrete examples of how functions and classes in the standard library can benefit from the new flexibility of message parameters. All examples are based on [[!N5001]], and also assumes the existence of `constexpr std::format` ([[P3391R0]]) and Reflection ([[P2996R7]]).
 
 One thing to note here is that `[[deprecated]]` is never required on the deprecated features in the standard library. Similarly, `[[nodiscard]]` is regarded as QoI after the adoption of [[P2422R1]] in St. Louis (2024-06) and no longer appears in the standard library's specification. Therefore, all the following examples only resemble some possible use of the attributes by a standard library vendor. All the examples below that used `[[nodiscard]]` were marked as so in the specification before [[P2422R1]] landed.
 
@@ -221,7 +221,7 @@ warning: 'std::aligned_union' is deprecated: use alignas(A, B) std::byte[std::ma
 
 ## Third-Party Libraries ## {#third-party-libraries}
 
-A potential use case of the new flexibility to third-party library developers is to include the library name in every diagnostic emitted by the types and functions within the library. Although this is already achievable with the current fixed message parameter, adding the name to each message parameter is error-prone. A better approach is something like (assuming that `std::fixed_string` ([[P3094R3]]) exists):
+A potential use case of the new flexibility to third-party library developers is to include the library name in every diagnostic emitted by the types and functions within the library. Although this is already achievable with the current fixed message parameter, adding the name to each message parameter is error-prone. A better approach is something like (assuming that `std::fixed_string` ([[P3094R5]]) exists):
 ```cpp
 namespace my_lib
 {
@@ -445,11 +445,11 @@ This does sacrifice some convenience, but if desired, the distinction can be mad
 
 ## Interaction with Reflection ## {#interaction-with-reflection}
 
-Reflection ([[P2996R5]]) is great and will probably come to C++ in the near future. It will also greatly aid in generating friendly diagnostic messages that display the template type argument's name, as demonstrated in the Usage Examples section above.
+Reflection ([[P2996R7]]) is great and will probably come to C++ in the near future. It will also greatly aid in generating friendly diagnostic messages that display the template type argument's name, as demonstrated in the Usage Examples section above.
 
 However, a natural question arises: should there be a reflection facility to get the message specified to `= delete` and attributes?
 
-In the current reflection proposal ([[P2996R5]]), there is one metafunction that queries whether the function is deleted: `meta::is_deleted`. No attribute-reflecting mechanisms are proposed in [[P2996R5]], but there is ongoing work on reflecting attributes first by [[P1887R1]] and currently by [[P3385R0]]. Should these proposals also propose the ability to query the message provided to the attributes and `= delete`?
+In the current reflection proposal ([[P2996R7]]), there is one metafunction that queries whether the function is deleted: `meta::is_deleted`. No attribute-reflecting mechanisms are proposed in [[P2996R7]], but there is ongoing work on reflecting attributes first by [[P1887R1]] and currently by [[P3385R2]]. Should these proposals also propose the ability to query the message provided to the attributes and `= delete`?
 
 The author thinks that they probably should (for instance, by letting `meta::display_name_of` return the message or add a new `meta::message_of`), but this is certainly outside the scope of this proposal. The message parameter already exists in these attributes, and this proposal does not add any new parameters to them, so the difficulty of supporting them should not change drastically.
 
@@ -521,7 +521,7 @@ The wording below is based on [[!N5001]].
 Wording notes for CWG and editor:
 - The wording below renames *static_assert-message* to *diagnostic-message*, which is now used as the grammar for the general diagnostic message parameter. (Should we actually move *diagnostic-message* to another place?)
 - The phrase "text of the *diagnostic-message*" is treated as a word of power, and is referenced by other sections defining `= delete` and attributes to simplify the wording.
-- The wording for attributes that makes them not a part of a function's immediate context comes in two parts: Note in <a href="https://eel.is/c++draft/temp.deduct.general#7">[temp.deduct.general]/7</a> and normative wording in <a href="https://eel.is/c++draft/temp.inst#14">[temp.inst]/14</a> are both adjusted to give attribute specifiers the same instantiation timing with `noexcept` specifiers. This part of the wording is inspired by similar wording in [[P2900R10]] that makes contract specifiers not part of immediate context.
+- The wording for attributes that makes them not a part of a function's immediate context comes in two parts: Note in <a href="https://eel.is/c++draft/temp.deduct.general#7">[temp.deduct.general]/7</a> and normative wording in <a href="https://eel.is/c++draft/temp.inst#14">[temp.inst]/14</a> are both adjusted to give attribute specifiers the same instantiation timing with `noexcept` specifiers. This part of the wording is inspired by similar wording in [[P2900R12]] that makes contract specifiers not part of immediate context.
     - `= delete` is not worded since that is considered a kind of function body and thus follows the same rule already.
 
 ## 7.7 Constant expressions [expr.const] ## {#expr.const}
@@ -589,7 +589,7 @@ Paragraph 2:
 
 > A program that refers to a deleted function implicitly or explicitly, other than to declare it, is ill-formed.
 
-> *Recommended practice*: The resulting diagnostic message should include the text of the <i><del>unevaluated-string</del><ins>diagnostic-message ([dcl.pre])</ins></i>, if one is supplied.
+> *Recommended practice*: The resulting diagnostic message should include the text of the <del><i>unevaluated-string</i></del><ins><i>diagnostic-message</i> ([dcl.pre])</ins>, if one is supplied.
 
 > [*Note 1*: This includes calling the function implicitly or explicitly and forming a pointer or pointer-to-member to the function.
 It applies even for references in expressions that are not potentially-evaluated. For an overload set, only the function selected by overload resolution is referenced.
