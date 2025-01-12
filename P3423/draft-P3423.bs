@@ -12,7 +12,7 @@ URL: https://wg21.link/D3423R1
 !Issue Tracking: <a href="https://github.com/Mick235711/wg21-papers/issues">GitHub Mick235711/wg21-papers</a>
 Editor: Yihe Li, winmikedows@hotmail.com
 No abstract: true
-Date: 2024-11-22
+Date: 2025-01-12
 Markup Shorthands: markdown yes
 </pre>
 
@@ -24,11 +24,11 @@ During Varna (2023-06), [[!P2741R3]] had been adopted into the C++26 working dra
 
 # Revision History # {#revisions}
 
-## R1 (2024-12 post-Wrocław Mailing) ## {#r1}
+## R1 (2025-01 pre-Hagenberg Mailing) ## {#r1}
 - Add discussion on instantiation timing of attributes, aka if SFINAE happens if the attribute argument clause results in invalid substitution.
 - Add polls section.
 - In Wrocław (2024-11), EWGI sees [[!P3423R0]] and forwarded it to EWG ([polls](#ewgi-review-wroclaw)). Audience is altered accordingly.
-- Rebase onto latest draft [[!N4993]].
+- Rebase onto latest draft [[!N5001]].
 
 ## R0 (2024-10 pre-Wrocław Mailing) ## {#r0}
 - Initial revision.
@@ -118,7 +118,7 @@ Clearly, this new "potential best" error message is much superior to the previou
 
 ## Standard Library ## {#stl-usage}
 
-This part contains some concrete examples of how functions and classes in the standard library can benefit from the new flexibility of message parameters. All examples are based on [[!N4993]], and also assumes the existence of `constexpr std::format` ([[P3391R0]]) and Reflection ([[P2996R5]]).
+This part contains some concrete examples of how functions and classes in the standard library can benefit from the new flexibility of message parameters. All examples are based on [[!N5001]], and also assumes the existence of `constexpr std::format` ([[P3391R0]]) and Reflection ([[P2996R5]]).
 
 One thing to note here is that `[[deprecated]]` is never required on the deprecated features in the standard library. Similarly, `[[nodiscard]]` is regarded as QoI after the adoption of [[P2422R1]] in St. Louis (2024-06) and no longer appears in the standard library's specification. Therefore, all the following examples only resemble some possible use of the attributes by a standard library vendor. All the examples below that used `[[nodiscard]]` were marked as so in the specification before [[P2422R1]] landed.
 
@@ -516,7 +516,7 @@ the proposed feature relatively easily. No significant obstacles are observed du
 
 # Wording # {#wording}
 
-The wording below is based on [[!N4993]].
+The wording below is based on [[!N5001]].
 
 Wording notes for CWG and editor:
 - The wording below renames *static_assert-message* to *diagnostic-message*, which is now used as the grammar for the general diagnostic message parameter. (Should we actually move *diagnostic-message* to another place?)
@@ -596,6 +596,23 @@ It applies even for references in expressions that are not potentially-evaluated
 The implicit odr-use ([basic.def.odr]) of a virtual function does not, by itself, constitute a reference. The <i><del>unevaluated-string</del><ins>diagnostic-message</ins></i>, if present, can be used to explain the rationale for deletion and/or to suggest an alternative. — *end note*]
 
 ## 9.12 Attributes [dcl.attr] ## {#dcl.attr}
+### 9.12.1 Attribute syntax and semantics [dcl.attr.grammar] ### {#dcl.attr.grammar}
+
+Paragraph 5-6:
+
+> Each *attribute-specifier-seq* is said to *appertain* to some entity or statement, identified by the syntactic context where it appears ([stmt.stmt], [dcl.dcl], [dcl.decl]). If an *attribute-specifier-seq* that appertains to some
+entity or statement contains an *attribute* or *alignment-specifier* that is not allowed to apply to that entity or statement, the program is ill-formed. If an *attribute-specifier-seq* appertains to a friend declaration ([class.friend]), that declaration shall be a definition.
+
+> [*Note 3*: An *attribute-specifier-seq* cannot appertain to an explicit instantiation ([temp.explicit]). — *end note*]
+
+> <ins>The *attribute-specifier-seq*s appertaining to a function are considered to be *needed* ([temp.inst]) when
+> - the function is odr-used ([basic.def.odr]), or
+> - the function is defined.</ins>
+
+> <ins>The *attribute-specifier-seq*s appertaining to a templated function is instantiated only when needed.</ins>
+
+> For an *attribute-token* (including an *attribute-scoped-token*) not specified in this document, the behavior is implementation-defined; any such *attribute-token* that is not recognized by the implementation is ignored.
+
 ### 9.12.5 Deprecated attribute [dcl.attr.deprecated] ### {#dcl.attr.deprecated}
 
 Paragraph 1:
@@ -636,7 +653,7 @@ Paragraph 4:
 
 Paragraph 14:
 
-> The *noexcept-specifier* <ins>and *attribute-specifier-seq* </ins>of a function template specialization is not instantiated along with the function declaration; it is instantiated when needed ([except.spec]). If such a <del>*noexcept-specifier*</del><ins>specifier</ins> is needed but has not yet been
+> The *noexcept-specifier* <ins>and *attribute-specifier-seq*s </ins>of a function template specialization <del>is</del><ins>are</ins> not instantiated along with the function declaration; <del>it is</del><ins>they are</ins> instantiated when needed ([except.spec]<ins>, [dcl.attr.grammar]</ins>). If such a <del>*noexcept-specifier*</del><ins>specifier</ins> is needed but has not yet been
 instantiated, the dependent names are looked up, the semantics constraints are checked, and the instantiation of any template used in the <del>*noexcept-specifier*</del><ins>specifier</ins> is done as if it were being done as part of instantiating the declaration of the specialization at that point.
 
 ## 13.10.3 Template argument deduction [temp.deduct] ## {#temp.deduct}
@@ -644,7 +661,7 @@ instantiated, the dependent names are looked up, the semantics constraints are c
 
 Paragraph 7:
 
-> [*Note 4*: The equivalent substitution in exception<ins> and attribute</ins> specifications is done only when the <ins>corresponding </ins>*noexcept-specifier*<ins> or *attribute-specifier-seq*</ins> is instantiated, at which point a program is ill-formed if the substitution results in an invalid type or expression. — *end note*]
+> [*Note 4*: The equivalent substitution in exception<ins> and attribute</ins> specifications is done only when the *noexcept-specifier*<ins> or *attribute-specifier-seq*, respectively,</ins> is instantiated, at which point a program is ill-formed if the substitution results in an invalid type or expression. — *end note*]
 
 ## 15.2 Conditional inclusion [cpp.cond] ## {#cpp.cond}
 
