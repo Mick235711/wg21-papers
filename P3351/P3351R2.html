@@ -1564,7 +1564,7 @@ Possible extra rowspan handling
   <meta content="Bikeshed version 742f3d674, updated Mon Nov 4 14:56:54 2024 -0800" name="generator">
   <link href="https://wg21.link/P3351R2" rel="canonical">
   <link href="https://isocpp.org/favicon.ico" rel="icon">
-  <meta content="83609ef69c83eb168d4d191c161aa55d43eebab5" name="revision">
+  <meta content="02e161afdef53326339f2d2c99791b42d84c3dee" name="revision">
   <meta content="dark light" name="color-scheme">
 <style>
 table, th, td { border:1px solid grey; }
@@ -2129,27 +2129,28 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
      <a href="#design"><span class="secno">3</span> <span class="content">Design</span></a>
      <ol class="toc">
       <li><a href="#what-is-being-proposed"><span class="secno">3.1</span> <span class="content">What Is Being Proposed?</span></a>
-      <li><a href="#prior-art"><span class="secno">3.2</span> <span class="content">Prior Art</span></a>
-      <li><a href="#alternative-names"><span class="secno">3.3</span> <span class="content">Alternative Names</span></a>
+      <li><a href="#background"><span class="secno">3.2</span> <span class="content">Background</span></a>
+      <li><a href="#prior-art"><span class="secno">3.3</span> <span class="content">Prior Art</span></a>
+      <li><a href="#alternative-names"><span class="secno">3.4</span> <span class="content">Alternative Names</span></a>
       <li>
-       <a href="#left-or-right-fold"><span class="secno">3.4</span> <span class="content">Left or Right Fold?</span></a>
+       <a href="#left-or-right-fold"><span class="secno">3.5</span> <span class="content">Left or Right Fold?</span></a>
        <ol class="toc">
-        <li><a href="#left-right-sg9-review-wroclaw"><span class="secno">3.4.1</span> <span class="content">SG9 Review, Wrocław (2024-11)</span></a>
+        <li><a href="#left-right-sg9-review-wroclaw"><span class="secno">3.5.1</span> <span class="content">SG9 Review, Wrocław (2024-11)</span></a>
        </ol>
-      <li><a href="#more-convenience-aliases"><span class="secno">3.5</span> <span class="content">More Convenience Aliases</span></a>
+      <li><a href="#more-convenience-aliases"><span class="secno">3.6</span> <span class="content">More Convenience Aliases</span></a>
       <li>
-       <a href="#range-properties"><span class="secno">3.6</span> <span class="content">Range Properties</span></a>
+       <a href="#range-properties"><span class="secno">3.7</span> <span class="content">Range Properties</span></a>
        <ol class="toc">
-        <li><a href="#reference-and-value-type"><span class="secno">3.6.1</span> <span class="content">Reference and Value Type</span></a>
-        <li><a href="#category"><span class="secno">3.6.2</span> <span class="content">Category</span></a>
-        <li><a href="#common"><span class="secno">3.6.3</span> <span class="content">Common</span></a>
-        <li><a href="#sized"><span class="secno">3.6.4</span> <span class="content">Sized</span></a>
-        <li><a href="#const-iterable"><span class="secno">3.6.5</span> <span class="content">Const-Iterable</span></a>
-        <li><a href="#borrowed"><span class="secno">3.6.6</span> <span class="content">Borrowed</span></a>
+        <li><a href="#reference-and-value-type"><span class="secno">3.7.1</span> <span class="content">Reference and Value Type</span></a>
+        <li><a href="#category"><span class="secno">3.7.2</span> <span class="content">Category</span></a>
+        <li><a href="#common"><span class="secno">3.7.3</span> <span class="content">Common</span></a>
+        <li><a href="#sized"><span class="secno">3.7.4</span> <span class="content">Sized</span></a>
+        <li><a href="#const-iterable"><span class="secno">3.7.5</span> <span class="content">Const-Iterable</span></a>
+        <li><a href="#borrowed"><span class="secno">3.7.6</span> <span class="content">Borrowed</span></a>
        </ol>
-      <li><a href="#feature-test-macro"><span class="secno">3.7</span> <span class="content">Feature Test Macro</span></a>
-      <li><a href="#freestanding"><span class="secno">3.8</span> <span class="content">Freestanding</span></a>
-      <li><a href="#future-extensions"><span class="secno">3.9</span> <span class="content">Future Extensions</span></a>
+      <li><a href="#feature-test-macro"><span class="secno">3.8</span> <span class="content">Feature Test Macro</span></a>
+      <li><a href="#freestanding"><span class="secno">3.9</span> <span class="content">Freestanding</span></a>
+      <li><a href="#future-extensions"><span class="secno">3.10</span> <span class="content">Future Extensions</span></a>
      </ol>
     <li><a href="#implementation-experience"><span class="secno">4</span> <span class="content">Implementation Experience</span></a>
     <li>
@@ -2270,6 +2271,13 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
    <p>This adaptor is also present in ranges-v3, where it is called <code class="highlight"><c- n>views</c-><c- o>::</c-><c- n>partial_sum</c-></code> with the function parameter defaulted to <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>plus</c-><c- p>{}</c-></code>. However, as <a data-link-type="biblio" href="#biblio-p2760r1" title="A Plan for C++26 Ranges">[P2760R1]</a> rightfully pointed out, <code class="highlight"><c- n>partial_sum</c-></code> is probably not suitable for a generic operation like this that can do much more than just calculating partial sum, similar to how <code class="highlight"><c- n>accumulate</c-></code> is not a suitable name for a general fold. Therefore, the more generic <code class="highlight"><c- n>scan</c-></code> name is chosen to reflect the nature of this operation. (More discussion on the naming are present in the later sections.)</p>
    <h2 class="heading settled" data-level="3" id="design"><span class="secno">3. </span><span class="content">Design</span><a class="self-link" href="#design"></a></h2>
    <h3 class="heading settled" data-level="3.1" id="what-is-being-proposed"><span class="secno">3.1. </span><span class="content">What Is Being Proposed?</span><a class="self-link" href="#what-is-being-proposed"></a></h3>
+<pre class="language-cpp highlight"><c- n>std</c-><c- o>::</c-><c- n>vector</c-> <c- n>vec</c-><c- p>{</c-><c- mi>1</c-><c- p>,</c-> <c- mi>2</c-><c- p>,</c-> <c- mi>3</c-><c- p>,</c-> <c- mi>4</c-><c- p>,</c-> <c- mi>5</c-><c- p>};</c->
+<c- n>std</c-><c- o>::</c-><c- n>println</c-><c- p>(</c-><c- s>"{}"</c-><c- p>,</c-> <c- n>vec</c-> <c- o>|</c-> <c- n>views</c-><c- o>::</c-><c- n>scan</c-><c- p>(</c-><c- n>std</c-><c- o>::</c-><c- n>plus</c-><c- p>{}));</c-> <c- c1>// [1, 3, 6, 10, 15]</c->
+<c- n>std</c-><c- o>::</c-><c- n>println</c-><c- p>(</c-><c- s>"{}"</c-><c- p>,</c-> <c- n>vec</c-> <c- o>|</c-> <c- n>views</c-><c- o>::</c-><c- n>partial_sum</c-><c- p>);</c-> <c- c1>// [1, 3, 6, 10, 15]</c->
+<c- n>std</c-><c- o>::</c-><c- n>println</c-><c- p>(</c-><c- s>"{}"</c-><c- p>,</c-> <c- n>vec</c-> <c- o>|</c-> <c- n>views</c-><c- o>::</c-><c- n>scan</c-><c- p>(</c-><c- n>std</c-><c- o>::</c-><c- n>plus</c-><c- p>{},</c-> <c- mi>10</c-><c- p>));</c-> <c- c1>// [11, 13, 16, 20, 25]</c->
+<c- n>std</c-><c- o>::</c-><c- n>println</c-><c- p>(</c-><c- s>"{}"</c-><c- p>,</c-> <c- n>vec</c-> <c- o>|</c-> <c- n>views</c-><c- o>::</c-><c- n>partial_sum</c-><c- p>(</c-><c- mi>10</c-><c- p>));</c-> <c- c1>// [11, 13, 16, 20, 25]</c->
+</pre>
+   <h3 class="heading settled" data-level="3.2" id="background"><span class="secno">3.2. </span><span class="content">Background</span><a class="self-link" href="#background"></a></h3>
    <p>Scan is a pretty common operation in functional programming. On its simplest form, scanning a sequence <code class="highlight"><c- n>x0</c-><c- p>,</c-> <c- n>x1</c-><c- p>,</c-> <c- n>x2</c-><c- p>,</c-> <c- p>...</c-></code> gives you back the sequence <code class="highlight"><c- n>x0</c-><c- p>,</c-> <c- n>x0</c-> <c- o>+</c-> <c- n>x1</c-><c- p>,</c-> <c- n>x0</c-> <c- o>+</c-> <c- n>x1</c-> <c- o>+</c-> <c- n>x2</c-><c- p>,</c-> <c- p>...</c-></code>, essentially doing a prefix sum. When generalizing <code class="highlight"><c- o>+</c-></code> to an arbitrary binary function, scan become a form of "partial" fold, in which fold-like operation is performed but with intermediate result preserved.</p>
    <p>There are two forms of scan defined in a mathematical sense: <em>inclusive</em> scan and <em>exclusive</em> scan. An inclusive scan includes <code class="highlight"><c- n>i</c-></code>-th term of the original sequence when computing the <code class="highlight"><c- n>i</c-></code>-th term of the resulting sequence, while the exclusive scan does not. Inclusive scan may optionally include an initial seed <code class="highlight"><c- n>s</c-></code> that will be used to compute the first output term, while exclusive scan requires an initial seed as the first output term directly. When summarized in a table, both forms of scan looks like this:</p>
    <table>
@@ -2324,7 +2332,7 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
 <c- n>prescan</c-><c- p>(</c-><c- n>rng</c-><c- p>,</c-> <c- n>func</c-><c- p>,</c-> <c- n>init</c-><c- p>)</c-> <c- o>=</c-> <c- n>concat</c-><c- p>(</c-><c- n>single</c-><c- p>(</c-><c- n>init</c-><c- p>),</c-> <c- n>scan</c-><c- p>(</c-><c- n>rng</c-><c- p>,</c-> <c- n>func</c-><c- p>,</c-> <c- n>init</c-><c- p>))</c->
 </pre>
    <p>Therefore, the author thinks that providing only the inclusive semantics is sufficient.</p>
-   <h3 class="heading settled" data-level="3.2" id="prior-art"><span class="secno">3.2. </span><span class="content">Prior Art</span><a class="self-link" href="#prior-art"></a></h3>
+   <h3 class="heading settled" data-level="3.3" id="prior-art"><span class="secno">3.3. </span><span class="content">Prior Art</span><a class="self-link" href="#prior-art"></a></h3>
    <p>The scan adaptor/algorithm had made an appearance in many different libraries and languages:</p>
    <ul>
     <li data-md>
@@ -2456,7 +2464,7 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
       <td>❌
       <td>✅
    </table>
-   <h3 class="heading settled" data-level="3.3" id="alternative-names"><span class="secno">3.3. </span><span class="content">Alternative Names</span><a class="self-link" href="#alternative-names"></a></h3>
+   <h3 class="heading settled" data-level="3.4" id="alternative-names"><span class="secno">3.4. </span><span class="content">Alternative Names</span><a class="self-link" href="#alternative-names"></a></h3>
    <p>The author thinks <code class="highlight"><c- n>views</c-><c- o>::</c-><c- n>scan</c-></code> and <code class="highlight"><c- n>views</c-><c- o>::</c-><c- n>partial_sum</c-></code> are pretty good names. The former have prior example in <code class="highlight"><c- n>std</c-><c- o>::</c-><c- p>[</c-><c- n>in</c-><c- p>,</c-><c- n>ex</c-><c- p>]</c-><c- n>clusive_scan</c-></code> and in Rust/Kotlin, and is a generic enough name that will not cause confusion. The latter also have prior example in <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>partial_sum</c-></code>, and partial sum is definitely one of the canonical terms of describing this operation.</p>
    <p>However, one possible naming conflict recently has arisen: <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>scan</c-></code> (<a data-link-type="biblio" href="#biblio-p1729r5" title="Text Parsing">[P1729R5]</a>). Here, the name <code class="highlight"><c- n>scan</c-></code> refers to a completely different concept: scanning user’s input, and <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>scan</c-></code> is proposed as an upgraded version of the <code class="highlight"><c- n>scanf</c-></code> family and uses <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>format</c-></code>-like syntax to parse variables from a given string input:</p>
 <pre class="language-cpp highlight"><c- k>auto</c-> <c- n>result</c-> <c- o>=</c-> <c- n>std</c-><c- o>::</c-><c- n>scan</c-><c- o>&lt;</c-><c- n>std</c-><c- o>::</c-><c- n>string</c-><c- p>,</c-> <c- b>int</c-><c- o>></c-><c- p>(</c-><c- s>"answer = 42"</c-><c- p>,</c-> <c- s>"{} = {}"</c-><c- p>);</c->
@@ -2482,7 +2490,7 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
      <p><code class="highlight"><c- n>views</c-><c- o>::</c-><c- n>cumsum</c-></code> or <code class="highlight"><c- n>views</c-><c- o>::</c-><c- n>cumulative_sum</c-></code>: Have prior example in NumPy, but in the spirit of Ranges naming we probably need to choose the latter which is a bit long.</p>
    </ul>
    <p>Overall, the author doesn’t find any of these options particularly intriguing and opts to propose the original naming of <code class="highlight"><c- n>scan</c-></code> and <code class="highlight"><c- n>partial_sum</c-></code>. This does not actually conflict with <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>scan</c-></code>, and besides, the standard library is already adopting two meanings of <code class="highlight"><c- n>scan</c-></code> by introducing both <code class="highlight"><c- n>scanf</c-></code> and <code class="highlight"><c- n>std</c-><c- o>::</c-><c- p>[</c-><c- n>in</c-><c- p>,</c-> <c- n>ex</c-><c- p>]</c-><c- n>clusive_scan</c-></code>, so it shouldn’t be that much of a confusion risk to the users.</p>
-   <h3 class="heading settled" data-level="3.4" id="left-or-right-fold"><span class="secno">3.4. </span><span class="content">Left or Right Fold?</span><a class="self-link" href="#left-or-right-fold"></a></h3>
+   <h3 class="heading settled" data-level="3.5" id="left-or-right-fold"><span class="secno">3.5. </span><span class="content">Left or Right Fold?</span><a class="self-link" href="#left-or-right-fold"></a></h3>
    <p>Theoretically, there are two possible direction of scanning a range:</p>
 <pre class="language-cpp highlight"><c- c1>// rng = [x1, x2, x3, ...]</c->
 <c- n>scan_left</c-><c- p>(</c-><c- n>rng</c-><c- p>,</c-> <c- n>f</c-><c- p>,</c-> <c- n>i</c-><c- p>)</c-> <c- c1>// [x1, f(x1, x2), f(f(x1, x2), x3), ...]</c->
@@ -2491,9 +2499,9 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
    <p>Both are certainly viable, which begs the question: Should we provide both?</p>
    <p>On the one hand, <code class="highlight"><c- n>ranges</c-><c- o>::</c-><c- n>fold</c-></code> provided both the left and the right fold version, despite the fact that right fold can be simulated by reversing the range and the function parameter order. However, here, the simulation is even easier: just reversing the order of the function parameters will turn a left scan to a right scan.</p>
    <p>Furthermore, all of the mentioned prior arts perform left scan, and it is hard to come up with a valid use case of right scan that cannot be easily covered by left scan. Therefore, the author only proposes left scan in this proposal.</p>
-   <h4 class="heading settled" data-level="3.4.1" id="left-right-sg9-review-wroclaw"><span class="secno">3.4.1. </span><span class="content">SG9 Review, Wrocław (2024-11)</span><a class="self-link" href="#left-right-sg9-review-wroclaw"></a></h4>
+   <h4 class="heading settled" data-level="3.5.1" id="left-right-sg9-review-wroclaw"><span class="secno">3.5.1. </span><span class="content">SG9 Review, Wrocław (2024-11)</span><a class="self-link" href="#left-right-sg9-review-wroclaw"></a></h4>
     SG9 agreed that only left scan is needed, since a right scan can be easily simulated by flipping the arguments of the function provided. The fundamental difference between <code class="highlight"><c- n>fold</c-></code> and <code class="highlight"><c- n>scan</c-></code> here is that <code class="highlight"><c- n>fold</c-></code> requires both reversing the range <em>and</em> flipping the arguments when changing from left to right, while <code class="highlight"><c- n>scan</c-></code> only requires the latter. 
-   <h3 class="heading settled" data-level="3.5" id="more-convenience-aliases"><span class="secno">3.5. </span><span class="content">More Convenience Aliases</span><a class="self-link" href="#more-convenience-aliases"></a></h3>
+   <h3 class="heading settled" data-level="3.6" id="more-convenience-aliases"><span class="secno">3.6. </span><span class="content">More Convenience Aliases</span><a class="self-link" href="#more-convenience-aliases"></a></h3>
    <p>Obviously, there are more aliases that can be provided besides <code class="highlight"><c- n>partial_sum</c-></code>. The three most useful aliases are:</p>
 <pre class="language-cpp highlight"><c- n>std</c-><c- o>::</c-><c- n>vector</c-><c- o>&lt;</c-><c- b>int</c-><c- o>></c-> <c- n>vec</c-><c- p>{</c-><c- mi>3</c-><c- p>,</c-> <c- mi>4</c-><c- p>,</c-> <c- mi>6</c-><c- p>,</c-> <c- mi>2</c-><c- p>,</c-> <c- mi>1</c-><c- p>,</c-> <c- mi>9</c-><c- p>,</c-> <c- mi>0</c-><c- p>,</c-> <c- mi>7</c-><c- p>,</c-> <c- mi>5</c-><c- p>,</c-> <c- mi>8</c-><c- p>}</c->
 <c- n>partial_sum</c-><c- p>(</c-><c- n>vec</c-><c- p>)</c-> <c- c1>// [3, 7, 13, 15, 16, 25, 25, 32, 37, 45]</c->
@@ -2516,9 +2524,9 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
 <pre class="language-cpp highlight"><c- n>vec</c-> <c- o>|</c-> <c- n>views</c-><c- o>::</c-><c- n>scan</c-> <c- c1>// what should this mean?</c->
 </pre>
    <p>This is similar to the scenario encountered by <code class="highlight"><c- n>ranges</c-><c- o>::</c-><c- n>fold</c-></code> (<a data-link-type="biblio" href="#biblio-p2322r6" title="ranges::fold">[P2322R6]</a>), where despite the old algorithm <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>accumulate</c-></code> took <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>plus</c-></code> as the default function parameter, <code class="highlight"><c- n>ranges</c-><c- o>::</c-><c- n>fold</c-></code> still choose to not have a default. The author feels that the same should be done for <code class="highlight"><c- n>views</c-><c- o>::</c-><c- n>scan</c-></code> (i.e. no default function), and introduce a separate <code class="highlight"><c- n>views</c-><c- o>::</c-><c- n>partial_sum</c-></code> alias that more clearly convey the intent.</p>
-   <h3 class="heading settled" data-level="3.6" id="range-properties"><span class="secno">3.6. </span><span class="content">Range Properties</span><a class="self-link" href="#range-properties"></a></h3>
+   <h3 class="heading settled" data-level="3.7" id="range-properties"><span class="secno">3.7. </span><span class="content">Range Properties</span><a class="self-link" href="#range-properties"></a></h3>
    <p>All three proposed views are range adaptors, i.e. can be piped into. <code class="highlight"><c- n>partial_sum</c-></code> is just an alias for <code class="highlight"><c- n>scan</c-><c- p>(</c-><c- n>std</c-><c- o>::</c-><c- n>plus</c-><c- p>{})</c-></code>, so it will not be mentioned in the below analysis.</p>
-   <h4 class="heading settled" data-level="3.6.1" id="reference-and-value-type"><span class="secno">3.6.1. </span><span class="content">Reference and Value Type</span><a class="self-link" href="#reference-and-value-type"></a></h4>
+   <h4 class="heading settled" data-level="3.7.1" id="reference-and-value-type"><span class="secno">3.7.1. </span><span class="content">Reference and Value Type</span><a class="self-link" href="#reference-and-value-type"></a></h4>
    <p>Consider the following:</p>
 <pre class="language-cpp highlight"><c- n>std</c-><c- o>::</c-><c- n>vector</c-><c- o>&lt;</c-><c- b>double</c-><c- o>></c-> <c- n>vec</c-><c- p>{</c-><c- mf>1.0</c-><c- p>,</c-> <c- mf>1.5</c-><c- p>,</c-> <c- mf>2.0</c-><c- p>};</c->
 <c- n>vec</c-> <c- o>|</c-> <c- n>views</c-><c- o>::</c-><c- n>scan</c-><c- p>(</c-><c- n>std</c-><c- o>::</c-><c- n>plus</c-><c- p>{},</c-> <c- mi>1</c-><c- p>);</c->
@@ -2546,27 +2554,27 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
 <c- p>)</c-> <c- c1>// ["21", "212", "2123"]</c->
 </pre>
    <p>Given that <code class="highlight"><c- n>ranges</c-><c- o>::</c-><c- n>fold_left</c-><c- p>[</c-><c- n>_first</c-><c- p>]</c-></code> chose the second approach, the author thinks that the second approach is the correct one to pursue. In other words, the value type of <code class="highlight"><c- n>scan_view</c-></code> will be <code class="highlight"><c- n>decay_t</c-><c- o>&lt;</c-><c- n>invoke_result_t</c-><c- o>&lt;</c-><c- n>F</c-><c- o>&amp;</c-><c- p>,</c-> <c- n>T</c-><c- p>,</c-> <c- n>ranges</c-><c- o>::</c-><c- n>range_reference_t</c-><c- o>&lt;</c-><c- n>Rng</c-><c- o>>>></c-></code>, and the reference type will be <code class="highlight"><c- k>const</c-> <c- n>value_type</c-><c- o>&amp;</c-></code>.</p>
-   <h4 class="heading settled" data-level="3.6.2" id="category"><span class="secno">3.6.2. </span><span class="content">Category</span><a class="self-link" href="#category"></a></h4>
+   <h4 class="heading settled" data-level="3.7.2" id="category"><span class="secno">3.7.2. </span><span class="content">Category</span><a class="self-link" href="#category"></a></h4>
    <p>At most forward. (In other words, forward if the input range is forward, otherwise input.)</p>
    <p>The resulting range cannot be bidirectional, since the function parameter cannot be applied in reverse. A future extension may enable a <code class="highlight"><c- n>scan</c-></code> with both forward and backward function parameter, but that is outside the scope of this paper.</p>
-   <h4 class="heading settled" data-level="3.6.3" id="common"><span class="secno">3.6.3. </span><span class="content">Common</span><a class="self-link" href="#common"></a></h4>
+   <h4 class="heading settled" data-level="3.7.3" id="common"><span class="secno">3.7.3. </span><span class="content">Common</span><a class="self-link" href="#common"></a></h4>
    <p>Never.</p>
    <p>This is consistent with range-v3’s implementation. The reasoning is that each iterator needs to store both the current position and the current partial sum (generalized), so that the <code class="highlight"><c- n>end</c-><c- p>()</c-></code> position’s iterator is not readily available in O(1) time.</p>
-   <h4 class="heading settled" data-level="3.6.4" id="sized"><span class="secno">3.6.4. </span><span class="content">Sized</span><a class="self-link" href="#sized"></a></h4>
+   <h4 class="heading settled" data-level="3.7.4" id="sized"><span class="secno">3.7.4. </span><span class="content">Sized</span><a class="self-link" href="#sized"></a></h4>
    <p>If and only if the input range is sized. The reported size is always equal to the input range’s size.</p>
    <p>Also, given that <a data-link-type="biblio" href="#biblio-p2846r5" title="reserve_hint: Eagerly reserving memory for not-quite-sized lazy ranges">[P2846R5]</a> is on track to be adopted for C++26, <code class="highlight"><c- n>scan_view</c-></code> also adapted that proposal by adding <code class="highlight"><c- n>reserve_hint</c-><c- p>()</c-></code> members who forwards the underlying view’s <code class="highlight"><c- n>reserve_hint</c-><c- p>()</c-></code> result appropriately.</p>
-   <h4 class="heading settled" data-level="3.6.5" id="const-iterable"><span class="secno">3.6.5. </span><span class="content">Const-Iterable</span><a class="self-link" href="#const-iterable"></a></h4>
+   <h4 class="heading settled" data-level="3.7.5" id="const-iterable"><span class="secno">3.7.5. </span><span class="content">Const-Iterable</span><a class="self-link" href="#const-iterable"></a></h4>
    <p>Similar to <code class="highlight"><c- n>views</c-><c- o>::</c-><c- n>transform</c-></code>, if and only if the input range is const-iterable and <code class="highlight"><c- n>func</c-></code> is <code class="highlight"><c- k>const</c-></code>-invocable.</p>
-   <h4 class="heading settled" data-level="3.6.6" id="borrowed"><span class="secno">3.6.6. </span><span class="content">Borrowed</span><a class="self-link" href="#borrowed"></a></h4>
+   <h4 class="heading settled" data-level="3.7.6" id="borrowed"><span class="secno">3.7.6. </span><span class="content">Borrowed</span><a class="self-link" href="#borrowed"></a></h4>
    <p>Never.</p>
    <p>At least for now. Currently, <code class="highlight"><c- n>views</c-><c- o>::</c-><c- n>transform</c-></code> is never borrowed, but after <a data-link-type="biblio" href="#biblio-p3117r1" title="Extending Conditionally Borrowed">[P3117R1]</a> determined suitable criteria for storing the function parameter in the iterator, it can be conditionally borrowed.</p>
    <p>Theoretically, the same can be applied to <code class="highlight"><c- n>scan_view</c-></code> to make it conditionally borrowed by storing the function and the initial value inside the iterator. However, the author would like to wait until <a data-link-type="biblio" href="#biblio-p3117r1" title="Extending Conditionally Borrowed">[P3117R1]</a> lands to make this change.</p>
-   <h3 class="heading settled" data-level="3.7" id="feature-test-macro"><span class="secno">3.7. </span><span class="content">Feature Test Macro</span><a class="self-link" href="#feature-test-macro"></a></h3>
+   <h3 class="heading settled" data-level="3.8" id="feature-test-macro"><span class="secno">3.8. </span><span class="content">Feature Test Macro</span><a class="self-link" href="#feature-test-macro"></a></h3>
    <p>This proposal added a new feature test macro <code class="highlight"><c- n>__cpp_lib_ranges_scan</c-></code>, which signals the availability of both <code class="highlight"><c- n>scan</c-></code> and <code class="highlight"><c- n>partial_sum</c-></code> adaptors.</p>
-   <h3 class="heading settled" data-level="3.8" id="freestanding"><span class="secno">3.8. </span><span class="content">Freestanding</span><a class="self-link" href="#freestanding"></a></h3>
+   <h3 class="heading settled" data-level="3.9" id="freestanding"><span class="secno">3.9. </span><span class="content">Freestanding</span><a class="self-link" href="#freestanding"></a></h3>
    <p><a data-link-type="biblio" href="#biblio-p1642r11" title="Freestanding Library: Easy [utilities], [ranges], and [iterators]">[P1642R11]</a> included nearly everything in <code class="highlight"><c- o>&lt;</c-><c- n>ranges</c-><c- o>></c-></code> into freestanding, except <code class="highlight"><c- n>views</c-><c- o>::</c-><c- n>istream</c-></code> and the corresponding view types. However, range adaptors added after <a data-link-type="biblio" href="#biblio-p1642r11" title="Freestanding Library: Easy [utilities], [ranges], and [iterators]">[P1642R11]</a>, like <code class="highlight"><c- n>views</c-><c- o>::</c-><c- n>concat</c-></code> and <code class="highlight"><c- n>views</c-><c- o>::</c-><c- n>enumerate</c-></code> did not include themselves in freestanding.</p>
    <p>The author assumes that this is an oversight, since I cannot see any reason for those views to not be in freestanding. As a result, the range adaptor proposed by this paper will be included in freestanding. (Adding freestanding markers to the two views mentioned above is probably out of scope for this paper, but if LWG decides that this paper should also solve that oversight, the author is happy to comply.)</p>
-   <h3 class="heading settled" data-level="3.9" id="future-extensions"><span class="secno">3.9. </span><span class="content">Future Extensions</span><a class="self-link" href="#future-extensions"></a></h3>
+   <h3 class="heading settled" data-level="3.10" id="future-extensions"><span class="secno">3.10. </span><span class="content">Future Extensions</span><a class="self-link" href="#future-extensions"></a></h3>
    <p>Several future extensions to the proposed <code class="highlight"><c- n>scan</c-></code> adaptor are possible and seen in other languages. These are outside the scope of this proposal and are only listed here as a record for inspiration.</p>
    <p>One obvious extension is to provide a variant that allows functions that operate on indexes, similar to Kotlin’s <a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.collections/scan-indexed.html"><code class="highlight"><c- n>scanIndexed</c-></code> member</a>:</p>
 <pre class="language-cpp highlight"><c- o>>>></c-> <c- n>scanIndexed</c-><c- p>([</c-><c- s>"a"</c-><c- p>,</c-> <c- s>"b"</c-><c- p>,</c-> <c- s>"c"</c-><c- p>],</c-> <c- s>"start"</c-><c- p>,</c-> <c- n>lambda</c-> <c- n>index</c-><c- p>,</c-> <c- n>acc</c-><c- p>,</c-> <c- n>elem</c-><c- o>:</c-> <c- n>acc</c-> <c- o>+</c-> <c- n>f</c-><c- s>", {index}: {elem}"</c-><c- p>)</c->

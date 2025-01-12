@@ -75,6 +75,16 @@ This adaptor is also present in ranges-v3, where it is called `views::partial_su
 
 ## What Is Being Proposed? ## {#what-is-being-proposed}
 
+```cpp
+std::vector vec{1, 2, 3, 4, 5};
+std::println("{}", vec | views::scan(std::plus{})); // [1, 3, 6, 10, 15]
+std::println("{}", vec | views::partial_sum); // [1, 3, 6, 10, 15]
+std::println("{}", vec | views::scan(std::plus{}, 10)); // [11, 13, 16, 20, 25]
+std::println("{}", vec | views::partial_sum(10)); // [11, 13, 16, 20, 25]
+```
+
+## Background ## {#background}
+
 Scan is a pretty common operation in functional programming. On its simplest form, scanning a sequence `x0, x1, x2, ...` gives you back the sequence `x0, x0 + x1, x0 + x1 + x2, ...`, essentially doing a prefix sum. When generalizing `+` to an arbitrary binary function, scan become a form of "partial" fold, in which fold-like operation is performed but with intermediate result preserved.
 
 There are two forms of scan defined in a mathematical sense: *inclusive* scan and *exclusive* scan. An inclusive scan includes `i`-th term of the original sequence when computing the `i`-th term of the resulting sequence, while the exclusive scan does not. Inclusive scan may optionally include an initial seed `s` that will be used to compute the first output term, while exclusive scan requires an initial seed as the first output term directly. When summarized in a table, both forms of scan looks like this:
