@@ -7,7 +7,7 @@ Audience: SG9
 Status: P
 Group: WG21
 !Target: C++26
-URL: https://wg21.link/D3351R2
+URL: https://wg21.link/P3351R2
 !Source: <a href="https://github.com/Mick235711/wg21-papers/blob/main/P3351/P3351R2.bs">github.com/Mick235711/wg21-papers/blob/main/P3351/P3351R2.bs</a>
 !Issue Tracking: <a href="https://github.com/Mick235711/wg21-papers/issues">GitHub Mick235711/wg21-papers</a>
 Editor: Yihe Li, winmikedows@hotmail.com
