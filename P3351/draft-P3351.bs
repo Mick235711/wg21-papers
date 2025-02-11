@@ -6,7 +6,7 @@ Revision: 3
 Audience: SG9
 Status: D
 Group: WG21
-!Target: C++26
+!Target: C++29
 URL: https://wg21.link/D3351R3
 !Source: <a href="https://github.com/Mick235711/wg21-papers/blob/main/P3351/draft-P3351.bs">github.com/Mick235711/wg21-papers/blob/main/P3351/draft-P3351.bs</a>
 !Issue Tracking: <a href="https://github.com/Mick235711/wg21-papers/issues">GitHub Mick235711/wg21-papers</a>
@@ -29,6 +29,7 @@ The `views::scan` adaptor is classified as a Tier 1 item in the Ranges plan for 
 
 ## R3 (TODO) ## {#r3}
 
+- Retargeted to C++29, given time constraints.
 - Removed `partial_sum` alias as per SG9 guidance in Hagenberg (2025-02).
 - Add significant material in the transversal category section, including discussion on stashing iterators, move-only types, and the possible choices between unconditionally input or conditionally forward for `scan_view`. (TODO)
 - Add performance figures and size discussion on the feasibility of making `scan_view` conditionally borrowed. (TODO)
@@ -363,10 +364,6 @@ The poll results indicated that the function parameter should not have a default
 - Should the naming be `views::inclusive_scan` to avoid conflict?
 - `regular_invocable` or `invocable`? Currently the wording uses the latter (following range-v3), but `transform_view` used the former.
 
-## Questions for LWG ## {#questions-for-lwg}
-- Due to never being a common range, `scan_view` simply have a single `end() const` member that returns `default_sentinel`. Is that the correct way to do this, or should I just use the end iterator of the base range?
-- The extra `bool IsInit` parameter seems a bit clunky.
-
 # Wording # {#wording}
 
 The wording below is based on [[!N5001]] with [[P2846R5]] already applied on top.
@@ -374,6 +371,7 @@ The wording below is based on [[!N5001]] with [[P2846R5]] already applied on top
 Wording notes for LWG and editor:
 - Currently, the three views' definition reside just after `views::transform`'s definition and synopsis, due to the author's perception that they are pretty similar.
 - The exposition-only concept <code><i>scannable</i></code> and <code><i>scannable-impl</i></code> is basically the same as <code><i>indirectly-binary-left-foldable</i></code> and <code><i>indirectly-binary-left-foldable-impl</i></code>; the only difference is that `F` is required to be move constructible instead of copy constructible.
+- The extra `bool IsInit` parameter only exists because the need to do `if constexpr` in `iterator`'s constructor. This complexity is unfortunate but the author have not been able to find an alternative way to express the desired semantics.
 
 ## 17.3.2 Header `<version>` synopsis [version.syn] ## {#version.syn}
 
