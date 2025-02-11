@@ -21,17 +21,23 @@ Default Highlight: cpp
 table, th, td { border:1px solid grey; }
 </style>
 
-This paper proposes the `views::scan` range adaptor family, which takes a range and a function that takes the current element *and* the current state as parameters. Basically, `views::scan` is a lazy view version of `std::inclusive_scan`, or `views::transform` with a stateful function. To make common usage of this adaptor easier, this paper also proposes `views::partial_sum`, which is `views::scan` with the binary function defaulted to `+`.
+This paper proposes the `views::scan` range adaptor family, which takes a range and a function that takes the current element *and* the current state as parameters. Basically, `views::scan` is a lazy view version of `std::inclusive_scan`, or `views::transform` with a stateful function.
 
 The `views::scan` adaptor is classified as a Tier 1 item in the Ranges plan for C++26 ([[!P2760R1]]).
 
 # Revision History # {#revisions}
 
-## R3 () ## {#r3}
+## R3 (TODO) ## {#r3}
 
-- Removed question on `operator-`; apparantly only random access ranges need to provide that in the STL (see `filter_view`, for example).
-- Reactivate the conflict section, but only as documentation on the possibly notable behavior, not as a reason to avoid overloading (TODO).
-- Move naming questions to LEWG.
+- Removed `partial_sum` alias as per SG9 guidance in Hagenberg (2025-02).
+- Add significant material in the transversal category section, including discussion on stashing iterators, move-only types, and the possible choices between unconditionally input or conditionally forward for `scan_view`. (TODO)
+- Add performance figures and size discussion on the feasibility of making `scan_view` conditionally borrowed. (TODO)
+- Add implementation experience in libc++. (TODO)
+- Editorial changes since [[!P3351R2]]:
+    - Add poll results and comments from SG9 review in Hagenberg (2025-02).
+    - Removed question on `operator-`; apparantly only random access ranges need to provide that in the STL (see `filter_view`, for example).
+    - Reactivate the conflict section, but only as documentation on the possibly notable behavior, not as a reason to avoid overloading (TODO).
+    - Move naming questions to LEWG.
 
 ## R2 (2025-01 pre-Hagenberg Mailing) ## {#r2}
 
@@ -82,11 +88,11 @@ This adaptor is also present in ranges-v3, where it is called `views::partial_su
 ## What Is Being Proposed? ## {#what-is-being-proposed}
 
 ```cpp
-std::vector vec{1, 2, 3, 4, 5};
-std::println("{}", vec | views::scan(std::plus{})); // [1, 3, 6, 10, 15]
-std::println("{}", vec | views::partial_sum); // [1, 3, 6, 10, 15]
-std::println("{}", vec | views::scan(std::plus{}, 10)); // [11, 13, 16, 20, 25]
-std::println("{}", vec | views::partial_sum(10)); // [11, 13, 16, 20, 25]
+std::vector vec{1, 2, 3, 4, 5, 4, 3, 2, 1};
+std::println("{}", vec | views::scan(std::plus{})); // [1, 3, 6, 10, 15, 19, 22, 24, 25]
+std::println("{}", vec | views::scan(std::plus{}, 10)); // [11, 13, 16, 20, 25, 29, 32, 34, 35]
+std::println("{}", vec | views::scan(ranges::max{})); // [1, 2, 3, 4, 5, 5, 5, 5, 5]
+std::println("{}", vec | views::scan(ranges::max{}, 3)); // [3, 3, 3, 4, 5, 5, 5, 5, 5]
 ```
 
 ## Background ## {#background}
@@ -144,8 +150,7 @@ Summarized in a table (without additional note, all functions provide inclusive 
         <tr><td colspan="6">**Lazy Adaptors**</td></tr>
         <tr><td rowspan="2">range-v3 /<br />`tl::ranges`</td><td>`partial_sum`</td><td>`(rng[, fun])`</td><td>✅</td><td>✅</td><td>❌</td></tr>
         <tr><td>`exclusive_scan`<br />(Exclusive semantics)</td><td>`(rng, init[, fun])`</td><td>✅</td><td>✅</td><td>✅</td></tr>
-        <tr><td rowspan="2">Proposed</td><td>`scan`</td><td>`(rng, func[, init])`</td><td>✅</td><td>❌</td><td>✅</td></tr>
-        <tr><td>`partial_sum`</td><td>`(rng[, init])`</td><td>❌</td><td>N/A</td><td>✅</td></tr>
+        <tr><td>Proposed</td><td>`scan`</td><td>`(rng, func[, init])`</td><td>✅</td><td>❌</td><td>✅</td></tr>
         <tr><td colspan="6">**Eager Algorithms**</td></tr>
         <tr><td rowspan="3">STL</td><td>`std::partial_sum`</td><td>`(rng, out[, func])`</td><td>✅</td><td>✅</td><td>❌</td></tr>
         <tr><td>`std::inclusive_scan`</td><td>`(rng, out[, func[, init]])`</td><td>✅</td><td>✅</td><td>✅</td></tr>
@@ -162,7 +167,7 @@ Summarized in a table (without additional note, all functions provide inclusive 
 
 ## Alternative Names ## {#alternative-names}
 
-The author thinks `views::scan` and `views::partial_sum` are pretty good names. The former have prior example in `std::[in,ex]clusive_scan` and in Rust/Kotlin, and is a generic enough name that will not cause confusion. The latter also have prior example in `std::partial_sum`, and partial sum is definitely one of the canonical terms of describing this operation.
+The author thinks `views::scan` is a pretty good name, which have prior example in `std::[in,ex]clusive_scan` and in Rust/Kotlin, and is a generic enough name that will not cause confusion.
 
 However, one possible naming conflict recently has arisen: `std::scan` ([[P1729R5]]). Here, the name `scan` refers to a completely different concept: scanning user's input, and `std::scan` is proposed as an upgraded version of the `scanf` family and uses `std::format`-like syntax to parse variables from a given string input:
 ```cpp
@@ -179,11 +184,7 @@ Alternative names considered for `views::scan`: (in order of decreasing preferen
 - `views::inclusive_scan`: Makes the equivalence with the STL numeric algorithm clear, and have no conflict potential with `scanf` anymore. However, the author felt that this name is a bit too long.
 - `views::accumulate`, `views::fold`, `views::fold_left`: The output is a range instead of a number, so using the same name probably is not accurate. The latter two also suffer from the same displaced correspondence problem.
 
-Alternative names considered for `views::partial_sum`: (in order of decreasing preference)
-- `views::prefix_sum`: Another canonical term for this operation, but doesn't have prior examples.
-- `views::cumsum` or `views::cumulative_sum`: Have prior example in NumPy, but in the spirit of Ranges naming we probably need to choose the latter which is a bit long.
-
-Overall, the author doesn't find any of these options particularly intriguing and opts to propose the original naming of `scan` and `partial_sum`. This does not actually conflict with `std::scan`, and besides, the standard library is already adopting two meanings of `scan` by introducing both `scanf` and `std::[in, ex]clusive_scan`, so it shouldn't be that much of a confusion risk to the users.
+Overall, the author doesn't find any of these options particularly intriguing and opts to propose the original naming of `scan`. This does not actually conflict with `std::scan`, and besides, the standard library is already adopting two meanings of `scan` by introducing both `scanf` and `std::[in, ex]clusive_scan`, so it shouldn't be that much of a confusion risk to the users.
 
 ## Left or Right Fold? ## {#left-or-right-fold}
 
@@ -204,7 +205,7 @@ SG9 agreed that only left scan is needed, since a right scan can be easily simul
 
 ## More Convenience Aliases ## {#more-convenience-aliases}
 
-Obviously, there are more aliases that can be provided besides `partial_sum`. The three most useful aliases are:
+Obviously, there are some common aliases that can be provided on top of `scan`. The four most useful aliases are:
 ```cpp
 std::vector<int> vec{3, 4, 6, 2, 1, 9, 0, 7, 5, 8}
 partial_sum(vec) // [3, 7, 13, 15, 16, 25, 25, 32, 37, 45]
@@ -212,24 +213,28 @@ partial_product(vec) // [3, 12, 72, 144, 144, 1296, 0, 0, 0, 0]
 running_min(vec) // [3, 3, 3, 2, 1, 1, 0, 0, 0, 0]
 running_max(vec) // [3, 4, 6, 6, 6, 9, 9, 9, 9, 9]
 ```
-Which are the results of applying `std::plus{}`, `std::multiplies{}`, `ranges::min`, and `ranges::max`.
+Which are the results of applying `std::plus{}`, `std::multiplies{}`, `ranges::min`, and `ranges::max` as the functor to be passed to `views::scan`, respectively.
 
-Looking at the results, these are certainly very useful aliases, even as useful as `partial_sum`. However, as stated above, all of these three aliases can be achieved by simply passing the corresponding function object (currently, `min`/`max` doesn't have a function object, but `ranges::min` and `ranges::max` become useable after [[P3136R1]] was adopted in Wrocław (2024-11)) as the function parameter, so I'm not sure it is worth the hassle of specification. Therefore, currently this proposal do not include the other three aliases, but the author is happy to add them should SG9/LEWG request.
+Looking at the results, these are certainly very useful aliases. However, as stated above, all of these four aliases can be achieved by simply passing the corresponding function object (currently, `min`/`max` doesn't have a function object, but `ranges::min` and `ranges::max` become useable after [[P3136R1]] was adopted in Wrocław (2024-11)) as the function parameter, so I'm not sure it is worth the hassle of specification. Therefore, currently this proposal do not include these aliases, but the author is happy to add them should SG9/LEWG request.
 
-As for `partial_sum` itself, there are several reasons why this alias should be added, that is certainly stronger than the case for `product`, `min` and `max`:
+R2 of this paper originally proposed the `partial_sum` aliase, as there is certainly a stronger case for it than the case for `product`, `min` and `max`:
 - All existing implementation of scan-like algorithm defaults the function argument to `+` whenever there is a default.
 - `std::partial_sum` exists
 - Partial sum is one of the most studied and used concept in programming, arguably even more useful than running min/max.
 
-One remaining question is whether `partial_sum` should be a standalone adaptor alias, or should it be folded into `scan` as the default function parameter. On the one hand, range-v3's `views::partial_sum` does this folding by using a function parameter defaults to `std::plus{}`. On the other hand, the author thinks that this will definitely cause some confusion to the users, due to the fact that a generic name like `scan` defaults to `std::plus` as its function parameter:
+It was also considered whether `partial_sum` should be a standalone adaptor alias, or should it be folded into `scan` as the default function parameter. On the one hand, range-v3's `views::partial_sum` does this folding by using a function parameter defaults to `std::plus{}`. On the other hand, the author thinks that this will definitely cause some confusion to the users, due to the fact that a generic name like `scan` defaults to `std::plus` as its function parameter:
 ```cpp
 vec | views::scan // what should this mean?
 ```
-This is similar to the scenario encountered by `ranges::fold` ([[P2322R6]]), where despite the old algorithm `std::accumulate` took `std::plus` as the default function parameter, `ranges::fold` still choose to not have a default. The author feels that the same should be done for `views::scan` (i.e. no default function), and introduce a separate `views::partial_sum` alias that more clearly convey the intent.
+This is similar to the scenario encountered by `ranges::fold` ([[P2322R6]]), where despite the old algorithm `std::accumulate` took `std::plus` as the default function parameter, `ranges::fold` still choose to not have a default. The author felt that the same should be done for `views::scan` (i.e. no default function), and introduced a separate `views::partial_sum` alias that more clearly convey the intent.
+
+### SG9 Review, Hagenberg (2025-02) ### {#alias-sg9-review-hagenberg}
+
+However, the guidance and comments received during SG9 review of [[!P3351R2]] in Hagenberg (2025-02) suggested that the `partial_sum` alias is not needed. Instead, forcing users to specify `std::plus{}` explicitly convey the intent of the operation more clearly. Therefore, the suggested aliases was dropped.
 
 ## Range Properties ## {#range-properties}
 
-All three proposed views are range adaptors, i.e. can be piped into. `partial_sum` is just an alias for `scan(std::plus{})`, so it will not be mentioned in the below analysis.
+The proposed `scan_view` is a range adaptor, i.e. can be piped into. 
 
 ### Reference and Value Type ### {#reference-and-value-type}
 
@@ -297,7 +302,7 @@ Theoretically, the same can be applied to `scan_view` to make it conditionally b
 
 ## Feature Test Macro ## {#feature-test-macro}
 
-This proposal added a new feature test macro `__cpp_lib_ranges_scan`, which signals the availability of both `scan` and `partial_sum` adaptors.
+This proposal added a new feature test macro `__cpp_lib_ranges_scan`.
 
 ## Freestanding ## {#freestanding}
 
@@ -325,7 +330,7 @@ ranges::inclusive_scan(par, rng, rng);
 ranges::transform(par, rng, some_func);
 
 // After: one pass but actually serial
-ranges::transform(par, rng | views::partial_sum, some_func);
+ranges::transform(par, rng | views::scan(std::plus{}), some_func);
 ```
 This is due to the fact that `scan_view` is at most forward, and thus, all the scanning operations can only be performed in sequence.
 
@@ -436,8 +441,6 @@ for (auto&& i : std::views::scan(vec, std::plus{}, 10)) {
 }
 ```
 -- *end example*]
-
-3. The name `views::partial_sum` denotes a range adaptor object ([range.adaptor.object]). Given subexpression `E`, the expressions `views::partial_sum(E)` and `views::partial_sum(E, F)` are expression-equivalent to `scan_view(E, std::plus{})` and `scan_view(E, std::plus{}, F)`, respectively.
 
 ## 25.7.�.2 Class template `scan_view` [range.scan.view] ## {#range.scan.view}
 
