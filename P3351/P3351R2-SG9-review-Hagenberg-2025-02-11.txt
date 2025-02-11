@@ -1,0 +1,90 @@
+Re borrowed: we don't have backward compatability concerns here,
+so we probably just want to do what P3117 wants to do directly
+
+Two choices:
+1. Always borrowed as long as input is; requires storing functor, end iterator and initial value in the iterator
+2. Use tidy-function criteria in P3117 (someone express that anything more than this is unacceptable)
+
+Making this borrowed also requires reworking iterator (store the end iterator + functor inside)
+
+ACTION: We need another version of P3351 to make scan conditionally borrowed, and measure the performance...
+
+Another concern: stashing iterator (operator* returns a reference to the iterator members) can only be input, cannot be forward
+- Move-only types in iterator will make it move-only which automatically downgrade to input anyway
+ACTION: Make it input only
+
+If it is forward, then regular_invocable definitely; if it is input, maybe? Probably still regular_invocable
+
+Remove the sum storing discussion
+
+ACTION: implement in libc++ and do tests
+
+Many people don't want partial_sum; everyone should write scan(plus)
+But operation (functor) must be in ++, not *, even under input
+
+Mostly will be numeric use cases, so copy probably is fine
+
+Polls:
+
+We think `scan_view` should always be an `input_range` because (among other reasons) we think that copying the value every time we perform a dereference is an unacceptable hidden cost.
+
+1-3-4-1-1
+
+Attendance: 13
+Author: N
+Very weak consensus, author's choice (need to get performance numbers)
+
+SA: I think multi-pass range decaying to input ranges is unexpected and should be avoided. You can use `views::to_input` if you want to avoid the extra cost. 
+
+We think `scan_view` should be conditionally borrowed when the function is a tidy function (in the P3117R1 sense).
+
+4-1-3-0-0
+
+Attendance: 13
+Author: N
+Consensus
+
+Eliminate `partial_sum` as a short-hand for `scan` with `plus`, and `scan` should not have a defaulted function argument.
+
+3-5-3-0-0
+
+Attendance: 13
+Author: N
+Consensus
+
+Iterator currently have a parent function; keep that when non-tidy-func, store end iterator when tidy-func (don't store the functor; just construct it every time; or alternatively use NUA functor member)
+default sentinel is fine (we store the end iterator)
+DO BENCHMARKS! Essentially with small and large end iterator
+cached begin() will make space requirement when storing end iterator quadratic, MEASURE THIS!
+
+-----
+Bryce's comments:
+I just want to note that prescan is not a thing that exists in literature, it's a new thing, that's why we didn't want it.
+
+@foonathan I want no default, and thus no partial_sum
+
+I think scan(plus{}) is much clearer than partial_sum
+
+For the intermediate type, it must follow the rules that fold does, where it is inferred from the function object. It cannot be taken from the input ranges type.
+
+The concern about parallelism has been misunderstood. Ved ors want the freedom to be able to deconstruct and parallelize range adaptor pipelines. Introducing new views that make that challenging without solving that underlying problem worries us. We don't want users to use views::scan with a parallel for_each and expect that to be parallelized.
+
+We want this room to take this problem seriously. We'll be very hesitant to new range adaptors until we have a solution to this overall problem.
+
+To some degree limiting parallel algos to random access solves this problem by not allowing the use of views::filter and views::scan.
+
+But it sounds like that would be ill-formed anyway with scan_view, right?
+
+But our users will complain that this doesn't work.
+
+Right it would be Zach.
+
+I understand. My users will ask for this and expect this to work. I'm not claiming that my position is reasonable. I'm just telling you what complaints we will get from users.
+
+We don't need to discuss this to death. I just want the room to be aware of what real world users want to work. We can move on.
+
+But just to be clear, I'm going to be obligated to raise this parallelism concern for every new range adaptor that doesn't support random access, so that the room is at least aware of the limitations.
+
+I'd encourage future paper authors to have a paper section that addresses whether the range adaptor is parallelism friendly or not. No is an acceptable answer.
+
+String concatenation is the non numerical use case but it's exceptionally rare

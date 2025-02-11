@@ -2,17 +2,17 @@
 Title: views::scan
 H1: <code>views::scan</code>
 Shortname: D3351
-Revision: 2
+Revision: 3
 Audience: SG9
 Status: D
 Group: WG21
 !Target: C++26
-URL: https://wg21.link/D3351R2
+URL: https://wg21.link/D3351R3
 !Source: <a href="https://github.com/Mick235711/wg21-papers/blob/main/P3351/draft-P3351.bs">github.com/Mick235711/wg21-papers/blob/main/P3351/draft-P3351.bs</a>
 !Issue Tracking: <a href="https://github.com/Mick235711/wg21-papers/issues">GitHub Mick235711/wg21-papers</a>
 Editor: Yihe Li, winmikedows@hotmail.com
 No abstract: true
-Date: 2025-01-12
+Date: 2025-02-11
 Markup Shorthands: markdown yes
 Default Highlight: cpp
 </pre>
@@ -26,6 +26,12 @@ This paper proposes the `views::scan` range adaptor family, which takes a range 
 The `views::scan` adaptor is classified as a Tier 1 item in the Ranges plan for C++26 ([[!P2760R1]]).
 
 # Revision History # {#revisions}
+
+## R3 () ## {#r3}
+
+- Removed question on `operator-`; apparantly only random access ranges need to provide that in the STL (see `filter_view`, for example).
+- Reactivate the conflict section, but only as documentation on the possibly notable behavior, not as a reason to avoid overloading (TODO).
+- Move naming questions to LEWG.
 
 ## R2 (2025-01 pre-Hagenberg Mailing) ## {#r2}
 
@@ -166,7 +172,7 @@ const auto& [key, value] = result->values();
 ```
 As noted above, this interpretation of the name `scan` also has precedence in the standard library: the `scanf` family, so this meaning also makes some sense.
 
-Notice that `std::scan` and `views::scan` do not conflict with each other since these two names are in different namespaces. However, it may be of interest to SG9/LEWG to rename `views::scan` to a different name in order to avoid user confusion about two unrelated facilities being named the same. In light of this, the following list of alternative names is provided for consideration:
+Notice that `std::scan` and `views::scan` do not conflict with each other since these two names are in different namespaces. However, it may be of interest to LEWG to rename `views::scan` to a different name in order to avoid user confusion about two unrelated facilities being named the same. In light of this, the following list of alternative names is provided for consideration:
 
 Alternative names considered for `views::scan`: (in order of decreasing preference)
 - `views::partial_fold` (suggested by [[P2214R2]], and makes the connection with `ranges::fold` clear): Pretty good name, since `scan` is just a `fold` with intermediate state saved. However, the correct analogy is actually `ranges::fold_left_first`, and `ranges::fold_left` actually corresponds to an exclusive scan, which the author felt may cause some confusion.
@@ -232,7 +238,7 @@ Consider the following:
 std::vector<double> vec{1.0, 1.5, 2.0};
 vec | views::scan(std::plus{}, 1);
 ```
-Obviously, we expect the result to be `[1.0, 2.0, 3.5, 5.5]`, not `[1, 2, 3, 5]`, therefore for `scan` we cannot just use the initial seed's type as the resulting range's reference/value type.
+Obviously, we expect the result to be `[2.0, 3.5, 5.5]`, not `[2, 3, 5]`, therefore for `scan` we cannot just use the initial seed's type as the resulting range's reference/value type.
 
 There are two choices we can make: (for input range type `Rng`, function type `F` and initial seed type `T`)
 1. Just use the reference/value type of the input range. This is consistent with `std::partial_sum`. (range-v3 also chose this approach, using the input range's value type as the reference type of `scan_view`)
@@ -285,9 +291,9 @@ Similar to `views::transform`, if and only if the input range is const-iterable 
 
 Never.
 
-At least for now. Currently, `views::transform` is never borrowed, but after [[P3117R1]] determined suitable criteria for storing the function parameter in the iterator, it can be conditionally borrowed.
+At least for now. Currently, `views::transform` is never borrowed, but after [[!P3117R1]] determined suitable criteria for storing the function parameter in the iterator, it can be conditionally borrowed.
 
-Theoretically, the same can be applied to `scan_view` to make it conditionally borrowed by storing the function and the initial value inside the iterator. However, the author would like to wait until [[P3117R1]] lands to make this change.
+Theoretically, the same can be applied to `scan_view` to make it conditionally borrowed by storing the function and the initial value inside the iterator. However, the author would like to wait until [[!P3117R1]] lands to make this change.
 
 ## Feature Test Macro ## {#feature-test-macro}
 
@@ -342,13 +348,14 @@ The author implemented this proposal in [Compiler Explorer](https://godbolt.org/
 
 # Questions To Resolve # {#questions}
 ## Questions for SG9 ## {#questions-for-sg9}
-- Should the naming be `views::inclusive_scan` to avoid conflict?
-- Should the function parameter have a default?
-- Do we need `operator-` for `sized_sentinel_for`? Between two iterators of `scan_view` and/or between iterators of `scan_view` and iterators of base range? Between iterator and sentinel?
-    - range-v3's `partial_sum_view` does not have `operator-`, but `tl::ranges`'s does.
+- Should the function parameter have a default? - Resolved ✅
+- Should more convenience aliases be added? - Resolved ✅
+
+### SG9 Review, Hagenberg (2025-02) ### {#questions-sg9-review-hagenberg}
+The poll results indicated that the function parameter should not have a default, and no more convenience aliases should be added.
 
 ## Questions for LEWG ## {#questions-for-lewg}
-- Currently, the current sum is cached in the iterator object (as implemented in range-v3). An alternative is to cache the current sum in the view object (as implemented in `tl::ranges`), such that each iterator only needs to hold a pointer to the parent view and an iterator to the current position. Which one should be chosen?
+- Should the naming be `views::inclusive_scan` to avoid conflict?
 - `regular_invocable` or `invocable`? Currently the wording uses the latter (following range-v3), but `transform_view` used the former.
 
 ## Questions for LWG ## {#questions-for-lwg}
@@ -667,6 +674,40 @@ friend constexpr bool operator==(const <i>iterator</i>& x, default_sentinel_t);
 - **Attendance**: 10
 - **Author's Position**: Favor
 - **Outcome**: No consensus either way. Author's choice.
+
+## SG9 Review, Hagenberg (2025-02) ## {#sg9-review-hagenberg}
+**Poll 1**: We think `scan_view` should always be an `input_range` because (among other reasons) we think that copying the value every time we perform a dereference is an unacceptable hidden cost.
+
+<table>
+    <thead><tr><td>Strongly Favor</td><td>Favor</td><td>Neutral</td><td>Against</td><td>Strongly Against</td></tr></thead>
+    <tbody><tr><td>1</td><td>3</td><td>4</td><td>1</td><td>1</td></tr></tbody>
+</table>
+
+- **Attendance**: 13
+- **Author's Position**: Neutral
+- **Outcome**: Very weak consensus. Author's choice.
+
+**Poll 2**: We think `scan_view` should be conditionally borrowed when the function is a tidy function (in the [[!P3117R1]] sense).
+
+<table>
+    <thead><tr><td>Strongly Favor</td><td>Favor</td><td>Neutral</td><td>Against</td><td>Strongly Against</td></tr></thead>
+    <tbody><tr><td>4</td><td>1</td><td>3</td><td>0</td><td>0</td></tr></tbody>
+</table>
+
+- **Attendance**: 13
+- **Author's Position**: Neutral
+- **Outcome**: Consensus.
+
+**Poll 3**: Eliminate `partial_sum` as a short-hand for `scan` with `plus`, and `scan` should not have a defaulted function argument.
+
+<table>
+    <thead><tr><td>Strongly Favor</td><td>Favor</td><td>Neutral</td><td>Against</td><td>Strongly Against</td></tr></thead>
+    <tbody><tr><td>3</td><td>5</td><td>3</td><td>0</td><td>0</td></tr></tbody>
+</table>
+
+- **Attendance**: 13
+- **Author's Position**: Neutral
+- **Outcome**: Consensus.
 
 # Historical Records # {#historical-records}
 
