@@ -12,7 +12,7 @@ URL: https://wg21.link/D3351R3
 !Issue Tracking: <a href="https://github.com/Mick235711/wg21-papers/issues">GitHub Mick235711/wg21-papers</a>
 Editor: Yihe Li, winmikedows@hotmail.com
 No abstract: true
-Date: 2025-02-11
+Date: 2025-04-02
 Markup Shorthands: markdown yes
 Default Highlight: cpp
 </pre>
@@ -27,13 +27,15 @@ The `views::scan` adaptor is classified as a Tier 1 item in the Ranges plan for 
 
 # Revision History # {#revisions}
 
-## R3 (TODO) ## {#r3}
+## R3 (2025-05 pre-Sofia mailing) ## {#r3}
 
 - Retargeted to C++29, given time constraints.
 - Removed `partial_sum` alias as per SG9 guidance in Hagenberg (2025-02).
 - Add significant material in the transversal category section, including discussion on stashing iterators, move-only types, and the possible choices between unconditionally input or conditionally forward for `scan_view`. (TODO)
 - Add performance figures and size discussion on the feasibility of making `scan_view` conditionally borrowed. (TODO)
 - Add implementation experience in libc++. (TODO)
+- Rebase onto latest draft [[!N5008]], which incorporates changes induced by [[P2846R6]].
+    - Since [[LWG4189]] is now accepted, the freestanding section is obsolete and is modified accordingly.
 - Editorial changes since [[!P3351R2]]:
     - Add poll results and comments from SG9 review in Hagenberg (2025-02).
     - Removed question on `operator-`; apparantly only random access ranges need to provide that in the STL (see `filter_view`, for example).
@@ -57,8 +59,8 @@ The `views::scan` adaptor is classified as a Tier 1 item in the Ranges plan for 
 - Several wording fixes:
     - Fixed the mismatch template arguments for `scan_view` in synopsis.
     - Add *italics* for exposition-only concepts.
-- Preemptively add `reserve_hint` members in anticipation of [[P2846R5]]'s acceptance.
-- Rebase onto latest draft [[!N5001]].
+- Preemptively add `reserve_hint` members in anticipation of [[P2846R6]]'s acceptance.
+- Rebase onto latest draft [[N5001]].
 
 ## R1 (2024-10 pre-Wrocław Mailing) ## {#r1}
 
@@ -287,7 +289,7 @@ This is consistent with range-v3's implementation. The reasoning is that each it
 
 If and only if the input range is sized. The reported size is always equal to the input range's size.
 
-Also, given that [[P2846R5]] is on track to be adopted for C++26, `scan_view` also adapted that proposal by adding `reserve_hint()` members who forwards the underlying view's `reserve_hint()` result appropriately.
+Also, given that [[P2846R6]] is adopted for C++26 in Hagenberg (2025-02), `scan_view` also adapted that proposal by adding `reserve_hint()` members who forwards the underlying view's `reserve_hint()` result appropriately.
 
 ### Const-Iterable ### {#const-iterable}
 
@@ -307,9 +309,9 @@ This proposal added a new feature test macro `__cpp_lib_ranges_scan`.
 
 ## Freestanding ## {#freestanding}
 
-[[P1642R11]] included nearly everything in `<ranges>` into freestanding, except `views::istream` and the corresponding view types. However, range adaptors added after [[P1642R11]], like `views::concat` and `views::enumerate` did not include themselves in freestanding.
+[[P1642R11]] included nearly everything in `<ranges>` into freestanding, and [[LWG4189]] (accepted at Hagenberg (2025-02)) make the few leftover cases such as `views::cache_latest` freestanding too. Currently, everything in `<ranges>` except `ranges::elements_of`, `views::istream` and `ranges::[basic_]istream_view` is marked freestanding, and due to the blanket `//mostly freestanding` new additions into the header will be automatically made freestanding, which is the desired behavior for `views::scan`.
 
-The author assumes that this is an oversight, since I cannot see any reason for those views to not be in freestanding. As a result, the range adaptor proposed by this paper will be included in freestanding. (Adding freestanding markers to the two views mentioned above is probably out of scope for this paper, but if LWG decides that this paper should also solve that oversight, the author is happy to comply.)
+However, [[LWG4189]] failed to mark `__cpp_lib_ranges_enumerate` as freestanding, which the author assumes is an oversight. This paper thus marks its feature-test macro as freestanding as usual.
 
 ## Future Extensions ## {#future-extensions}
 
@@ -346,7 +348,7 @@ There are several possible mitigation strategies for this problem, but none of t
 - Add named algorithms for compositions. For instance, to solve the transform + scan multi-launch problem, STL directly provides `transform_{in,ex}clusive_scan`, whose paralleled version can perform two operations in one launch. However, compositions are infinite, and STL cannot provide every composition as named algorithms (the above scan + transform operation, for instance, is not provided).
 - Special-case the range adaptors. For instance, paralleled `ranges::transform` can identify the `scan_view` being passed in and utilize `base()` and functor members to do the parallelization. However, this solution is brittle, cannot handle complex pipelines, and requires substantial work for all algorithms.
 
-Ultimately, the C++20 range adaptor is not a good abstraction for parallelism, and complex pipelines using adaptors are inherently only able to be executed serially. The parallelism problem is not unique to `scan_view`, and substantial changes to both the adaptor and iterator model (perhaps somehow separate the advancement and compute stages) are required to enable sufficient parallelism opportunities even for long pipeline compositions, which are best explored in a separate proposal. Fortunately, at least the current range parallel algorithm proposal [[P3179R4]] wisely restricted the input to be random access, so the above scan + transform invocation will result in a compile error instead of silently degrading to serial performance.
+Ultimately, the C++20 range adaptor is not a good abstraction for parallelism, and complex pipelines using adaptors are inherently only able to be executed serially. The parallelism problem is not unique to `scan_view`, and substantial changes to both the adaptor and iterator model (perhaps somehow separate the advancement and compute stages) are required to enable sufficient parallelism opportunities even for long pipeline compositions, which are best explored in a separate proposal. Fortunately, at least the current range parallel algorithm proposal [[P3179R7]] wisely restricted the input to be random access, so the above scan + transform invocation will result in a compile error instead of silently degrading to serial performance.
 
 # Implementation Experience # {#implementation-experience}
 
@@ -366,7 +368,7 @@ The poll results indicated that the function parameter should not have a default
 
 # Wording # {#wording}
 
-The wording below is based on [[!N5001]] with [[P2846R5]] already applied on top.
+The wording below is based on [[!N5008]].
 
 Wording notes for LWG and editor:
 - Currently, the three views' definition reside just after `views::transform`'s definition and synopsis, due to the author's perception that they are pretty similar.
@@ -392,28 +394,27 @@ namespace std::ranges {
     requires view&lt;V&gt; && is_object_v&lt;F&gt; &&
              regular_invocable&lt;F&, range_reference_t&lt;V&gt;&gt; &&
              <i>can-reference</i>&lt;invoke_result_t&lt;F&, range_reference_t&lt;V&gt;&gt;&gt;
-  class transform_view; // freestanding
+  class transform_view;
 
-  namespace views { inline constexpr <i>unspecified</i> transform = <i>unspecified</i>; } // freestanding
+  namespace views { inline constexpr <i>unspecified</i> transform = <i>unspecified</i>; }
 
   <ins>// [range.scan], scan view
   template&lt;input_range V, move_constructible F, move_constructible T, bool IsInit&gt;
     requires <i>see below</i>
-  class scan_view; // freestanding
+  class scan_view;
 
   namespace views {
-    inline constexpr <i>unspecified</i> scan = <i>unspecified</i>; // freestanding
-    inline constexpr <i>unspecified</i> prefix_sum = <i>unspecified</i>; // freestanding
+    inline constexpr <i>unspecified</i> scan = <i>unspecified</i>;
   }</ins>
 
   // [range.take], take view
-  template&lt;view&gt; class take_view; // freestanding
+  template&lt;view&gt; class take_view;
 
   template&lt;class T&gt;
     constexpr bool enable_borrowed_range&lt;take_view&lt;T&gt;&gt; =
-      enable_borrowed_range&lt;T&gt;; // freestanding
+      enable_borrowed_range&lt;T&gt;;
 
-  namespace views { inline constexpr <i>unspecified</i> take = <i>unspecified</i>; } // freestanding
+  namespace views { inline constexpr <i>unspecified</i> take = <i>unspecified</i>; }
   // [...]
 }
 </pre>

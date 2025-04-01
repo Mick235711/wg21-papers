@@ -2,17 +2,17 @@
 Title: Extending User-Generated Diagnostic Messages
 H1: Extending User-Generated Diagnostic Messages
 Shortname: D3423
-Revision: 1
+Revision: 2
 Audience: EWG
 Status: D
 Group: WG21
-!Target: C++26
-URL: https://wg21.link/D3423R1
+!Target: C++29
+URL: https://wg21.link/D3423R2
 !Source: <a href="https://github.com/Mick235711/wg21-papers/blob/main/P3423/draft-P3423.bs">github.com/Mick235711/wg21-papers/blob/main/P3423/draft-P3423.bs</a>
 !Issue Tracking: <a href="https://github.com/Mick235711/wg21-papers/issues">GitHub Mick235711/wg21-papers</a>
 Editor: Yihe Li, winmikedows@hotmail.com
 No abstract: true
-Date: 2025-01-12
+Date: 2025-04-02
 Markup Shorthands: markdown yes
 </pre>
 
@@ -24,11 +24,15 @@ During Varna (2023-06), [[!P2741R3]] had been adopted into the C++26 working dra
 
 # Revision History # {#revisions}
 
+## R2 (2025-05 pre-Sofia Mailing) ## {#r2}
+- Retargeted to C++29, given time constraints.
+- Rebase onto latest draft [[!N5008]], which incorporates changes induced by [[P2900R13]].
+
 ## R1 (2025-01 pre-Hagenberg Mailing) ## {#r1}
 - Add discussion on instantiation timing of attributes, aka if SFINAE happens if the attribute argument clause results in invalid substitution.
 - Add polls section.
 - In Wrocław (2024-11), EWGI sees [[!P3423R0]] and forwarded it to EWG ([polls](#ewgi-review-wroclaw)). Audience is altered accordingly.
-- Rebase onto latest draft [[!N5001]].
+- Rebase onto latest draft [[N5001]].
 
 ## R0 (2024-10 pre-Wrocław Mailing) ## {#r0}
 - Initial revision.
@@ -118,7 +122,7 @@ Clearly, this new "potential best" error message is much superior to the previou
 
 ## Standard Library ## {#stl-usage}
 
-This part contains some concrete examples of how functions and classes in the standard library can benefit from the new flexibility of message parameters. All examples are based on [[!N5001]], and also assumes the existence of `constexpr std::format` ([[P3391R0]]) and Reflection ([[P2996R7]]).
+This part contains some concrete examples of how functions and classes in the standard library can benefit from the new flexibility of message parameters. All examples are based on [[!N5008]], and also assumes the existence of `constexpr std::format` ([[P3391R0]]) and Reflection ([[P2996R10]]).
 
 One thing to note here is that `[[deprecated]]` is never required on the deprecated features in the standard library. Similarly, `[[nodiscard]]` is regarded as QoI after the adoption of [[P2422R1]] in St. Louis (2024-06) and no longer appears in the standard library's specification. Therefore, all the following examples only resemble some possible use of the attributes by a standard library vendor. All the examples below that used `[[nodiscard]]` were marked as so in the specification before [[P2422R1]] landed.
 
@@ -445,11 +449,11 @@ This does sacrifice some convenience, but if desired, the distinction can be mad
 
 ## Interaction with Reflection ## {#interaction-with-reflection}
 
-Reflection ([[P2996R7]]) is great and will probably come to C++ in the near future. It will also greatly aid in generating friendly diagnostic messages that display the template type argument's name, as demonstrated in the Usage Examples section above.
+Reflection ([[P2996R10]]) is great and will probably come to C++ in the near future. It will also greatly aid in generating friendly diagnostic messages that display the template type argument's name, as demonstrated in the Usage Examples section above.
 
 However, a natural question arises: should there be a reflection facility to get the message specified to `= delete` and attributes?
 
-In the current reflection proposal ([[P2996R7]]), there is one metafunction that queries whether the function is deleted: `meta::is_deleted`. No attribute-reflecting mechanisms are proposed in [[P2996R7]], but there is ongoing work on reflecting attributes first by [[P1887R1]] and currently by [[P3385R2]]. Should these proposals also propose the ability to query the message provided to the attributes and `= delete`?
+In the current reflection proposal ([[P2996R10]]), there is one metafunction that queries whether the function is deleted: `meta::is_deleted`. No attribute-reflecting mechanisms are proposed in [[P2996R10]], but there is ongoing work on reflecting attributes first by [[P1887R1]] and currently by [[P3385R4]]. Should these proposals also propose the ability to query the message provided to the attributes and `= delete`?
 
 The author thinks that they probably should (for instance, by letting `meta::display_name_of` return the message or add a new `meta::message_of`), but this is certainly outside the scope of this proposal. The message parameter already exists in these attributes, and this proposal does not add any new parameters to them, so the difficulty of supporting them should not change drastically.
 
@@ -465,7 +469,7 @@ This paper encourages vendors to apply any message they see fit for the purpose 
 
 ## Target Vehicle ## {#target-vehicle}
 
-This proposal targets C++26.
+This proposal targets C++29.
 
 ## Feature Test Macro ## {#feature-test-macro}
 
@@ -516,12 +520,12 @@ the proposed feature relatively easily. No significant obstacles are observed du
 
 # Wording # {#wording}
 
-The wording below is based on [[!N5001]].
+The wording below is based on [[!N5008]].
 
 Wording notes for CWG and editor:
 - The wording below renames *static_assert-message* to *diagnostic-message*, which is now used as the grammar for the general diagnostic message parameter. (Should we actually move *diagnostic-message* to another place?)
 - The phrase "text of the *diagnostic-message*" is treated as a word of power, and is referenced by other sections defining `= delete` and attributes to simplify the wording.
-- The wording for attributes that makes them not a part of a function's immediate context comes in two parts: Note in <a href="https://eel.is/c++draft/temp.deduct.general#7">[temp.deduct.general]/7</a> and normative wording in <a href="https://eel.is/c++draft/temp.inst#14">[temp.inst]/14</a> are both adjusted to give attribute specifiers the same instantiation timing with `noexcept` specifiers. This part of the wording is inspired by similar wording in [[P2900R12]] that makes contract specifiers not part of immediate context.
+- The wording for attributes that makes them not a part of a function's immediate context comes in two parts: Note in <a href="https://eel.is/c++draft/temp.deduct.general#7">[temp.deduct.general]/7</a> and normative wording in <a href="https://eel.is/c++draft/temp.inst#14">[temp.inst]/14</a> are both adjusted to give attribute specifiers the same instantiation timing with `noexcept` specifiers. This part of the wording is inspired by similar wording in <a href="https://eel.is/c++draft/dcl.contract.func#9">[dcl.contract.func]/9</a> (introduced by [[P2900R13]]) that makes contract specifiers not part of immediate context.
     - `= delete` is not worded since that is considered a kind of function body and thus follows the same rule already.
 
 ## 7.7 Constant expressions [expr.const] ## {#expr.const}
@@ -563,8 +567,8 @@ Paragraph 14:
 
 > *Recommended practice*: When a *static_assert-declaration* fails, the resulting diagnostic message should include the text of the <i><del>static_assert</del><ins>diagnostic</ins>-message</i>, if one is supplied.
 
-## 9.5 Function definitions [dcl.fct.def] ## {#dcl.fct.def}
-### 9.5.1 General [dcl.fct.def.general] ### {#dcl.fct.def.general}
+## 9.6 Function definitions [dcl.fct.def] ## {#dcl.fct.def}
+### 9.6.1 General [dcl.fct.def.general] ### {#dcl.fct.def.general}
 
 Paragraph 1:
 
@@ -583,7 +587,7 @@ Paragraph 1:
     = delete ( <i><del>unevaluated-string</del><ins>diagnostic-message</ins></i> ) ;
 </pre>
 
-### 9.5.3 Deleted definitions [dcl.fct.def.delete] ### {#dcl.fct.def.delete}
+### 9.6.3 Deleted definitions [dcl.fct.def.delete] ### {#dcl.fct.def.delete}
 
 Paragraph 2:
 
@@ -595,8 +599,8 @@ Paragraph 2:
 It applies even for references in expressions that are not potentially-evaluated. For an overload set, only the function selected by overload resolution is referenced.
 The implicit odr-use ([basic.def.odr]) of a virtual function does not, by itself, constitute a reference. The <i><del>unevaluated-string</del><ins>diagnostic-message</ins></i>, if present, can be used to explain the rationale for deletion and/or to suggest an alternative. — *end note*]
 
-## 9.12 Attributes [dcl.attr] ## {#dcl.attr}
-### 9.12.1 Attribute syntax and semantics [dcl.attr.grammar] ### {#dcl.attr.grammar}
+## 9.13 Attributes [dcl.attr] ## {#dcl.attr}
+### 9.13.1 Attribute syntax and semantics [dcl.attr.grammar] ### {#dcl.attr.grammar}
 
 Paragraph 5-6:
 
@@ -613,7 +617,7 @@ entity or statement contains an *attribute* or *alignment-specifier* that is not
 
 > For an *attribute-token* (including an *attribute-scoped-token*) not specified in this document, the behavior is implementation-defined; any such *attribute-token* that is not recognized by the implementation is ignored.
 
-### 9.12.5 Deprecated attribute [dcl.attr.deprecated] ### {#dcl.attr.deprecated}
+### 9.13.4 Deprecated attribute [dcl.attr.deprecated] ### {#dcl.attr.deprecated}
 
 Paragraph 1:
 
@@ -632,7 +636,7 @@ Paragraph 4:
 
 > *Recommended practice*: Implementations should use the `deprecated` attribute to produce a diagnostic message in case the program refers to a name or entity other than to declare it, after a declaration that specifies the attribute. The diagnostic message should include the text<ins> of the *diagnostic-message* ([dcl.pre])</ins> provided within the *attribute-argument-clause* of any `deprecated` attribute applied to the name or entity. The value of a *has-attribute-expression* for the `deprecated` attribute should be `0` unless the implementation can issue such diagnostic messages.
 
-### 9.12.10 Nodiscard attribute [dcl.attr.nodiscard] ### {#dcl.attr.nodiscard}
+### 9.13.9 Nodiscard attribute [dcl.attr.nodiscard] ### {#dcl.attr.nodiscard}
 
 Paragraph 1:
 
@@ -653,15 +657,14 @@ Paragraph 4:
 
 Paragraph 14:
 
-> The *noexcept-specifier* <ins>and *attribute-specifier-seq*s </ins>of a function template specialization <del>is</del><ins>are</ins> not instantiated along with the function declaration; <del>it is</del><ins>they are</ins> instantiated when needed ([except.spec]<ins>, [dcl.attr.grammar]</ins>). If such a <del>*noexcept-specifier*</del><ins>specifier</ins> is needed but has not yet been
-instantiated, the dependent names are looked up, the semantics constraints are checked, and the instantiation of any template used in the <del>*noexcept-specifier*</del><ins>specifier</ins> is done as if it were being done as part of instantiating the declaration of the specialization at that point.
+> The *noexcept-specifier*<ins>, *attribute-specifier-seq*s,</ins> and *function-contract-specifier*s of a function template specialization are not instantiated along with the function declaration; they are instantiated when needed ([except.spec], <ins>[dcl.attr.grammar], </ins>[dcl.contract.func]). If such a specifier is needed but has not yet been instantiated, the dependent names are looked up, the semantics constraints are checked, and the instantiation of any template used in the specifier is done as if it were being done as part of instantiating the declaration of the specialization at that point.
 
 ## 13.10.3 Template argument deduction [temp.deduct] ## {#temp.deduct}
 ### 13.10.3.1 General [temp.deduct.general] ### {#temp.deduct.general}
 
 Paragraph 7:
 
-> [*Note 4*: The equivalent substitution in exception<ins> and attribute</ins> specifications is done only when the *noexcept-specifier*<ins> or *attribute-specifier-seq*, respectively,</ins> is instantiated, at which point a program is ill-formed if the substitution results in an invalid type or expression. — *end note*]
+> [*Note 4*: The equivalent substitution in exception specifications ([except.spec])<ins>, attribute specifications ([dcl.attr.grammar]),</ins> and function contract assertions ([dcl.contract.func]) is done only when the *noexcept-specifier*<ins>, *attribute-specifier-seq*,</ins> or *function-contract-specifier*, respectively, is instantiated, at which point a program is ill-formed if the substitution results in an invalid type or expression. — *end note*]
 
 ## 15.2 Conditional inclusion [cpp.cond] ## {#cpp.cond}
 
