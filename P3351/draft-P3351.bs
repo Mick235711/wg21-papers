@@ -309,7 +309,7 @@ This proposal added a new feature test macro `__cpp_lib_ranges_scan`.
 
 ## Freestanding ## {#freestanding}
 
-[[P1642R11]] included nearly everything in `<ranges>` into freestanding, and [[LWG4189]] (accepted at Hagenberg (2025-02)) make the few leftover cases such as `views::cache_latest` freestanding too. Currently, everything in `<ranges>` except `ranges::elements_of`, `views::istream` and `ranges::[basic_]istream_view` is marked freestanding, and due to the blanket `//mostly freestanding` new additions into the header will be automatically made freestanding, which is the desired behavior for `views::scan`.
+[[P1642R11]] included nearly everything in `<ranges>` into freestanding, and [[LWG4189]] (accepted at Hagenberg (2025-02)) make the few leftover cases such as `views::cache_latest` freestanding too. Currently, everything in `<ranges>` except `ranges::elements_of`, `views::istream` and `ranges::[basic_]istream_view` is marked freestanding, and due to the blanket `// mostly freestanding` new additions into the header will be automatically made freestanding, which is the desired behavior for `views::scan`.
 
 However, [[LWG4189]] failed to mark `__cpp_lib_ranges_enumerate` as freestanding, which the author assumes is an oversight. This paper thus marks its feature-test macro as freestanding as usual.
 

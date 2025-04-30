@@ -122,7 +122,7 @@ Clearly, this new "potential best" error message is much superior to the previou
 
 ## Standard Library ## {#stl-usage}
 
-This part contains some concrete examples of how functions and classes in the standard library can benefit from the new flexibility of message parameters. All examples are based on [[!N5008]], and also assumes the existence of `constexpr std::format` ([[P3391R0]]) and Reflection ([[P2996R10]]).
+This part contains some concrete examples of how functions and classes in the standard library can benefit from the new flexibility of message parameters. All examples are based on [[!N5008]], and also assumes the existence of `constexpr std::format` ([[P3391R1]]) and Reflection ([[P2996R11]]).
 
 One thing to note here is that `[[deprecated]]` is never required on the deprecated features in the standard library. Similarly, `[[nodiscard]]` is regarded as QoI after the adoption of [[P2422R1]] in St. Louis (2024-06) and no longer appears in the standard library's specification. Therefore, all the following examples only resemble some possible use of the attributes by a standard library vendor. All the examples below that used `[[nodiscard]]` were marked as so in the specification before [[P2422R1]] landed.
 
@@ -449,11 +449,11 @@ This does sacrifice some convenience, but if desired, the distinction can be mad
 
 ## Interaction with Reflection ## {#interaction-with-reflection}
 
-Reflection ([[P2996R10]]) is great and will probably come to C++ in the near future. It will also greatly aid in generating friendly diagnostic messages that display the template type argument's name, as demonstrated in the Usage Examples section above.
+Reflection ([[P2996R11]]) is great and will probably come to C++ in the near future. It will also greatly aid in generating friendly diagnostic messages that display the template type argument's name, as demonstrated in the Usage Examples section above.
 
 However, a natural question arises: should there be a reflection facility to get the message specified to `= delete` and attributes?
 
-In the current reflection proposal ([[P2996R10]]), there is one metafunction that queries whether the function is deleted: `meta::is_deleted`. No attribute-reflecting mechanisms are proposed in [[P2996R10]], but there is ongoing work on reflecting attributes first by [[P1887R1]] and currently by [[P3385R4]]. Should these proposals also propose the ability to query the message provided to the attributes and `= delete`?
+In the current reflection proposal ([[P2996R11]]), there is one metafunction that queries whether the function is deleted: `meta::is_deleted`. No attribute-reflecting mechanisms are proposed in [[P2996R11]], but there is ongoing work on reflecting attributes first by [[P1887R1]] and currently by [[P3385R4]]. Should these proposals also propose the ability to query the message provided to the attributes and `= delete`?
 
 The author thinks that they probably should (for instance, by letting `meta::display_name_of` return the message or add a new `meta::message_of`), but this is certainly outside the scope of this proposal. The message parameter already exists in these attributes, and this proposal does not add any new parameters to them, so the difficulty of supporting them should not change drastically.
 
@@ -477,10 +477,10 @@ This proposal bumps the feature test macro for `= delete` (`__cpp_deleted_functi
 
 However, one thing to note here is that `__has_cpp_attribute` will report `0` for `[[nodiscard]]` and `[[deprecated]]` if the implementation cannot issue a warning that includes the text of the message provided. This proposal intends for the following rules to be used:
 - If an implementation cannot issue warnings that include the message (even a fixed message) at all, `__has_cpp_attribute` should report `0`.
-- If an implementation can issue warnings that include a fixed (string literal) message supplied but cannot support arbitrary string-like constant parameter as a message, `__has_cpp_attribute` should report their current value (`201907L` for `[[nodiscard]]` and `201309L` for `[[deprecated]]` as of Oct 2024).
+- If an implementation can issue warnings that include a fixed (string literal) message supplied but cannot support arbitrary string-like constant parameter as a message, `__has_cpp_attribute` should report their current value (`201907L` for `[[nodiscard]]` and `201309L` for `[[deprecated]]` as of Oct 2024). Basically, keep the status quo.
 - If an implementation can issue warnings that include user-generated strings, `__has_cpp_attribute` should report the new values modified by this proposal.
 
-Such rules are consistent with how other feature test macros worked.
+Such rules are consistent with how other feature test macros worked and follows [[P2552R3]]'s guidance.
 
 # Implementation Experience # {#implementation}
 
