@@ -1,0 +1,21 @@
+Issue:
+- There is no definition of instantiation point of attribute in the standard, especially implementation-defined attributes. Especially Clang have its own inconsistency for implementation-defined attributes.
+- We should probably define this for standard attributes.
+- Annotation (P3394) have instantiation point wording; use that
+  Add to 13.8.4.1 [temp.point]:
+  "For an annotation ([dcl.attr.annotation]), its point of instantiation is the point of instantiation of the entity to which it applies."
+  (P1306R5 also have this wording)
+
+- Something like this makes me uncomfortable, like the tools may parse attribute with string literals easily, but for this they need a compiler? - Maybe just be parsing balanced-token-soup, you can get away with it?
+- Is the feature still useful if we restrict expressions to be non-dependent? Probably not as useful…
+- = delete is probably more easy to implement
+
+Question:
+- Exploration on what happens if the expression SFINAE away?
+- How many time it is evaluated if it is dependent?
+- Further clarification on tooling whether we can wing it on balanced tokens…
+- What will happen if form a cycle? You can forward-declare a template and then redeclare it with the nodiscard, and fork a cycle…
+- Look into the instantiation point problem
+
+Encourage more work? 1-16-2-1-0 consensus
+A: Needs more testing
