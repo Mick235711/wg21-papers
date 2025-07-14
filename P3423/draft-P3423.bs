@@ -26,7 +26,7 @@ During Varna (2023-06), [[!P2741R3]] had been adopted into the C++26 working dra
 
 ## R2 (2025-05 pre-Sofia Mailing) ## {#r2}
 - Retargeted to C++29, given time constraints.
-- Rebase onto latest draft [[!N5008]], which incorporates changes induced by [[P2900R13]].
+- Rebase onto latest draft [[!N5008]], which incorporates changes induced by [[P2900R14]].
 
 ## R1 (2025-01 pre-Hagenberg Mailing) ## {#r1}
 - Add discussion on instantiation timing of attributes, aka if SFINAE happens if the attribute argument clause results in invalid substitution.
@@ -525,7 +525,7 @@ The wording below is based on [[!N5008]].
 Wording notes for CWG and editor:
 - The wording below renames *static_assert-message* to *diagnostic-message*, which is now used as the grammar for the general diagnostic message parameter. (Should we actually move *diagnostic-message* to another place?)
 - The phrase "text of the *diagnostic-message*" is treated as a word of power, and is referenced by other sections defining `= delete` and attributes to simplify the wording.
-- The wording for attributes that makes them not a part of a function's immediate context comes in two parts: Note in <a href="https://eel.is/c++draft/temp.deduct.general#7">[temp.deduct.general]/7</a> and normative wording in <a href="https://eel.is/c++draft/temp.inst#14">[temp.inst]/14</a> are both adjusted to give attribute specifiers the same instantiation timing with `noexcept` specifiers. This part of the wording is inspired by similar wording in <a href="https://eel.is/c++draft/dcl.contract.func#9">[dcl.contract.func]/9</a> (introduced by [[P2900R13]]) that makes contract specifiers not part of immediate context.
+- The wording for attributes that makes them not a part of a function's immediate context comes in two parts: Note in <a href="https://eel.is/c++draft/temp.deduct.general#7">[temp.deduct.general]/7</a> and normative wording in <a href="https://eel.is/c++draft/temp.inst#14">[temp.inst]/14</a> are both adjusted to give attribute specifiers the same instantiation timing with `noexcept` specifiers. This part of the wording is inspired by similar wording in <a href="https://eel.is/c++draft/dcl.contract.func#9">[dcl.contract.func]/9</a> (introduced by [[P2900R14]]) that makes contract specifiers not part of immediate context.
     - `= delete` is not worded since that is considered a kind of function body and thus follows the same rule already.
 
 ## 7.7 Constant expressions [expr.const] ## {#expr.const}

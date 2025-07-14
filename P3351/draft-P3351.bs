@@ -12,7 +12,7 @@ URL: https://wg21.link/D3351R3
 !Issue Tracking: <a href="https://github.com/Mick235711/wg21-papers/issues">GitHub Mick235711/wg21-papers</a>
 Editor: Yihe Li, winmikedows@hotmail.com
 No abstract: true
-Date: 2025-04-02
+Date: 2025-07-15
 Markup Shorthands: markdown yes
 Default Highlight: cpp
 </pre>
@@ -33,7 +33,7 @@ The `views::scan` adaptor is classified as a Tier 1 item in the Ranges plan for 
 - Removed `partial_sum` alias as per SG9 guidance in Hagenberg (2025-02).
 - Add significant material in the transversal category section, including discussion on stashing iterators, move-only types, and the possible choices between unconditionally input or conditionally forward for `scan_view`. (TODO)
 - Add performance figures and size discussion on the feasibility of making `scan_view` conditionally borrowed. (TODO)
-- Add implementation experience in libc++. (TODO)
+- Add implementation experience in Beman Project.
 - Rebase onto latest draft [[!N5008]], which incorporates changes induced by [[P2846R6]].
     - Since [[LWG4189]] is now accepted, the freestanding section is obsolete and is modified accordingly.
 - Editorial changes since [[!P3351R2]]:
@@ -94,8 +94,8 @@ This adaptor is also present in ranges-v3, where it is called `views::partial_su
 std::vector vec{1, 2, 3, 4, 5, 4, 3, 2, 1};
 std::println("{}", vec | views::scan(std::plus{})); // [1, 3, 6, 10, 15, 19, 22, 24, 25]
 std::println("{}", vec | views::scan(std::plus{}, 10)); // [11, 13, 16, 20, 25, 29, 32, 34, 35]
-std::println("{}", vec | views::scan(ranges::max{})); // [1, 2, 3, 4, 5, 5, 5, 5, 5]
-std::println("{}", vec | views::scan(ranges::max{}, 3)); // [3, 3, 3, 4, 5, 5, 5, 5, 5]
+std::println("{}", vec | views::scan(ranges::max)); // [1, 2, 3, 4, 5, 5, 5, 5, 5]
+std::println("{}", vec | views::scan(ranges::max, 3)); // [3, 3, 3, 4, 5, 5, 5, 5, 5]
 ```
 
 ## Background ## {#background}
@@ -352,7 +352,7 @@ Ultimately, the C++20 range adaptor is not a good abstraction for parallelism, a
 
 # Implementation Experience # {#implementation-experience}
 
-The author implemented this proposal in [Compiler Explorer](https://godbolt.org/z/qMvEhWKf9). No significant obstacles are observed.
+The author implemented this proposal in [beman.scan_view](https://github.com/bemanproject/scan_view) as part of Beman Project. No significant obstacles are observed.
 
 # Questions To Resolve # {#questions}
 ## Questions for SG9 ## {#questions-for-sg9}
