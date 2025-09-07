@@ -1,14 +1,14 @@
 <pre class='metadata'>
 Title: Contract Labels Should Use Annotation Syntax
 H1: Contract Labels Should Use Annotation Syntax
-Shortname: D3831
+Shortname: P3831
 Revision: 0
 Audience: SG21
-Status: D
+Status: P
 Group: WG21
 !Target: [[!P3400R1]]
-URL: https://wg21.link/D3831R0
-!Source: <a href="https://github.com/Mick235711/wg21-papers/blob/main/P3831/draft-P3831.bs">github.com/Mick235711/wg21-papers/blob/main/P3831/draft-P3831.bs</a>
+URL: https://wg21.link/P3831R0
+!Source: <a href="https://github.com/Mick235711/wg21-papers/blob/main/P3831/P3831R0.bs">github.com/Mick235711/wg21-papers/blob/main/P3831/P3831R0.bs</a>
 !Issue Tracking: <a href="https://github.com/Mick235711/wg21-papers/issues">GitHub Mick235711/wg21-papers</a>
 Editor: Yihe Li, winmikedows@hotmail.com
 No abstract: true
