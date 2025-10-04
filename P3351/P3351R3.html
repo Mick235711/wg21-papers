@@ -1564,7 +1564,7 @@ Possible extra rowspan handling
   <meta content="Bikeshed version 3f621ba99, updated Mon Jul 28 15:38:36 2025 -0700" name="generator">
   <link href="https://wg21.link/P3351R3" rel="canonical">
   <link href="https://isocpp.org/favicon.ico" rel="icon">
-  <meta content="239919307d32b685d341acd592342c741407eb8f" name="revision">
+  <meta content="2e9aeafeb681dab04c9c747225ed1a1980b07cc3" name="revision">
   <meta content="dark light" name="color-scheme">
 <style>
 table, th, td { border:1px solid grey; }
@@ -2093,7 +2093,7 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
    <p data-fill-with="logo"></p>
    <h1 class="p-name no-ref" id="title">P3351R3<br><code class="highlight"><c- n>views</c-><c- o>::</c-><c- n>scan</c-></code></h1>
    <h2 class="no-num no-toc no-ref heading settled" id="profile-and-date"><span class="content">Published Proposal,
-    <time class="dt-updated" datetime="2025-09-30">2025-09-30</time></span></h2>
+    <time class="dt-updated" datetime="2025-10-04">2025-10-04</time></span></h2>
    <div data-fill-with="spec-metadata">
     <dl>
      <dt>This version:
@@ -2608,11 +2608,7 @@ SG9 agreed that only left scan is needed, since a right scan can be easily simul
    <p>None of the two options are particularly appealing, but the author and SG9 ultimately thinks that copying the accumulator every time you dereference the iterator is too surprising as a hidden cost. Therefore, the author decided to make <code class="highlight"><c- n>scan_view</c-></code> input only.</p>
    <p>Theoretically we can use some type traits similar to <code class="highlight"><c- n>is_trivially_copyable</c-></code> to determine a criteria for when to copy the accumulator, but the author feels that depending a fundamental property of the iterator on such difference is hard to understand for the users.</p>
    <h4 class="heading settled" data-level="3.7.3" id="common"><span class="secno">3.7.3. </span><span class="content">Common</span><a class="self-link" href="#common"></a></h4>
-   
-                                                                                                                                                                                                               e
-Never.
-
-
+   <p>Never.</p>
    <p>This is consistent with range-v3’s implementation. The reasoning is that each iterator needs to store both the current position and the current partial sum (generalized), so that the <code class="highlight"><c- n>end</c-><c- p>()</c-></code> position’s iterator is not readily available in O(1) time.</p>
    <h4 class="heading settled" data-level="3.7.4" id="sized"><span class="secno">3.7.4. </span><span class="content">Sized</span><a class="self-link" href="#sized"></a></h4>
    <p>If and only if the input range is sized. The reported size is always equal to the input range’s size.</p>

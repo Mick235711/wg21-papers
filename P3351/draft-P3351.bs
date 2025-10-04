@@ -291,7 +291,7 @@ None of the two options are particularly appealing, but the author and SG9 ultim
 Theoretically we can use some type traits similar to `is_trivially_copyable` to determine a criteria for when to copy the accumulator, but the author feels that depending a fundamental property of the iterator on such difference is hard to understand for the users.
 
 ### Common ### {#common}
-                                                                                                                                                                                                               e
+
 Never.
 
 This is consistent with range-v3's implementation. The reasoning is that each iterator needs to store both the current position and the current partial sum (generalized), so that the `end()` position's iterator is not readily available in O(1) time.
