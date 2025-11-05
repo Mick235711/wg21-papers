@@ -1,0 +1,11 @@
+P3423 discussion
+Next revision target 29
+Paper seems unbaked; I want this but I cannot vote yes now
+Forward to CWG for C++29: 2-15-9-1-1
+SA: I think we should push harder for a full implementation
+A: Seems challenging and subtle, need better implementation
+
+TH: Regarding the approval of P3423, just a note that this will require changes to Clang with regard to when it instantiates attributes on functions. Clang currently diagnoses ill-formed attribute sequences on function declarations during overload resolution. Some examples can be seen at https://github.com/llvm/llvm-project/blob/8f683c3e4b6fe939a7d0f1167934aa823a889267/clang/test/SemaSYCL/sycl-kernel-entry-point-attr-sfinae.cpp#L30-L65. I (still) think this change is fine though; the current Clang behavior is not (always) desirable.
+CJ: Yeah, that part is less clear - hopefully the standard would be consistent with annotations.
+CJ: Clang handles attributes in template in a sort of ad-hoc way on a per attribute basis
+

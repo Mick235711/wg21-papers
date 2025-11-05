@@ -1,0 +1,17 @@
+P3351 discussion
+Design intent is for it to have same borrowed requirements with transform - yes
+bool IsInit default value need to be a declaration, not definition
+It is probably necessary because whether there is an init actually affects semantics of class after constructor
+The question is whether we want separate types for inclusive scan without and with seed or just template parameter (this is part of ABI)
+Maybe we should make the type exposition-only, and alias the type to scan_view and seeded_scan_view to prevent user from writing scan_view<…, true>
+See UTF view (utf_view_impl) for example
+Iterator should be SCARY; it have no dependency on IsInit (also need to change parent pointer to a base class; if IsInit is false you don’t need to store init in this base class, can also have variation on borrowed)
+Maybe consider making it an enum, not bool? Similar to any_view/subrange_kind
+Postfix operator++ should return void; forward_range never works
+
+Hui Xie: SCARY iterator is not a good thing! It leads to potential bugs on comparing iterator from different containers, it also loses information
+
+Replace IsInit with enum: 2-3-2-0-0
+We want IsInit to be part of exposition-only type, not scan_view type itself: 2-0-2-3-0
+Make iterator SCARY: 1-2-3-0-0
+Forward to LEWG: 4-3-0-0-0
