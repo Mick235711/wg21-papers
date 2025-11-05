@@ -2,17 +2,17 @@
 Title: views::scan
 H1: <code>views::scan</code>
 Shortname: D3351
-Revision: 3
-Audience: SG9
+Revision: 4
+Audience: LEWG
 Status: D
 Group: WG21
 !Target: C++29
-URL: https://wg21.link/D3351R3
+URL: https://wg21.link/D3351R4
 !Source: <a href="https://github.com/Mick235711/wg21-papers/blob/main/P3351/draft-P3351.bs">github.com/Mick235711/wg21-papers/blob/main/P3351/draft-P3351.bs</a>
 !Issue Tracking: <a href="https://github.com/Mick235711/wg21-papers/issues">GitHub Mick235711/wg21-papers</a>
 Editor: Yihe Li, winmikedows@hotmail.com
 No abstract: true
-Date: 2025-09-30
+Date: 2025-11-06
 Markup Shorthands: markdown yes
 Default Highlight: cpp
 </pre>
@@ -26,6 +26,12 @@ This paper proposes the `views::scan` range adaptor, which takes a range and a f
 The `views::scan` adaptor is classified as a Tier 1 item in the Ranges plan for C++26 ([[!P2760R1]]).
 
 # Revision History # {#revisions}
+
+## R4 ## {#r4}
+
+- In Kona (2025-11), SG9 sees [[!P3351R3]] and forwarded it to LEWG ([polls](#sg9-review-kona)). Audience is altered accordingly.
+- Wording changes since [[!P3351R3]] based on SG9 feedback:
+    - Removed impossible requirements on `forward_range` in iterator's postfix `operator++`.
 
 ## R3 (2025-10 pre-Kona mailing) ## {#r3}
 
@@ -575,7 +581,6 @@ namespace std::ranges {
 
     constexpr <i>iterator</i>& operator++();
     constexpr void operator++(int);
-    constexpr <i>iterator</i> operator++(int) requires forward_range&lt;<i>Base</i>&gt;;
 
     friend constexpr bool operator==(const <i>iterator</i>& x, const <i>iterator</i>& y)
       requires equality_comparable&lt;iterator_t&lt;<i>Base</i>&gt;&gt;;
@@ -622,26 +627,15 @@ constexpr void operator++(int);
 4. *Effects*: Equivalent to `++*this`.
 
 <pre>
-constexpr <i>iterator</i> operator++(int) requires forward_range&lt;<i>Base</i>&gt;;
-</pre>
-5. *Effects*: Equivalent to:
-
-```cpp
-auto tmp = *this;
-++*this;
-return tmp;
-```
-
-<pre>
 friend constexpr bool operator==(const <i>iterator</i>& x, const <i>iterator</i>& y)
   requires equality_comparable&lt;iterator_t&lt;<i>Base</i>&gt;&gt;;
 </pre>
-6. *Effects*: Equivalent to: <code>return x.<i>current_</i> == y.<i>current_</i>;</code>
+5. *Effects*: Equivalent to: <code>return x.<i>current_</i> == y.<i>current_</i>;</code>
 
 <pre>
 friend constexpr bool operator==(const <i>iterator</i>& x, default_sentinel_t);
 </pre>
-7. *Effects*: Equivalent to: <code>return x.<i>current_</i> == ranges::end(x.<i>parent_</i>-&gt;<i>base_</i>);</code>
+6. *Effects*: Equivalent to: <code>return x.<i>current_</i> == ranges::end(x.<i>parent_</i>-&gt;<i>base_</i>);</code>
 
 # Poll Results # {#poll-results}
 ## SG9 Review, Wrocław (2024-11) ## {#sg9-review-wroclaw}
@@ -722,6 +716,51 @@ friend constexpr bool operator==(const <i>iterator</i>& x, default_sentinel_t);
 - **Attendance**: 13
 - **Author's Position**: Neutral
 - **Outcome**: Consensus.
+
+## SG9 Review, Kona (2025-11) ## {#sg9-review-kona}
+**Poll 1**: Replace the `bool IsInit` template parameter with some kind of enum similar to the `std::ranges::subrange_kind` enum of `std::ranges::subrange`.
+
+<table>
+    <thead><tr><td>Strongly Favor</td><td>Favor</td><td>Neutral</td><td>Against</td><td>Strongly Against</td></tr></thead>
+    <tbody><tr><td>2</td><td>3</td><td>2</td><td>0</td><td>0</td></tr></tbody>
+</table>
+
+- **Attendance**: 8
+- **Author's Position**: Favor
+- **Outcome**: Strong consensus in favor.
+
+**Poll 2**: Instead of having an templated `scan_view` templated on having an initializer, provide two separate classes `scan_view` and `scan_view_with_init` or something like that.
+
+<table>
+    <thead><tr><td>Strongly Favor</td><td>Favor</td><td>Neutral</td><td>Against</td><td>Strongly Against</td></tr></thead>
+    <tbody><tr><td>2</td><td>0</td><td>2</td><td>3</td><td>0</td></tr></tbody>
+</table>
+
+- **Attendance**: 8
+- **Author's Position**: Neutral
+- **Outcome**: No consensus.
+
+**Poll 3**: Allow an implementation to make the iterator not dependent on the `IsInit` parameter.
+
+<table>
+    <thead><tr><td>Strongly Favor</td><td>Favor</td><td>Neutral</td><td>Against</td><td>Strongly Against</td></tr></thead>
+    <tbody><tr><td>1</td><td>2</td><td>3</td><td>0</td><td>0</td></tr></tbody>
+</table>
+
+- **Attendance**: 8
+- **Author's Position**: Neutral
+- **Outcome**: Weak consensus in favor.
+
+**Poll 4**: Forward [[!P3351R3]] `views::scan` with the changes above to LEWG for inclusion in C++29.
+
+<table>
+    <thead><tr><td>Strongly Favor</td><td>Favor</td><td>Neutral</td><td>Against</td><td>Strongly Against</td></tr></thead>
+    <tbody><tr><td>4</td><td>3</td><td>0</td><td>0</td><td>0</td></tr></tbody>
+</table>
+
+- **Attendance**: 8
+- **Author's Position**: Strongly Favor
+- **Outcome**: Strong consensus in favor.
 
 # Historical Records # {#historical-records}
 

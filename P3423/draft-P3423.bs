@@ -3,7 +3,7 @@ Title: Extending User-Generated Diagnostic Messages
 H1: Extending User-Generated Diagnostic Messages
 Shortname: D3423
 Revision: 2
-Audience: EWG
+Audience: CWG
 Status: D
 Group: WG21
 !Target: C++29
@@ -12,7 +12,7 @@ URL: https://wg21.link/D3423R2
 !Issue Tracking: <a href="https://github.com/Mick235711/wg21-papers/issues">GitHub Mick235711/wg21-papers</a>
 Editor: Yihe Li, winmikedows@hotmail.com
 No abstract: true
-Date: 2025-04-02
+Date: 2025-11-06
 Markup Shorthands: markdown yes
 </pre>
 
@@ -24,9 +24,10 @@ During Varna (2023-06), [[!P2741R3]] had been adopted into the C++26 working dra
 
 # Revision History # {#revisions}
 
-## R2 (2025-05 pre-Sofia Mailing) ## {#r2}
+## R2 ## {#r2}
 - Retargeted to C++29, given time constraints.
-- Rebase onto latest draft [[!N5008]], which incorporates changes induced by [[P2900R14]].
+- In Kona (2025-11), EWG sees [[!P3423R1]] and forwarded it to CWG ([polls](#ewg-review-kona)). Audience is altered accordingly.
+- Rebase onto latest draft [[!N5014]], which incorporates changes induced by [[P2900R14]].
 
 ## R1 (2025-01 pre-Hagenberg Mailing) ## {#r1}
 - Add discussion on instantiation timing of attributes, aka if SFINAE happens if the attribute argument clause results in invalid substitution.
@@ -122,7 +123,7 @@ Clearly, this new "potential best" error message is much superior to the previou
 
 ## Standard Library ## {#stl-usage}
 
-This part contains some concrete examples of how functions and classes in the standard library can benefit from the new flexibility of message parameters. All examples are based on [[!N5008]], and also assumes the existence of `constexpr std::format` ([[P3391R1]]) and Reflection ([[P2996R11]]).
+This part contains some concrete examples of how functions and classes in the standard library can benefit from the new flexibility of message parameters. All examples are based on [[!N5014]], and also assumes the existence of `constexpr std::format` ([[P3391R1]]) and Reflection ([[P2996R13]]).
 
 One thing to note here is that `[[deprecated]]` is never required on the deprecated features in the standard library. Similarly, `[[nodiscard]]` is regarded as QoI after the adoption of [[P2422R1]] in St. Louis (2024-06) and no longer appears in the standard library's specification. Therefore, all the following examples only resemble some possible use of the attributes by a standard library vendor. All the examples below that used `[[nodiscard]]` were marked as so in the specification before [[P2422R1]] landed.
 
@@ -225,7 +226,7 @@ warning: 'std::aligned_union' is deprecated: use alignas(A, B) std::byte[std::ma
 
 ## Third-Party Libraries ## {#third-party-libraries}
 
-A potential use case of the new flexibility to third-party library developers is to include the library name in every diagnostic emitted by the types and functions within the library. Although this is already achievable with the current fixed message parameter, adding the name to each message parameter is error-prone. A better approach is something like (assuming that `std::fixed_string` ([[P3094R5]]) exists):
+A potential use case of the new flexibility to third-party library developers is to include the library name in every diagnostic emitted by the types and functions within the library. Although this is already achievable with the current fixed message parameter, adding the name to each message parameter is error-prone. A better approach is something like (assuming that `std::fixed_string` ([[P3094R6]]) exists):
 ```cpp
 namespace my_lib
 {
@@ -449,11 +450,11 @@ This does sacrifice some convenience, but if desired, the distinction can be mad
 
 ## Interaction with Reflection ## {#interaction-with-reflection}
 
-Reflection ([[P2996R11]]) is great and will probably come to C++ in the near future. It will also greatly aid in generating friendly diagnostic messages that display the template type argument's name, as demonstrated in the Usage Examples section above.
+Reflection ([[P2996R13]], approved for C++26) is a significant change to the core language. It will greatly aid in generating friendly diagnostic messages that display the template type argument's name, as demonstrated in the Usage Examples section above.
 
 However, a natural question arises: should there be a reflection facility to get the message specified to `= delete` and attributes?
 
-In the current reflection proposal ([[P2996R11]]), there is one metafunction that queries whether the function is deleted: `meta::is_deleted`. No attribute-reflecting mechanisms are proposed in [[P2996R11]], but there is ongoing work on reflecting attributes first by [[P1887R1]] and currently by [[P3385R4]]. Should these proposals also propose the ability to query the message provided to the attributes and `= delete`?
+In the current C++26 Working Draft [[!N5014]], there is one metafunction that queries whether the function is deleted: `meta::is_deleted`. No attribute-reflecting mechanisms are proposed in [[P2996R13]], but there is ongoing work on reflecting attributes first by [[P1887R1]] and currently by [[P3385R6]]. Should these proposals also propose the ability to query the message provided to the attributes and `= delete`?
 
 The author thinks that they probably should (for instance, by letting `meta::display_name_of` return the message or add a new `meta::message_of`), but this is certainly outside the scope of this proposal. The message parameter already exists in these attributes, and this proposal does not add any new parameters to them, so the difficulty of supporting them should not change drastically.
 
@@ -520,7 +521,7 @@ the proposed feature relatively easily. No significant obstacles are observed du
 
 # Wording # {#wording}
 
-The wording below is based on [[!N5008]].
+The wording below is based on [[!N5014]].
 
 Wording notes for CWG and editor:
 - The wording below renames *static_assert-message* to *diagnostic-message*, which is now used as the grammar for the general diagnostic message parameter. (Should we actually move *diagnostic-message* to another place?)
@@ -714,6 +715,28 @@ In [tab:cpp.predefined.ft], modify the rows as indicated, and substituting `20XX
 <table>
     <thead><tr><td>Strongly Favor</td><td>Favor</td><td>Neutral</td><td>Against</td><td>Strongly Against</td></tr></thead>
     <tbody><tr><td>1</td><td>8</td><td>0</td><td>0</td><td>0</td></tr></tbody>
+</table>
+
+- **Outcome**: Consensus.
+
+## EWG Review, Sofia (2025-06) ## {#ewg-review-sofia}
+
+**Poll**: [[!P3423R1]] Extending User-Generated Diagnostic Messages: Encourage more work in the direction of the paper.
+
+<table>
+    <thead><tr><td>Strongly Favor</td><td>Favor</td><td>Neutral</td><td>Against</td><td>Strongly Against</td></tr></thead>
+    <tbody><tr><td>1</td><td>16</td><td>2</td><td>1</td><td>0</td></tr></tbody>
+</table>
+
+- **Outcome**: Consensus.
+
+## EWG Review, Kona (2025-11) ## {#ewg-review-kona}
+
+**Poll**: [[!P3423R1]] Extending User-Generated Diagnostic Messages - forward to CWG for inclusion in C++29.
+
+<table>
+    <thead><tr><td>Strongly Favor</td><td>Favor</td><td>Neutral</td><td>Against</td><td>Strongly Against</td></tr></thead>
+    <tbody><tr><td>2</td><td>15</td><td>9</td><td>1</td><td>1</td></tr></tbody>
 </table>
 
 - **Outcome**: Consensus.
