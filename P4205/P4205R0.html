@@ -1564,7 +1564,7 @@ Possible extra rowspan handling
   <meta content="Bikeshed version 0ef803fdf, updated Tue Jan 6 11:59:39 2026 -0800" name="generator">
   <link href="https://wg21.link/P4205R0" rel="canonical">
   <link href="https://isocpp.org/favicon.ico" rel="icon">
-  <meta content="bca60c4f0be4e93b4307a7f47e8e5462de2ff096" name="revision">
+  <meta content="e5d2d84fba605c8e34c58edf0838dd4a32d23431" name="revision">
   <meta content="dark light" name="color-scheme">
 <style>
 table, th, td { border:1px solid grey; }
@@ -2371,7 +2371,7 @@ It was originally introduced for more performant specialized searching.</p>
     <c- k>template</c-> <c- o>&lt;</c-><c- n>forward_range</c-> <c- n>R</c-><c- p>,</c->
               <c- n>copy_constructible</c-> <c- n>Pred</c-> <c- o>=</c-> <c- n>equal_to</c-><c- p>,</c->
               <c- n>indirectly_regular_unary_invocable</c-><c- o>&lt;</c-><c- n>iterator_t</c-><c- o>&lt;</c-><c- n>R</c-><c- o>>></c-> <c- n>Proj</c-> <c- o>=</c-> <c- n>identity</c-><c- o>></c->
-      <c- k>class</c-> <c- nc>default_searcher</c-><c- p>;</c->
+      <c- k>class</c-> <c- nc>default_searcher</c-><c- p>;</c->  <c- c1>// freestanding</c->
 
     <c- k>template</c-> <c- o>&lt;</c-><c- n>random_access_range</c-> <c- n>R</c-><c- p>,</c->
               <c- n>copy_constructible</c-> <c- n>Pred</c-> <c- o>=</c-> <c- n>equal_to</c-><c- p>,</c->

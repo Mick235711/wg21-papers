@@ -268,7 +268,7 @@ namespace std {
     template &lt;forward_range R,
               copy_constructible Pred = equal_to,
               indirectly_regular_unary_invocable&lt;iterator_t&lt;R&gt;&gt; Proj = identity&gt;
-      class default_searcher;
+      class default_searcher;  // freestanding
     
     template &lt;random_access_range R,
               copy_constructible Pred = equal_to,
