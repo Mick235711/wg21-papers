@@ -1564,7 +1564,7 @@ Possible extra rowspan handling
   <meta content="Bikeshed version 0ef803fdf, updated Tue Jan 6 11:59:39 2026 -0800" name="generator">
   <link href="https://wg21.link/P4205R0" rel="canonical">
   <link href="https://isocpp.org/favicon.ico" rel="icon">
-  <meta content="e5d2d84fba605c8e34c58edf0838dd4a32d23431" name="revision">
+  <meta content="1312aab47ef998524787a22cddf7b2d994f8dfc5" name="revision">
   <meta content="dark light" name="color-scheme">
 <style>
 table, th, td { border:1px solid grey; }
@@ -2131,7 +2131,7 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
       <li><a href="#what-is-being-proposed"><span class="secno">4.1</span> <span class="content">What Is Being Proposed?</span></a>
       <li><a href="#range-based-searchers"><span class="secno">4.2</span> <span class="content">Range-Based Searchers</span></a>
       <li><a href="#building-a-searchers-concept"><span class="secno">4.3</span> <span class="content">Building A Searchers Concept</span></a>
-      <li><a href="#return-type"><span class="secno">4.4</span> <span class="content">Return Type</span></a>
+      <li><a href="#constexpr-and-return-type"><span class="secno">4.4</span> <span class="content"><code class="highlight"><c- k>constexpr</c-></code> And Return Type</span></a>
       <li><a href="#header-choice"><span class="secno">4.5</span> <span class="content">Header Choice</span></a>
       <li><a href="#feature-test-macro-changes"><span class="secno">4.6</span> <span class="content">Feature-Test Macro Changes</span></a>
       <li><a href="#freestanding"><span class="secno">4.7</span> <span class="content">Freestanding</span></a>
@@ -2294,7 +2294,8 @@ It was originally introduced for more performant specialized searching.</p>
     <c- n>ranges</c-><c- o>::</c-><c- n>forward_range</c-><c- o>&lt;</c-><c- n>invoke_result_t</c-><c- o>&lt;</c-><c- n>Searcher</c-><c- p>,</c-> <c- n>I</c-><c- p>,</c-> <c- n>S</c-><c- p>,</c-> <c- n>P</c-><c- o>>></c->
 </pre>
    <p>Note that we deliberately use <code class="highlight"><c- n>invocable</c-></code> here since most implementations of non-trivial searchers are stateful.</p>
-   <h3 class="heading settled" data-level="4.4" id="return-type"><span class="secno">4.4. </span><span class="content">Return Type</span><a class="self-link" href="#return-type"></a></h3>
+   <h3 class="heading settled" data-level="4.4" id="constexpr-and-return-type"><span class="secno">4.4. </span><span class="content"><code class="highlight"><c- k>constexpr</c-></code> And Return Type</span><a class="self-link" href="#constexpr-and-return-type"></a></h3>
+   <p>It is worth noting that <code class="highlight"><c- n>boyer_moore_</c-><c- p>[</c-><c- n>horspool_</c-><c- p>]</c-><c- n>_searcher</c-></code> are <em>not</em> marked as <code class="highlight"><c- k>constexpr</c-></code> currently, so the <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>ranges</c-></code> versions also do not support compile-time evaluation. <code class="highlight"><c- n>default_searcher</c-></code> on the other hand did support <code class="highlight"><c- k>constexpr</c-></code>.</p>
    <p>The return type for the new overloads of <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>ranges</c-><c- o>::</c-><c- n>search</c-></code> is specified as <code class="highlight"><c- k>auto</c-></code> (i.e., copy the return type of the searcher’s <code class="highlight"><c- k>operator</c-><c- p>()</c-></code>). It is possible to require convertible to <code class="highlight"><c- n>subrange</c-><c- o>&lt;</c-><c- n>I</c-><c- o>></c-></code> here too, but the author thinks that this is an unnecessary limitation. The searcher’s <code class="highlight"><c- k>operator</c-><c- p>()</c-></code> return type is constrained to be a forward range by the concept <code class="highlight"><c- n>searchable</c-></code>.</p>
    <h3 class="heading settled" data-level="4.5" id="header-choice"><span class="secno">4.5. </span><span class="content">Header Choice</span><a class="self-link" href="#header-choice"></a></h3>
    <p>The existing standard searchers live in <code class="highlight"><c- o>&lt;</c-><c- n>functional</c-><c- o>></c-></code>, and all overloads of the <code class="highlight"><c- n>std</c-><c- o>::</c-><c- n>search</c-></code> algorithm live in <code class="highlight"><c- o>&lt;</c-><c- n>algorithm</c-><c- o>></c-></code>.</p>
@@ -2474,18 +2475,18 @@ It was originally introduced for more performant specialized searching.</p>
     <c- k>requires</c-> <c- n>semiregular</c-><c- o>&lt;</c-><c- n>range_value_t</c-><c- o>&lt;</c-><c- n>R</c-><c- o>>></c->
   <c- k>class</c-> <c- nc>boyer_moore_searcher</c-> <c- p>{</c->
   <c- k>public</c-><c- o>:</c->
-    <c- k>constexpr</c-> <c- n>boyer_moore_searcher</c-><c- p>(</c-><c- n>iterator_t</c-><c- o>&lt;</c-><c- n>R</c-><c- o>></c-> <c- n>pat_first</c-><c- p>,</c-> <c- n>sentinel_t</c-><c- o>&lt;</c-><c- n>R</c-><c- o>></c-> <c- n>pat_last</c-><c- p>,</c->
-                                   <c- n>Pred</c-> <c- n>pred</c-> <c- o>=</c-> <c- p>{},</c-> <c- n>Proj</c-> <c- n>proj</c-> <c- o>=</c-> <c- p>{},</c-> <c- n>Hash</c-> <c- n>hf</c-> <c- o>=</c-> <c- p>{});</c->
+    <c- n>boyer_moore_searcher</c-><c- p>(</c-><c- n>iterator_t</c-><c- o>&lt;</c-><c- n>R</c-><c- o>></c-> <c- n>pat_first</c-><c- p>,</c-> <c- n>sentinel_t</c-><c- o>&lt;</c-><c- n>R</c-><c- o>></c-> <c- n>pat_last</c-><c- p>,</c->
+                         <c- n>Pred</c-> <c- n>pred</c-> <c- o>=</c-> <c- p>{},</c-> <c- n>Proj</c-> <c- n>proj</c-> <c- o>=</c-> <c- p>{},</c-> <c- n>Hash</c-> <c- n>hf</c-> <c- o>=</c-> <c- p>{});</c->
     <c- k>template</c-><c- o>&lt;</c-><c- k>typename</c-> <c- nc>R2</c-><c- o>></c-> <c- k>requires</c-> <c- n>same_as</c-><c- o>&lt;</c-><c- n>remove_reference_t</c-><c- o>&lt;</c-><c- n>R2</c-><c- o>></c-><c- p>,</c-> <c- n>R</c-><c- o>></c->
-    <c- k>constexpr</c-> <c- k>explicit</c-> <c- n>boyer_moore_searcher</c-><c- p>(</c-><c- n>R2</c-><c- o>&amp;&amp;</c-> <c- n>r</c-><c- p>);</c->
+    <c- k>explicit</c-> <c- n>boyer_moore_searcher</c-><c- p>(</c-><c- n>R2</c-><c- o>&amp;&amp;</c-> <c- n>r</c-><c- p>);</c->
     <c- k>template</c-><c- o>&lt;</c-><c- k>typename</c-> <c- nc>R2</c-><c- o>></c-> <c- k>requires</c-> <c- n>same_as</c-><c- o>&lt;</c-><c- n>remove_reference_t</c-><c- o>&lt;</c-><c- n>R2</c-><c- o>></c-><c- p>,</c-> <c- n>R</c-><c- o>></c->
-    <c- k>constexpr</c-> <c- n>boyer_moore_searcher</c-><c- p>(</c-><c- n>R2</c-><c- o>&amp;&amp;</c-> <c- n>r</c-><c- p>,</c-> <c- n>Pred</c-> <c- n>pred</c-><c- p>,</c-> <c- n>Proj</c-> <c- n>proj</c-> <c- o>=</c-> <c- p>{},</c-> <c- n>Hash</c-> <c- n>hf</c-> <c- o>=</c-> <c- p>{});</c->
+    <c- n>boyer_moore_searcher</c-><c- p>(</c-><c- n>R2</c-><c- o>&amp;&amp;</c-> <c- n>r</c-><c- p>,</c-> <c- n>Pred</c-> <c- n>pred</c-><c- p>,</c-> <c- n>Proj</c-> <c- n>proj</c-> <c- o>=</c-> <c- p>{},</c-> <c- n>Hash</c-> <c- n>hf</c-> <c- o>=</c-> <c- p>{});</c->
 
     <c- k>template</c-><c- o>&lt;</c-><c- n>random_access_iterator</c-> <c- n>I2</c-><c- p>,</c-> <c- n>sentinel_for</c-><c- o>&lt;</c-><c- n>I2</c-><c- o>></c-> <c- n>S2</c-><c- p>,</c-> <c- k>class</c-> <c- nc>Proj2</c-> <c- o>=</c-> <c- n>identity</c-><c- o>></c->
-      <c- k>constexpr</c-> <c- n>subrange</c-><c- o>&lt;</c-><c- n>I2</c-><c- o>></c-> <c- k>operator</c-><c- p>()(</c-><c- n>I2</c-> <c- n>first</c-><c- p>,</c-> <c- n>S2</c-> <c- n>last</c-><c- p>,</c-> <c- n>Proj2</c-> <c- n>proj2</c-> <c- o>=</c-> <c- p>{})</c-> <c- k>const</c->
+      <c- n>subrange</c-><c- o>&lt;</c-><c- n>I2</c-><c- o>></c-> <c- k>operator</c-><c- p>()(</c-><c- n>I2</c-> <c- n>first</c-><c- p>,</c-> <c- n>S2</c-> <c- n>last</c-><c- p>,</c-> <c- n>Proj2</c-> <c- n>proj2</c-> <c- o>=</c-> <c- p>{})</c-> <c- k>const</c->
         <c- k>requires</c-> <c- n>indirectly_comparable</c-><c- o>&lt;</c-><c- n>I2</c-><c- p>,</c-> <c- n>iterator_t</c-><c- o>&lt;</c-><c- n>R</c-><c- o>></c-><c- p>,</c-> <c- n>Pred</c-><c- p>,</c-> <c- n>Proj2</c-><c- p>,</c-> <c- n>Proj</c-><c- o>></c-><c- p>;</c->
     <c- k>template</c-><c- o>&lt;</c-><c- n>random_access_range</c-> <c- n>R2</c-><c- p>,</c-> <c- k>class</c-> <c- nc>Proj2</c-> <c- o>=</c-> <c- n>identity</c-><c- o>></c->
-      <c- k>constexpr</c-> <c- n>borrowed_subrange_t</c-><c- o>&lt;</c-><c- n>R2</c-><c- o>></c-> <c- k>operator</c-><c- p>()(</c-><c- n>R2</c-><c- o>&amp;&amp;</c-> <c- n>r2</c-><c- p>,</c-> <c- n>Proj2</c-> <c- n>proj2</c-> <c- o>=</c-> <c- p>{})</c-> <c- k>const</c->
+      <c- n>borrowed_subrange_t</c-><c- o>&lt;</c-><c- n>R2</c-><c- o>></c-> <c- k>operator</c-><c- p>()(</c-><c- n>R2</c-><c- o>&amp;&amp;</c-> <c- n>r2</c-><c- p>,</c-> <c- n>Proj2</c-> <c- n>proj2</c-> <c- o>=</c-> <c- p>{})</c-> <c- k>const</c->
         <c- k>requires</c-> <c- n>indirectly_comparable</c-><c- o>&lt;</c-><c- n>iterator_t</c-><c- o>&lt;</c-><c- n>R2</c-><c- o>></c-><c- p>,</c-> <c- n>iterator_t</c-><c- o>&lt;</c-><c- n>R</c-><c- o>></c-><c- p>,</c-> <c- n>Pred</c-><c- p>,</c-> <c- n>Proj2</c-><c- p>,</c-> <c- n>Proj</c-><c- o>></c-><c- p>;</c->
 
   <c- k>private</c-><c- o>:</c->
@@ -2505,8 +2506,8 @@ It was originally introduced for more performant specialized searching.</p>
       <c- o>-></c-> <c- n>boyer_moore_searcher</c-><c- o>&lt;</c-><c- n>remove_reference_t</c-><c- o>&lt;</c-><c- n>R</c-><c- o>></c-><c- p>,</c-> <c- n>Pred</c-><c- p>,</c-> <c- n>Proj</c-><c- p>,</c-> <c- n>Hash</c-><c- o>></c-><c- p>;</c->
 <c- p>}</c->
 </pre>
-<pre class="highlight language-cpp"><c- k>constexpr</c-> <c- n>boyer_moore_searcher</c-><c- p>(</c-><c- n>iterator_t</c-><c- o>&lt;</c-><c- n>R</c-><c- o>></c-> <c- n>pat_first</c-><c- p>,</c-> <c- n>sentinel_t</c-><c- o>&lt;</c-><c- n>R</c-><c- o>></c-> <c- n>pat_last</c-><c- p>,</c->
-                               <c- n>Pred</c-> <c- n>pred</c-> <c- o>=</c-> <c- p>{},</c-> <c- n>Proj</c-> <c- n>proj</c-> <c- o>=</c-> <c- p>{},</c-> <c- n>Hash</c-> <c- n>hf</c-> <c- o>=</c-> <c- p>{});</c->
+<pre class="highlight language-cpp"><c- n>boyer_moore_searcher</c-><c- p>(</c-><c- n>iterator_t</c-><c- o>&lt;</c-><c- n>R</c-><c- o>></c-> <c- n>pat_first</c-><c- p>,</c-> <c- n>sentinel_t</c-><c- o>&lt;</c-><c- n>R</c-><c- o>></c-> <c- n>pat_last</c-><c- p>,</c->
+                     <c- n>Pred</c-> <c- n>pred</c-> <c- o>=</c-> <c- p>{},</c-> <c- n>Proj</c-> <c- n>proj</c-> <c- o>=</c-> <c- p>{},</c-> <c- n>Hash</c-> <c- n>hf</c-> <c- o>=</c-> <c- p>{});</c->
 </pre>
    <ol>
     <li data-md>
@@ -2517,7 +2518,7 @@ It was originally introduced for more performant specialized searching.</p>
      <p><em>Throws</em>: Any exception thrown by the copy constructor of <code class="highlight"><c- n>iterator_t</c-><c- o>&lt;</c-><c- n>R</c-><c- o>></c-></code> or <code class="highlight"><c- n>sentinel_t</c-><c- o>&lt;</c-><c- n>R</c-><c- o>></c-></code>, or by the default constructor, copy constructor, or the copy assignment operator of the value type of <code class="highlight"><c- n>R</c-></code>, or <code class="highlight"><c- k>operator</c-><c- p>()</c-></code> of <code class="highlight"><c- n>Pred</c-></code> or <code class="highlight"><c- n>Hash</c-></code>. May throw <code class="highlight"><c- n>bad_alloc</c-></code> if additional memory needed for internal data structures cannot be allocated.</p>
    </ol>
 <pre class="highlight language-cpp"><c- k>template</c-><c- o>&lt;</c-><c- k>typename</c-> <c- nc>R2</c-><c- o>></c-> <c- k>requires</c-> <c- n>same_as</c-><c- o>&lt;</c-><c- n>remove_reference_t</c-><c- o>&lt;</c-><c- n>R2</c-><c- o>></c-><c- p>,</c-> <c- n>R</c-><c- o>></c->
-  <c- k>constexpr</c-> <c- k>explicit</c-> <c- n>boyer_moore_searcher</c-><c- p>(</c-><c- n>R2</c-><c- o>&amp;&amp;</c-> <c- n>r</c-><c- p>);</c->
+  <c- k>explicit</c-> <c- n>boyer_moore_searcher</c-><c- p>(</c-><c- n>R2</c-><c- o>&amp;&amp;</c-> <c- n>r</c-><c- p>);</c->
 </pre>
    <ol start="4">
     <li data-md>
@@ -2528,7 +2529,7 @@ It was originally introduced for more performant specialized searching.</p>
      <p><em>Throws</em>: Any exception thrown by the copy constructor of <code class="highlight"><c- n>iterator_t</c-><c- o>&lt;</c-><c- n>R</c-><c- o>></c-></code> or <code class="highlight"><c- n>sentinel_t</c-><c- o>&lt;</c-><c- n>R</c-><c- o>></c-></code>, or by the default constructor, copy constructor, or the copy assignment operator of the value type of <code class="highlight"><c- n>R</c-></code>, or <code class="highlight"><c- k>operator</c-><c- p>()</c-></code> of <code class="highlight"><c- n>Pred</c-></code> or <code class="highlight"><c- n>Hash</c-></code>. May throw <code class="highlight"><c- n>bad_alloc</c-></code> if additional memory needed for internal data structures cannot be allocated.</p>
    </ol>
 <pre class="highlight language-cpp"><c- k>template</c-><c- o>&lt;</c-><c- k>typename</c-> <c- nc>R2</c-><c- o>></c-> <c- k>requires</c-> <c- n>same_as</c-><c- o>&lt;</c-><c- n>remove_reference_t</c-><c- o>&lt;</c-><c- n>R2</c-><c- o>></c-><c- p>,</c-> <c- n>R</c-><c- o>></c->
-  <c- k>constexpr</c-> <c- n>boyer_moore_searcher</c-><c- p>(</c-><c- n>R2</c-><c- o>&amp;&amp;</c-> <c- n>r</c-><c- p>,</c-> <c- n>Pred</c-> <c- n>pred</c-><c- p>,</c-> <c- n>Proj</c-> <c- n>proj</c-> <c- o>=</c-> <c- p>{},</c-> <c- n>Hash</c-> <c- n>hf</c-> <c- o>=</c-> <c- p>{});</c->
+  <c- n>boyer_moore_searcher</c-><c- p>(</c-><c- n>R2</c-><c- o>&amp;&amp;</c-> <c- n>r</c-><c- p>,</c-> <c- n>Pred</c-> <c- n>pred</c-><c- p>,</c-> <c- n>Proj</c-> <c- n>proj</c-> <c- o>=</c-> <c- p>{},</c-> <c- n>Hash</c-> <c- n>hf</c-> <c- o>=</c-> <c- p>{});</c->
 </pre>
    <ol start="7">
     <li data-md>
@@ -2539,7 +2540,7 @@ It was originally introduced for more performant specialized searching.</p>
      <p><em>Throws</em>: Any exception thrown by the copy constructor of <code class="highlight"><c- n>iterator_t</c-><c- o>&lt;</c-><c- n>R</c-><c- o>></c-></code> or <code class="highlight"><c- n>sentinel_t</c-><c- o>&lt;</c-><c- n>R</c-><c- o>></c-></code>, or by the default constructor, copy constructor, or the copy assignment operator of the value type of <code class="highlight"><c- n>R</c-></code>, or <code class="highlight"><c- k>operator</c-><c- p>()</c-></code> of <code class="highlight"><c- n>Pred</c-></code> or <code class="highlight"><c- n>Hash</c-></code>. May throw <code class="highlight"><c- n>bad_alloc</c-></code> if additional memory needed for internal data structures cannot be allocated.</p>
    </ol>
 <pre class="highlight language-cpp"><c- k>template</c-><c- o>&lt;</c-><c- n>random_access_iterator</c-> <c- n>I2</c-><c- p>,</c-> <c- n>sentinel_for</c-><c- o>&lt;</c-><c- n>I2</c-><c- o>></c-> <c- n>S2</c-><c- p>,</c-> <c- k>class</c-> <c- nc>Proj2</c-> <c- o>=</c-> <c- n>identity</c-><c- o>></c->
-  <c- k>constexpr</c-> <c- n>subrange</c-><c- o>&lt;</c-><c- n>I2</c-><c- o>></c-> <c- k>operator</c-><c- p>()(</c-><c- n>I2</c-> <c- n>first</c-><c- p>,</c-> <c- n>S2</c-> <c- n>last</c-><c- p>,</c-> <c- n>Proj2</c-> <c- n>proj2</c-> <c- o>=</c-> <c- p>{})</c-> <c- k>const</c->
+  <c- n>subrange</c-><c- o>&lt;</c-><c- n>I2</c-><c- o>></c-> <c- k>operator</c-><c- p>()(</c-><c- n>I2</c-> <c- n>first</c-><c- p>,</c-> <c- n>S2</c-> <c- n>last</c-><c- p>,</c-> <c- n>Proj2</c-> <c- n>proj2</c-> <c- o>=</c-> <c- p>{})</c-> <c- k>const</c->
     <c- k>requires</c-> <c- n>indirectly_comparable</c-><c- o>&lt;</c-><c- n>I2</c-><c- p>,</c-> <c- n>iterator_t</c-><c- o>&lt;</c-><c- n>R</c-><c- o>></c-><c- p>,</c-> <c- n>Pred</c-><c- p>,</c-> <c- n>Proj2</c-><c- p>,</c-> <c- n>Proj</c-><c- o>></c-><c- p>;</c->
 </pre>
    <ol start="10">
@@ -2562,7 +2563,7 @@ It was originally introduced for more performant specialized searching.</p>
      <p><em>Complexity</em>: At most <code class="highlight"><c- p>(</c-><c- n>last</c-> <c- o>-</c-> <c- n>first</c-><c- p>)</c-> <c- o>*</c-> <c- p>(</c-><i><c- n>pat_last_</c-></i> <c- o>-</c-> <i><c- n>pat_first_</c-></i><c- p>)</c-></code> applications of the predicate, and at most <code class="highlight"><c- p>(</c-><c- n>last</c-> <c- o>-</c-> <c- n>first</c-><c- p>)</c-> <c- o>*</c-> <c- p>(</c-><i><c- n>pat_last_</c-></i> <c- o>-</c-> <i><c- n>pat_first_</c-></i> <c- o>+</c-> <c- mi>1</c-><c- p>)</c-></code> applications of either projection.</p>
    </ol>
 <pre class="highlight language-cpp"><c- k>template</c-><c- o>&lt;</c-><c- n>random_access_range</c-> <c- n>R2</c-><c- p>,</c-> <c- k>class</c-> <c- nc>Proj2</c-> <c- o>=</c-> <c- n>identity</c-><c- o>></c->
-  <c- k>constexpr</c-> <c- n>borrowed_subrange_t</c-><c- o>&lt;</c-><c- n>R2</c-><c- o>></c-> <c- k>operator</c-><c- p>()(</c-><c- n>R2</c-><c- o>&amp;&amp;</c-> <c- n>r2</c-><c- p>,</c-> <c- n>Proj2</c-> <c- n>proj2</c-> <c- o>=</c-> <c- p>{})</c-> <c- k>const</c->
+  <c- n>borrowed_subrange_t</c-><c- o>&lt;</c-><c- n>R2</c-><c- o>></c-> <c- k>operator</c-><c- p>()(</c-><c- n>R2</c-><c- o>&amp;&amp;</c-> <c- n>r2</c-><c- p>,</c-> <c- n>Proj2</c-> <c- n>proj2</c-> <c- o>=</c-> <c- p>{})</c-> <c- k>const</c->
     <c- k>requires</c-> <c- n>indirectly_comparable</c-><c- o>&lt;</c-><c- n>iterator_t</c-><c- o>&lt;</c-><c- n>R2</c-><c- o>></c-><c- p>,</c-> <c- n>iterator_t</c-><c- o>&lt;</c-><c- n>R</c-><c- o>></c-><c- p>,</c-> <c- n>Pred</c-><c- p>,</c-> <c- n>Proj2</c-><c- p>,</c-> <c- n>Proj</c-><c- o>></c-><c- p>;</c->
 </pre>
    <ol start="14">
@@ -2578,18 +2579,18 @@ It was originally introduced for more performant specialized searching.</p>
     <c- k>requires</c-> <c- n>semiregular</c-><c- o>&lt;</c-><c- n>range_value_t</c-><c- o>&lt;</c-><c- n>R</c-><c- o>>></c->
   <c- k>class</c-> <c- nc>boyer_moore_horspool_searcher</c-> <c- p>{</c->
   <c- k>public</c-><c- o>:</c->
-    <c- k>constexpr</c-> <c- n>boyer_moore_horspool_searcher</c-><c- p>(</c-><c- n>iterator_t</c-><c- o>&lt;</c-><c- n>R</c-><c- o>></c-> <c- n>pat_first</c-><c- p>,</c-> <c- n>sentinel_t</c-><c- o>&lt;</c-><c- n>R</c-><c- o>></c-> <c- n>pat_last</c-><c- p>,</c->
-                                            <c- n>Pred</c-> <c- n>pred</c-> <c- o>=</c-> <c- p>{},</c-> <c- n>Proj</c-> <c- n>proj</c-> <c- o>=</c-> <c- p>{},</c-> <c- n>Hash</c-> <c- n>hf</c-> <c- o>=</c-> <c- p>{});</c->
+    <c- n>boyer_moore_horspool_searcher</c-><c- p>(</c-><c- n>iterator_t</c-><c- o>&lt;</c-><c- n>R</c-><c- o>></c-> <c- n>pat_first</c-><c- p>,</c-> <c- n>sentinel_t</c-><c- o>&lt;</c-><c- n>R</c-><c- o>></c-> <c- n>pat_last</c-><c- p>,</c->
+                                  <c- n>Pred</c-> <c- n>pred</c-> <c- o>=</c-> <c- p>{},</c-> <c- n>Proj</c-> <c- n>proj</c-> <c- o>=</c-> <c- p>{},</c-> <c- n>Hash</c-> <c- n>hf</c-> <c- o>=</c-> <c- p>{});</c->
     <c- k>template</c-><c- o>&lt;</c-><c- k>typename</c-> <c- nc>R2</c-><c- o>></c-> <c- k>requires</c-> <c- n>same_as</c-><c- o>&lt;</c-><c- n>remove_reference_t</c-><c- o>&lt;</c-><c- n>R2</c-><c- o>></c-><c- p>,</c-> <c- n>R</c-><c- o>></c->
-    <c- k>constexpr</c-> <c- k>explicit</c-> <c- n>boyer_moore_horspool_searcher</c-><c- p>(</c-><c- n>R2</c-><c- o>&amp;&amp;</c-> <c- n>r</c-><c- p>);</c->
+    <c- k>explicit</c-> <c- n>boyer_moore_horspool_searcher</c-><c- p>(</c-><c- n>R2</c-><c- o>&amp;&amp;</c-> <c- n>r</c-><c- p>);</c->
     <c- k>template</c-><c- o>&lt;</c-><c- k>typename</c-> <c- nc>R2</c-><c- o>></c-> <c- k>requires</c-> <c- n>same_as</c-><c- o>&lt;</c-><c- n>remove_reference_t</c-><c- o>&lt;</c-><c- n>R2</c-><c- o>></c-><c- p>,</c-> <c- n>R</c-><c- o>></c->
-    <c- k>constexpr</c-> <c- n>boyer_moore_horspool_searcher</c-><c- p>(</c-><c- n>R2</c-><c- o>&amp;&amp;</c-> <c- n>r</c-><c- p>,</c-> <c- n>Pred</c-> <c- n>pred</c-><c- p>,</c-> <c- n>Proj</c-> <c- n>proj</c-> <c- o>=</c-> <c- p>{},</c-> <c- n>Hash</c-> <c- n>hf</c-> <c- o>=</c-> <c- p>{});</c->
+    <c- n>boyer_moore_horspool_searcher</c-><c- p>(</c-><c- n>R2</c-><c- o>&amp;&amp;</c-> <c- n>r</c-><c- p>,</c-> <c- n>Pred</c-> <c- n>pred</c-><c- p>,</c-> <c- n>Proj</c-> <c- n>proj</c-> <c- o>=</c-> <c- p>{},</c-> <c- n>Hash</c-> <c- n>hf</c-> <c- o>=</c-> <c- p>{});</c->
 
     <c- k>template</c-><c- o>&lt;</c-><c- n>random_access_iterator</c-> <c- n>I2</c-><c- p>,</c-> <c- n>sentinel_for</c-><c- o>&lt;</c-><c- n>I2</c-><c- o>></c-> <c- n>S2</c-><c- p>,</c-> <c- k>class</c-> <c- nc>Proj2</c-> <c- o>=</c-> <c- n>identity</c-><c- o>></c->
-      <c- k>constexpr</c-> <c- n>subrange</c-><c- o>&lt;</c-><c- n>I2</c-><c- o>></c-> <c- k>operator</c-><c- p>()(</c-><c- n>I2</c-> <c- n>first</c-><c- p>,</c-> <c- n>S2</c-> <c- n>last</c-><c- p>,</c-> <c- n>Proj2</c-> <c- n>proj2</c-> <c- o>=</c-> <c- p>{})</c-> <c- k>const</c->
+      <c- n>subrange</c-><c- o>&lt;</c-><c- n>I2</c-><c- o>></c-> <c- k>operator</c-><c- p>()(</c-><c- n>I2</c-> <c- n>first</c-><c- p>,</c-> <c- n>S2</c-> <c- n>last</c-><c- p>,</c-> <c- n>Proj2</c-> <c- n>proj2</c-> <c- o>=</c-> <c- p>{})</c-> <c- k>const</c->
         <c- k>requires</c-> <c- n>indirectly_comparable</c-><c- o>&lt;</c-><c- n>I2</c-><c- p>,</c-> <c- n>iterator_t</c-><c- o>&lt;</c-><c- n>R</c-><c- o>></c-><c- p>,</c-> <c- n>Pred</c-><c- p>,</c-> <c- n>Proj2</c-><c- p>,</c-> <c- n>Proj</c-><c- o>></c-><c- p>;</c->
     <c- k>template</c-><c- o>&lt;</c-><c- n>random_access_range</c-> <c- n>R2</c-><c- p>,</c-> <c- k>class</c-> <c- nc>Proj2</c-> <c- o>=</c-> <c- n>identity</c-><c- o>></c->
-      <c- k>constexpr</c-> <c- n>borrowed_subrange_t</c-><c- o>&lt;</c-><c- n>R2</c-><c- o>></c-> <c- k>operator</c-><c- p>()(</c-><c- n>R2</c-><c- o>&amp;&amp;</c-> <c- n>r2</c-><c- p>,</c-> <c- n>Proj2</c-> <c- n>proj2</c-> <c- o>=</c-> <c- p>{})</c-> <c- k>const</c->
+      <c- n>borrowed_subrange_t</c-><c- o>&lt;</c-><c- n>R2</c-><c- o>></c-> <c- k>operator</c-><c- p>()(</c-><c- n>R2</c-><c- o>&amp;&amp;</c-> <c- n>r2</c-><c- p>,</c-> <c- n>Proj2</c-> <c- n>proj2</c-> <c- o>=</c-> <c- p>{})</c-> <c- k>const</c->
         <c- k>requires</c-> <c- n>indirectly_comparable</c-><c- o>&lt;</c-><c- n>iterator_t</c-><c- o>&lt;</c-><c- n>R2</c-><c- o>></c-><c- p>,</c-> <c- n>iterator_t</c-><c- o>&lt;</c-><c- n>R</c-><c- o>></c-><c- p>,</c-> <c- n>Pred</c-><c- p>,</c-> <c- n>Proj2</c-><c- p>,</c-> <c- n>Proj</c-><c- o>></c-><c- p>;</c->
 
   <c- k>private</c-><c- o>:</c->
@@ -2609,8 +2610,8 @@ It was originally introduced for more performant specialized searching.</p>
       <c- o>-></c-> <c- n>boyer_moore_horspool_searcher</c-><c- o>&lt;</c-><c- n>remove_reference_t</c-><c- o>&lt;</c-><c- n>R</c-><c- o>></c-><c- p>,</c-> <c- n>Pred</c-><c- p>,</c-> <c- n>Proj</c-><c- p>,</c-> <c- n>Hash</c-><c- o>></c-><c- p>;</c->
 <c- p>}</c->
 </pre>
-<pre class="highlight language-cpp"><c- k>constexpr</c-> <c- n>boyer_moore_horspool_searcher</c-><c- p>(</c-><c- n>iterator_t</c-><c- o>&lt;</c-><c- n>R</c-><c- o>></c-> <c- n>pat_first</c-><c- p>,</c-> <c- n>sentinel_t</c-><c- o>&lt;</c-><c- n>R</c-><c- o>></c-> <c- n>pat_last</c-><c- p>,</c->
-                                        <c- n>Pred</c-> <c- n>pred</c-> <c- o>=</c-> <c- p>{},</c-> <c- n>Proj</c-> <c- n>proj</c-> <c- o>=</c-> <c- p>{},</c-> <c- n>Hash</c-> <c- n>hf</c-> <c- o>=</c-> <c- p>{});</c->
+<pre class="highlight language-cpp"><c- n>boyer_moore_horspool_searcher</c-><c- p>(</c-><c- n>iterator_t</c-><c- o>&lt;</c-><c- n>R</c-><c- o>></c-> <c- n>pat_first</c-><c- p>,</c-> <c- n>sentinel_t</c-><c- o>&lt;</c-><c- n>R</c-><c- o>></c-> <c- n>pat_last</c-><c- p>,</c->
+                              <c- n>Pred</c-> <c- n>pred</c-> <c- o>=</c-> <c- p>{},</c-> <c- n>Proj</c-> <c- n>proj</c-> <c- o>=</c-> <c- p>{},</c-> <c- n>Hash</c-> <c- n>hf</c-> <c- o>=</c-> <c- p>{});</c->
 </pre>
    <ol>
     <li data-md>
@@ -2621,7 +2622,7 @@ It was originally introduced for more performant specialized searching.</p>
      <p><em>Throws</em>: Any exception thrown by the copy constructor of <code class="highlight"><c- n>iterator_t</c-><c- o>&lt;</c-><c- n>R</c-><c- o>></c-></code> or <code class="highlight"><c- n>sentinel_t</c-><c- o>&lt;</c-><c- n>R</c-><c- o>></c-></code>, or by the default constructor, copy constructor, or the copy assignment operator of the value type of <code class="highlight"><c- n>R</c-></code>, or <code class="highlight"><c- k>operator</c-><c- p>()</c-></code> of <code class="highlight"><c- n>Pred</c-></code> or <code class="highlight"><c- n>Hash</c-></code>. May throw <code class="highlight"><c- n>bad_alloc</c-></code> if additional memory needed for internal data structures cannot be allocated.</p>
    </ol>
 <pre class="highlight language-cpp"><c- k>template</c-><c- o>&lt;</c-><c- k>typename</c-> <c- nc>R2</c-><c- o>></c-> <c- k>requires</c-> <c- n>same_as</c-><c- o>&lt;</c-><c- n>remove_reference_t</c-><c- o>&lt;</c-><c- n>R2</c-><c- o>></c-><c- p>,</c-> <c- n>R</c-><c- o>></c->
-  <c- k>constexpr</c-> <c- k>explicit</c-> <c- n>boyer_moore_horspool_searcher</c-><c- p>(</c-><c- n>R2</c-><c- o>&amp;&amp;</c-> <c- n>r</c-><c- p>);</c->
+  <c- k>explicit</c-> <c- n>boyer_moore_horspool_searcher</c-><c- p>(</c-><c- n>R2</c-><c- o>&amp;&amp;</c-> <c- n>r</c-><c- p>);</c->
 </pre>
    <ol start="4">
     <li data-md>
@@ -2632,7 +2633,7 @@ It was originally introduced for more performant specialized searching.</p>
      <p><em>Throws</em>: Any exception thrown by the copy constructor of <code class="highlight"><c- n>iterator_t</c-><c- o>&lt;</c-><c- n>R</c-><c- o>></c-></code> or <code class="highlight"><c- n>sentinel_t</c-><c- o>&lt;</c-><c- n>R</c-><c- o>></c-></code>, or by the default constructor, copy constructor, or the copy assignment operator of the value type of <code class="highlight"><c- n>R</c-></code>, or <code class="highlight"><c- k>operator</c-><c- p>()</c-></code> of <code class="highlight"><c- n>Pred</c-></code> or <code class="highlight"><c- n>Hash</c-></code>. May throw <code class="highlight"><c- n>bad_alloc</c-></code> if additional memory needed for internal data structures cannot be allocated.</p>
    </ol>
 <pre class="highlight language-cpp"><c- k>template</c-><c- o>&lt;</c-><c- k>typename</c-> <c- nc>R2</c-><c- o>></c-> <c- k>requires</c-> <c- n>same_as</c-><c- o>&lt;</c-><c- n>remove_reference_t</c-><c- o>&lt;</c-><c- n>R2</c-><c- o>></c-><c- p>,</c-> <c- n>R</c-><c- o>></c->
-  <c- k>constexpr</c-> <c- n>boyer_moore_horspool_searcher</c-><c- p>(</c-><c- n>R2</c-><c- o>&amp;&amp;</c-> <c- n>r</c-><c- p>,</c-> <c- n>Pred</c-> <c- n>pred</c-><c- p>,</c-> <c- n>Proj</c-> <c- n>proj</c-> <c- o>=</c-> <c- p>{},</c-> <c- n>Hash</c-> <c- n>hf</c-> <c- o>=</c-> <c- p>{});</c->
+  <c- n>boyer_moore_horspool_searcher</c-><c- p>(</c-><c- n>R2</c-><c- o>&amp;&amp;</c-> <c- n>r</c-><c- p>,</c-> <c- n>Pred</c-> <c- n>pred</c-><c- p>,</c-> <c- n>Proj</c-> <c- n>proj</c-> <c- o>=</c-> <c- p>{},</c-> <c- n>Hash</c-> <c- n>hf</c-> <c- o>=</c-> <c- p>{});</c->
 </pre>
    <ol start="7">
     <li data-md>
@@ -2643,7 +2644,7 @@ It was originally introduced for more performant specialized searching.</p>
      <p><em>Throws</em>: Any exception thrown by the copy constructor of <code class="highlight"><c- n>iterator_t</c-><c- o>&lt;</c-><c- n>R</c-><c- o>></c-></code> or <code class="highlight"><c- n>sentinel_t</c-><c- o>&lt;</c-><c- n>R</c-><c- o>></c-></code>, or by the default constructor, copy constructor, or the copy assignment operator of the value type of <code class="highlight"><c- n>R</c-></code>, or <code class="highlight"><c- k>operator</c-><c- p>()</c-></code> of <code class="highlight"><c- n>Pred</c-></code> or <code class="highlight"><c- n>Hash</c-></code>. May throw <code class="highlight"><c- n>bad_alloc</c-></code> if additional memory needed for internal data structures cannot be allocated.</p>
    </ol>
 <pre class="highlight language-cpp"><c- k>template</c-><c- o>&lt;</c-><c- n>random_access_iterator</c-> <c- n>I2</c-><c- p>,</c-> <c- n>sentinel_for</c-><c- o>&lt;</c-><c- n>I2</c-><c- o>></c-> <c- n>S2</c-><c- p>,</c-> <c- k>class</c-> <c- nc>Proj2</c-> <c- o>=</c-> <c- n>identity</c-><c- o>></c->
-  <c- k>constexpr</c-> <c- n>subrange</c-><c- o>&lt;</c-><c- n>I2</c-><c- o>></c-> <c- k>operator</c-><c- p>()(</c-><c- n>I2</c-> <c- n>first</c-><c- p>,</c-> <c- n>S2</c-> <c- n>last</c-><c- p>,</c-> <c- n>Proj2</c-> <c- n>proj2</c-> <c- o>=</c-> <c- p>{})</c-> <c- k>const</c->
+  <c- n>subrange</c-><c- o>&lt;</c-><c- n>I2</c-><c- o>></c-> <c- k>operator</c-><c- p>()(</c-><c- n>I2</c-> <c- n>first</c-><c- p>,</c-> <c- n>S2</c-> <c- n>last</c-><c- p>,</c-> <c- n>Proj2</c-> <c- n>proj2</c-> <c- o>=</c-> <c- p>{})</c-> <c- k>const</c->
     <c- k>requires</c-> <c- n>indirectly_comparable</c-><c- o>&lt;</c-><c- n>I2</c-><c- p>,</c-> <c- n>iterator_t</c-><c- o>&lt;</c-><c- n>R</c-><c- o>></c-><c- p>,</c-> <c- n>Pred</c-><c- p>,</c-> <c- n>Proj2</c-><c- p>,</c-> <c- n>Proj</c-><c- o>></c-><c- p>;</c->
 </pre>
    <ol start="10">
@@ -2666,7 +2667,7 @@ It was originally introduced for more performant specialized searching.</p>
      <p><em>Complexity</em>: At most <code class="highlight"><c- p>(</c-><c- n>last</c-> <c- o>-</c-> <c- n>first</c-><c- p>)</c-> <c- o>*</c-> <c- p>(</c-><i><c- n>pat_last_</c-></i> <c- o>-</c-> <i><c- n>pat_first_</c-></i><c- p>)</c-></code> applications of the predicate, and at most <code class="highlight"><c- p>(</c-><c- n>last</c-> <c- o>-</c-> <c- n>first</c-><c- p>)</c-> <c- o>*</c-> <c- p>(</c-><i><c- n>pat_last_</c-></i> <c- o>-</c-> <i><c- n>pat_first_</c-></i> <c- o>+</c-> <c- mi>1</c-><c- p>)</c-></code> applications of either projection.</p>
    </ol>
 <pre class="highlight language-cpp"><c- k>template</c-><c- o>&lt;</c-><c- n>random_access_range</c-> <c- n>R2</c-><c- p>,</c-> <c- k>class</c-> <c- nc>Proj2</c-> <c- o>=</c-> <c- n>identity</c-><c- o>></c->
-  <c- k>constexpr</c-> <c- n>borrowed_subrange_t</c-><c- o>&lt;</c-><c- n>R2</c-><c- o>></c-> <c- k>operator</c-><c- p>()(</c-><c- n>R2</c-><c- o>&amp;&amp;</c-> <c- n>r2</c-><c- p>,</c-> <c- n>Proj2</c-> <c- n>proj2</c-> <c- o>=</c-> <c- p>{})</c-> <c- k>const</c->
+  <c- n>borrowed_subrange_t</c-><c- o>&lt;</c-><c- n>R2</c-><c- o>></c-> <c- k>operator</c-><c- p>()(</c-><c- n>R2</c-><c- o>&amp;&amp;</c-> <c- n>r2</c-><c- p>,</c-> <c- n>Proj2</c-> <c- n>proj2</c-> <c- o>=</c-> <c- p>{})</c-> <c- k>const</c->
     <c- k>requires</c-> <c- n>indirectly_comparable</c-><c- o>&lt;</c-><c- n>iterator_t</c-><c- o>&lt;</c-><c- n>R2</c-><c- o>></c-><c- p>,</c-> <c- n>iterator_t</c-><c- o>&lt;</c-><c- n>R</c-><c- o>></c-><c- p>,</c-> <c- n>Pred</c-><c- p>,</c-> <c- n>Proj2</c-><c- p>,</c-> <c- n>Proj</c-><c- o>></c-><c- p>;</c->
 </pre>
    <ol start="14">

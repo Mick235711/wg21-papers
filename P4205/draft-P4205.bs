@@ -166,7 +166,9 @@ concept searchable =
 
 Note that we deliberately use `invocable` here since most implementations of non-trivial searchers are stateful.
 
-## Return Type ## {#return-type}
+## `constexpr` And Return Type ## {#constexpr-and-return-type}
+
+It is worth noting that `boyer_moore_[horspool_]_searcher` are *not* marked as `constexpr` currently, so the `std::ranges` versions also do not support compile-time evaluation. `default_searcher` on the other hand did support `constexpr`.
 
 The return type for the new overloads of `std::ranges::search` is specified as `auto` (i.e., copy the return type of the searcher's `operator()`). It is possible to require convertible to `subrange<I>` here too, but the author thinks that this is an unnecessary limitation. The searcher's `operator()` return type is constrained to be a forward range by the concept `searchable`.
 
@@ -370,18 +372,18 @@ namespace std::ranges {
     requires semiregular&lt;range_value_t&lt;R&gt;&gt;
   class boyer_moore_searcher {
   public:
-    constexpr boyer_moore_searcher(iterator_t&lt;R&gt; pat_first, sentinel_t&lt;R&gt; pat_last,
-                                   Pred pred = {}, Proj proj = {}, Hash hf = {});
+    boyer_moore_searcher(iterator_t&lt;R&gt; pat_first, sentinel_t&lt;R&gt; pat_last,
+                         Pred pred = {}, Proj proj = {}, Hash hf = {});
     template&lt;typename R2&gt; requires same_as&lt;remove_reference_t&lt;R2&gt;, R&gt;
-    constexpr explicit boyer_moore_searcher(R2&amp;&amp; r);
+    explicit boyer_moore_searcher(R2&amp;&amp; r);
     template&lt;typename R2&gt; requires same_as&lt;remove_reference_t&lt;R2&gt;, R&gt;
-    constexpr boyer_moore_searcher(R2&amp;&amp; r, Pred pred, Proj proj = {}, Hash hf = {});
+    boyer_moore_searcher(R2&amp;&amp; r, Pred pred, Proj proj = {}, Hash hf = {});
 
     template&lt;random_access_iterator I2, sentinel_for&lt;I2&gt; S2, class Proj2 = identity&gt;
-      constexpr subrange&lt;I2&gt; operator()(I2 first, S2 last, Proj2 proj2 = {}) const
+      subrange&lt;I2&gt; operator()(I2 first, S2 last, Proj2 proj2 = {}) const
         requires indirectly_comparable&lt;I2, iterator_t&lt;R&gt;, Pred, Proj2, Proj&gt;;
     template&lt;random_access_range R2, class Proj2 = identity&gt;
-      constexpr borrowed_subrange_t&lt;R2&gt; operator()(R2&amp;&amp; r2, Proj2 proj2 = {}) const
+      borrowed_subrange_t&lt;R2&gt; operator()(R2&amp;&amp; r2, Proj2 proj2 = {}) const
         requires indirectly_comparable&lt;iterator_t&lt;R2&gt;, iterator_t&lt;R&gt;, Pred, Proj2, Proj&gt;;
 
   private:
@@ -403,8 +405,8 @@ namespace std::ranges {
 </pre>
 
 ```cpp
-constexpr boyer_moore_searcher(iterator_t<R> pat_first, sentinel_t<R> pat_last,
-                               Pred pred = {}, Proj proj = {}, Hash hf = {});
+boyer_moore_searcher(iterator_t<R> pat_first, sentinel_t<R> pat_last,
+                     Pred pred = {}, Proj proj = {}, Hash hf = {});
 ```
 1. *Preconditions*: Let `V` be `range_value_t<R>`. For any two values `A` and `B` of type `V`, if `pred(invoke(proj, A), invoke(proj, B)) == true`, then `hf(invoke(proj, A)) == hf(invoke(proj, B))` is `true`.
 2. *Effects*: Constructs a `boyer_moore_searcher` object, initializing <code><i>pat_first_</i></code> with `pat_first`, <code><i>pat_last_</i></code> with `pat_last`, <code><i>pred_</i></code> with `move(pred)`, <code><i>proj_</i></code> with `move(proj)`, and <code><i>hash_</i></code> with `move(hf)`.
@@ -412,7 +414,7 @@ constexpr boyer_moore_searcher(iterator_t<R> pat_first, sentinel_t<R> pat_last,
 
 ```cpp
 template<typename R2> requires same_as<remove_reference_t<R2>, R>
-  constexpr explicit boyer_moore_searcher(R2&& r);
+  explicit boyer_moore_searcher(R2&& r);
 ```
 4. *Preconditions*: Let `V` be `range_value_t<R>`. For any two values `A` and `B` of type `V`, if `Pred{}(invoke(proj, A), invoke(proj, B)) == true`, then `Hash{}(invoke(proj, A)) == Hash{}(invoke(proj, B))` is `true`.
 5. *Effects*: Constructs a `boyer_moore_searcher` object, initializing <code><i>pat_first_</i></code> with `ranges::begin(r)` and <code><i>pat_last_</i></code> with `ranges::end(r)`.
@@ -420,7 +422,7 @@ template<typename R2> requires same_as<remove_reference_t<R2>, R>
 
 ```cpp
 template<typename R2> requires same_as<remove_reference_t<R2>, R>
-  constexpr boyer_moore_searcher(R2&& r, Pred pred, Proj proj = {}, Hash hf = {});
+  boyer_moore_searcher(R2&& r, Pred pred, Proj proj = {}, Hash hf = {});
 ```
 7. *Preconditions*: Let `V` be `range_value_t<R>`. For any two values `A` and `B` of type `V`, if `pred(invoke(proj, A), invoke(proj, B)) == true`, then `hf(invoke(proj, A)) == hf(invoke(proj, B))` is `true`.
 8. *Effects*: Constructs a `boyer_moore_searcher` object, initializing <code><i>pat_first_</i></code> with `ranges::begin(r)`, <code><i>pat_last_</i></code> with `ranges::end(r)`, <code><i>pred_</i></code> with `move(pred)`, <code><i>proj_</i></code> with `move(proj)`, and <code><i>hash_</i></code> with `move(hf)`.
@@ -428,7 +430,7 @@ template<typename R2> requires same_as<remove_reference_t<R2>, R>
 
 ```cpp
 template<random_access_iterator I2, sentinel_for<I2> S2, class Proj2 = identity>
-  constexpr subrange<I2> operator()(I2 first, S2 last, Proj2 proj2 = {}) const
+  subrange<I2> operator()(I2 first, S2 last, Proj2 proj2 = {}) const
     requires indirectly_comparable<I2, iterator_t<R>, Pred, Proj2, Proj>;
 ```
 10. *Mandates*: `is_same_v<remove_cvref_t<projected_value_t<iterator_t<R>, Proj>>, remove_cvref_t<projected_value_t<I2, Proj2>>>` is `true`.
@@ -444,7 +446,7 @@ Returns `subrange(first, first)` if <code>[<i>pat_first_</i>, <i>pat_last_</i>)<
 
 ```cpp
 template<random_access_range R2, class Proj2 = identity>
-  constexpr borrowed_subrange_t<R2> operator()(R2&& r2, Proj2 proj2 = {}) const
+  borrowed_subrange_t<R2> operator()(R2&& r2, Proj2 proj2 = {}) const
     requires indirectly_comparable<iterator_t<R2>, iterator_t<R>, Pred, Proj2, Proj>;
 ```
 14. *Effects*: Equivalent to: `return operator()(ranges::begin(r2), ranges::end(r2), move(proj2));`
@@ -460,18 +462,18 @@ namespace std::ranges {
     requires semiregular&lt;range_value_t&lt;R&gt;&gt;
   class boyer_moore_horspool_searcher {
   public:
-    constexpr boyer_moore_horspool_searcher(iterator_t&lt;R&gt; pat_first, sentinel_t&lt;R&gt; pat_last,
-                                            Pred pred = {}, Proj proj = {}, Hash hf = {});
+    boyer_moore_horspool_searcher(iterator_t&lt;R&gt; pat_first, sentinel_t&lt;R&gt; pat_last,
+                                  Pred pred = {}, Proj proj = {}, Hash hf = {});
     template&lt;typename R2&gt; requires same_as&lt;remove_reference_t&lt;R2&gt;, R&gt;
-    constexpr explicit boyer_moore_horspool_searcher(R2&amp;&amp; r);
+    explicit boyer_moore_horspool_searcher(R2&amp;&amp; r);
     template&lt;typename R2&gt; requires same_as&lt;remove_reference_t&lt;R2&gt;, R&gt;
-    constexpr boyer_moore_horspool_searcher(R2&amp;&amp; r, Pred pred, Proj proj = {}, Hash hf = {});
+    boyer_moore_horspool_searcher(R2&amp;&amp; r, Pred pred, Proj proj = {}, Hash hf = {});
 
     template&lt;random_access_iterator I2, sentinel_for&lt;I2&gt; S2, class Proj2 = identity&gt;
-      constexpr subrange&lt;I2&gt; operator()(I2 first, S2 last, Proj2 proj2 = {}) const
+      subrange&lt;I2&gt; operator()(I2 first, S2 last, Proj2 proj2 = {}) const
         requires indirectly_comparable&lt;I2, iterator_t&lt;R&gt;, Pred, Proj2, Proj&gt;;
     template&lt;random_access_range R2, class Proj2 = identity&gt;
-      constexpr borrowed_subrange_t&lt;R2&gt; operator()(R2&amp;&amp; r2, Proj2 proj2 = {}) const
+      borrowed_subrange_t&lt;R2&gt; operator()(R2&amp;&amp; r2, Proj2 proj2 = {}) const
         requires indirectly_comparable&lt;iterator_t&lt;R2&gt;, iterator_t&lt;R&gt;, Pred, Proj2, Proj&gt;;
 
   private:
@@ -493,8 +495,8 @@ namespace std::ranges {
 </pre>
 
 ```cpp
-constexpr boyer_moore_horspool_searcher(iterator_t<R> pat_first, sentinel_t<R> pat_last,
-                                        Pred pred = {}, Proj proj = {}, Hash hf = {});
+boyer_moore_horspool_searcher(iterator_t<R> pat_first, sentinel_t<R> pat_last,
+                              Pred pred = {}, Proj proj = {}, Hash hf = {});
 ```
 1. *Preconditions*: Let `V` be `range_value_t<R>`. For any two values `A` and `B` of type `V`, if `pred(invoke(proj, A), invoke(proj, B)) == true`, then `hf(invoke(proj, A)) == hf(invoke(proj, B))` is `true`.
 2. *Effects*: Constructs a `boyer_moore_horspool_searcher` object, initializing <code><i>pat_first_</i></code> with `pat_first`, <code><i>pat_last_</i></code> with `pat_last`, <code><i>pred_</i></code> with `move(pred)`, <code><i>proj_</i></code> with `move(proj)`, and <code><i>hash_</i></code> with `move(hf)`.
@@ -502,7 +504,7 @@ constexpr boyer_moore_horspool_searcher(iterator_t<R> pat_first, sentinel_t<R> p
 
 ```cpp
 template<typename R2> requires same_as<remove_reference_t<R2>, R>
-  constexpr explicit boyer_moore_horspool_searcher(R2&& r);
+  explicit boyer_moore_horspool_searcher(R2&& r);
 ```
 4. *Preconditions*: Let `V` be `range_value_t<R>`. For any two values `A` and `B` of type `V`, if `Pred{}(invoke(proj, A), invoke(proj, B)) == true`, then `Hash{}(invoke(proj, A)) == Hash{}(invoke(proj, B))` is `true`.
 5. *Effects*: Constructs a `boyer_moore_horspool_searcher` object, initializing <code><i>pat_first_</i></code> with `ranges::begin(r)` and <code><i>pat_last_</i></code> with `ranges::end(r)`.
@@ -510,7 +512,7 @@ template<typename R2> requires same_as<remove_reference_t<R2>, R>
 
 ```cpp
 template<typename R2> requires same_as<remove_reference_t<R2>, R>
-  constexpr boyer_moore_horspool_searcher(R2&& r, Pred pred, Proj proj = {}, Hash hf = {});
+  boyer_moore_horspool_searcher(R2&& r, Pred pred, Proj proj = {}, Hash hf = {});
 ```
 7. *Preconditions*: Let `V` be `range_value_t<R>`. For any two values `A` and `B` of type `V`, if `pred(invoke(proj, A), invoke(proj, B)) == true`, then `hf(invoke(proj, A)) == hf(invoke(proj, B))` is `true`.
 8. *Effects*: Constructs a `boyer_moore_horspool_searcher` object, initializing <code><i>pat_first_</i></code> with `ranges::begin(r)`, <code><i>pat_last_</i></code> with `ranges::end(r)`, <code><i>pred_</i></code> with `move(pred)`, <code><i>proj_</i></code> with `move(proj)`, and <code><i>hash_</i></code> with `move(hf)`.
@@ -518,7 +520,7 @@ template<typename R2> requires same_as<remove_reference_t<R2>, R>
 
 ```cpp
 template<random_access_iterator I2, sentinel_for<I2> S2, class Proj2 = identity>
-  constexpr subrange<I2> operator()(I2 first, S2 last, Proj2 proj2 = {}) const
+  subrange<I2> operator()(I2 first, S2 last, Proj2 proj2 = {}) const
     requires indirectly_comparable<I2, iterator_t<R>, Pred, Proj2, Proj>;
 ```
 10. *Mandates*: `is_same_v<remove_cvref_t<projected_value_t<iterator_t<R>, Proj>>, remove_cvref_t<projected_value_t<I2, Proj2>>>` is `true`.
@@ -534,7 +536,7 @@ Returns `subrange(first, first)` if <code>[<i>pat_first_</i>, <i>pat_last_</i>)<
 
 ```cpp
 template<random_access_range R2, class Proj2 = identity>
-  constexpr borrowed_subrange_t<R2> operator()(R2&& r2, Proj2 proj2 = {}) const
+  borrowed_subrange_t<R2> operator()(R2&& r2, Proj2 proj2 = {}) const
     requires indirectly_comparable<iterator_t<R2>, iterator_t<R>, Pred, Proj2, Proj>;
 ```
 14. *Effects*: Equivalent to: `return operator()(ranges::begin(r2), ranges::end(r2), move(proj2));`
