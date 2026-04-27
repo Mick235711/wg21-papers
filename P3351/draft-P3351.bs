@@ -230,7 +230,7 @@ Which are the results of applying `std::plus{}`, `std::multiplies{}`, `ranges::m
 
 Looking at the results, these are certainly very useful aliases. However, as stated above, all of these four aliases can be achieved by simply passing the corresponding function object (currently, `min`/`max` doesn't have a function object, but `ranges::min` and `ranges::max` become useable after [[P3136R1]] was adopted in Wrocław (2024-11)) as the function parameter, so I'm not sure it is worth the hassle of specification. Therefore, currently this proposal do not include these aliases, but the author is happy to add them should SG9/LEWG request.
 
-R2 of this paper originally proposed the `partial_sum` aliase, as there is certainly a stronger case for it than the case for `product`, `min` and `max`:
+R2 of this paper originally proposed the `partial_sum` alias, as there is certainly a stronger case for it than the case for `product`, `min` and `max`:
 - All existing implementation of scan-like algorithm defaults the function argument to `+` whenever there is a default.
 - `std::partial_sum` exists
 - Partial sum is one of the most studied and used concept in programming, arguably even more useful than running min/max.
@@ -325,7 +325,7 @@ Currently, `views::transform` is never borrowed, but after [[!P3117R1]] determin
 
 #### SG9 Review, Hagenberg (2025-02) #### {#borrowed-sg9-review-hagenberg}
 
-SG9 had consensus that `scan_view` should be conditionally borrowed similar to `transform_view`. The wording is thus modified to basdyon [[!P3117R1]]'s changes.
+SG9 had consensus that `scan_view` should be conditionally borrowed similar to `transform_view`. The wording is thus modified to be rebased on [[!P3117R1]]'s changes.
 
 ## Feature Test Macro ## {#feature-test-macro}
 

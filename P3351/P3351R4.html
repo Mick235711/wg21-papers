@@ -1564,7 +1564,7 @@ Possible extra rowspan handling
   <meta content="Bikeshed version 0ef803fdf, updated Tue Jan 6 11:59:39 2026 -0800" name="generator">
   <link href="https://wg21.link/P3351R4" rel="canonical">
   <link href="https://isocpp.org/favicon.ico" rel="icon">
-  <meta content="c00e4a50054041bee3b019c4688b75eb2c27fbdf" name="revision">
+  <meta content="db91c80c6a45183552cdcb663afea3bca28478c8" name="revision">
   <meta content="dark light" name="color-scheme">
 <style>
 table, th, td { border:1px solid grey; }
@@ -2093,7 +2093,7 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
    <p data-fill-with="logo"></p>
    <h1 class="no-ref p-name" id="title">P3351R4<br><code class="highlight"><c- n>views</c-><c- o>::</c-><c- n>scan</c-></code></h1>
    <h2 class="heading no-num no-ref no-toc settled" id="profile-and-date"><span class="content">Published Proposal,
-    <time class="dt-updated" datetime="2026-04-26">2026-04-26</time></span></h2>
+    <time class="dt-updated" datetime="2026-04-27">2026-04-27</time></span></h2>
    <div data-fill-with="spec-metadata">
     <dl>
      <dt>This version:
@@ -2571,7 +2571,7 @@ Which are the results of applying <code class="highlight"><c- n>std</c-><c- o>::
 
 
    <p>Looking at the results, these are certainly very useful aliases. However, as stated above, all of these four aliases can be achieved by simply passing the corresponding function object (currently, <code class="highlight"><c- n>min</c-></code>/<code class="highlight"><c- n>max</c-></code> doesn’t have a function object, but <code class="highlight"><c- n>ranges</c-><c- o>::</c-><c- n>min</c-></code> and <code class="highlight"><c- n>ranges</c-><c- o>::</c-><c- n>max</c-></code> become useable after <a data-link-type="biblio" href="#biblio-p3136r1" title="Retiring niebloids">[P3136R1]</a> was adopted in Wrocław (2024-11)) as the function parameter, so I’m not sure it is worth the hassle of specification. Therefore, currently this proposal do not include these aliases, but the author is happy to add them should SG9/LEWG request.</p>
-   <p>R2 of this paper originally proposed the <code class="highlight"><c- n>partial_sum</c-></code> aliase, as there is certainly a stronger case for it than the case for <code class="highlight"><c- n>product</c-></code>, <code class="highlight"><c- n>min</c-></code> and <code class="highlight"><c- n>max</c-></code>:</p>
+   <p>R2 of this paper originally proposed the <code class="highlight"><c- n>partial_sum</c-></code> alias, as there is certainly a stronger case for it than the case for <code class="highlight"><c- n>product</c-></code>, <code class="highlight"><c- n>min</c-></code> and <code class="highlight"><c- n>max</c-></code>:</p>
    <ul>
     <li data-md>
      <p>All existing implementation of scan-like algorithm defaults the function argument to <code class="highlight"><c- o>+</c-></code> whenever there is a default.</p>
@@ -2651,7 +2651,7 @@ With the first choice, the resulting range’s value type will be <code class="h
    <p>If and only if the input range is borrowed, and the function parameter models <code class="highlight"><c- n>tidy</c-><c- o>-</c-><c- n>func</c-></code>.</p>
    <p>Currently, <code class="highlight"><c- n>views</c-><c- o>::</c-><c- n>transform</c-></code> is never borrowed, but after <a data-link-type="biblio" href="#biblio-p3117r1" title="Extending Conditionally Borrowed">[P3117R1]</a> determined suitable criteria for storing the function parameter in the iterator, it can be conditionally borrowed. Therefore, the same can be applied to <code class="highlight"><c- n>scan_view</c-></code> to make it conditionally borrowed by storing the function and the initial value inside the iterator.</p>
    <h5 class="heading settled" data-level="3.7.6.1" id="borrowed-sg9-review-hagenberg"><span class="secno">3.7.6.1. </span><span class="content">SG9 Review, Hagenberg (2025-02)</span><a class="self-link" href="#borrowed-sg9-review-hagenberg"></a></h5>
-   <p>SG9 had consensus that <code class="highlight"><c- n>scan_view</c-></code> should be conditionally borrowed similar to <code class="highlight"><c- n>transform_view</c-></code>. The wording is thus modified to basdyon <a data-link-type="biblio" href="#biblio-p3117r1" title="Extending Conditionally Borrowed">[P3117R1]</a>’s changes.</p>
+   <p>SG9 had consensus that <code class="highlight"><c- n>scan_view</c-></code> should be conditionally borrowed similar to <code class="highlight"><c- n>transform_view</c-></code>. The wording is thus modified to be rebased on <a data-link-type="biblio" href="#biblio-p3117r1" title="Extending Conditionally Borrowed">[P3117R1]</a>’s changes.</p>
    <h3 class="heading settled" data-level="3.8" id="feature-test-macro"><span class="secno">3.8. </span><span class="content">Feature Test Macro</span><a class="self-link" href="#feature-test-macro"></a></h3>
    <p>This proposal added a new feature test macro <code class="highlight"><c- n>__cpp_lib_ranges_scan</c-></code>.</p>
    <h3 class="heading settled" data-level="3.9" id="freestanding"><span class="secno">3.9. </span><span class="content">Freestanding</span><a class="self-link" href="#freestanding"></a></h3>
