@@ -168,7 +168,7 @@ Note that we deliberately use `invocable` here since most implementations of non
 
 ## `constexpr` And Return Type ## {#constexpr-and-return-type}
 
-It is worth noting that `boyer_moore_[horspool_]_searcher` are *not* marked as `constexpr` currently, so the `std::ranges` versions also do not support compile-time evaluation. `default_searcher` on the other hand did support `constexpr`.
+It is worth noting that `boyer_moore_[horspool_]searcher` are *not* marked as `constexpr` currently, so the `std::ranges` versions also do not support compile-time evaluation. `default_searcher` on the other hand did support `constexpr`.
 
 The return type for the new overloads of `std::ranges::search` is specified as `auto` (i.e., copy the return type of the searcher's `operator()`). It is possible to require convertible to `subrange<I>` here too, but the author thinks that this is an unnecessary limitation. The searcher's `operator()` return type is constrained to be a forward range by the concept `searchable`.
 
@@ -194,7 +194,7 @@ Of course, the author is happy to split the FTMs further (such as separate FTMs 
 
 After the adoption of [[P2976R1]] in C++26, the majority of `<algorithm>` (including all overloads of `std::search` and `std::ranges::search`) are marked as freestanding. This proposal does not change anything in that regard, so the newly proposed overloads are also available in freestanding.
 
-The searchers have a somewhat different status. `std::boyer_moore_[horspool_]_searcher` is deliberately left out of freestanding by [[P1642R11]] as their common implementations rely on dynamic allocation, so their range versions are also not marked freestanding. `std::ranges::default_searcher` is marked freestanding as it is just a thin wrapper around `std::ranges::search` anyway. The concept `std::searchable` is marked freestanding to maintain consistency with other parts of `<iterator>`.
+The searchers have a somewhat different status. `std::boyer_moore_[horspool_]searcher` is deliberately left out of freestanding by [[P1642R11]] as their common implementations rely on dynamic allocation, so their range versions are also not marked freestanding. `std::ranges::default_searcher` is marked freestanding as it is just a thin wrapper around `std::ranges::search` anyway. The concept `std::searchable` is marked freestanding to maintain consistency with other parts of `<iterator>`.
 
 All feature-test macros added by this paper are marked freestanding, and all modified FTMs are already freestanding after the adoption of [[P2198R7]] and [[LWG4286]]. No existing features are moved to freestanding, so the freestanding-related FTMs are not changed.
 
@@ -323,6 +323,12 @@ namespace std::ranges {
     [[no_unique_address]] Pred <i>pred_</i>;                            // <i>exposition only</i>
     [[no_unique_address]] Proj <i>proj_</i>;                            // <i>exposition only</i>
   }
+
+  template &lt;forward_range R,
+            copy_constructible Pred = equal_to,
+            indirectly_regular_unary_invocable&lt;iterator_t&lt;R&gt;&gt; Proj = identity&gt;
+    default_searcher(R&&, Pred = {}, Proj = {})
+      -> default_searcher&lt;remove_reference_t&lt;R&gt;, Pred, Proj&gt;
 }
 </pre>
 
