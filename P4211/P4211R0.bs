@@ -47,7 +47,7 @@ assert(i == 1); // FAILS, i == 2
 
 At first glance, this code looks like it should work, as we are taking one element from the `istream_view` and thus should consume one integer from the string. However, as `take_view` uses `counted_iterator` internally, which still advances the underlying iterator even when `count == 0`, an additional integer is consumed and subsequently lost.
 
-This unintuitive behavior is a direct result of lacking an abstraction for closed ranges. Essentially, we are t,rying to create a range of 1 element, but half-open ranges need 2 iterator values to represent such ranges, thus consuming one more iterator value from the `istream_view`. Similarly, the other example presented in [[!P2406R5]] can also be resolved by a proper abstraction for closed ranges:
+This unintuitive behavior is a direct result of lacking an abstraction for closed ranges. Essentially, we are trying to create a range of 1 element, but half-open ranges need 2 iterator values to represent such ranges, thus consuming one more iterator value from the `istream_view`. Similarly, the other example presented in [[!P2406R5]] can also be resolved by a proper abstraction for closed ranges:
 
 ```cpp
 for (auto i : views::iota(0)

@@ -1564,7 +1564,7 @@ Possible extra rowspan handling
   <meta content="Bikeshed version 0ef803fdf, updated Tue Jan 6 11:59:39 2026 -0800" name="generator">
   <link href="https://wg21.link/P4211R0" rel="canonical">
   <link href="https://isocpp.org/favicon.ico" rel="icon">
-  <meta content="979ec0444c97a68f3eef38116a7e99a39edf08fa" name="revision">
+  <meta content="bfa7acb34bb2bff4bceb89ee0418c88a398824b9" name="revision">
   <meta content="dark light" name="color-scheme">
 <style>
 table, th, td { border:1px solid grey; }
@@ -2204,7 +2204,7 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
 <c- n>assert</c-><c- p>(</c-><c- n>i</c-> <c- o>==</c-> <c- mi>1</c-><c- p>);</c-> <c- c1>// FAILS, i == 2</c->
 </pre>
    <p>At first glance, this code looks like it should work, as we are taking one element from the <code class="highlight"><c- n>istream_view</c-></code> and thus should consume one integer from the string. However, as <code class="highlight"><c- n>take_view</c-></code> uses <code class="highlight"><c- n>counted_iterator</c-></code> internally, which still advances the underlying iterator even when <code class="highlight"><c- n>count</c-> <c- o>==</c-> <c- mi>0</c-></code>, an additional integer is consumed and subsequently lost.</p>
-   <p>This unintuitive behavior is a direct result of lacking an abstraction for closed ranges. Essentially, we are t,rying to create a range of 1 element, but half-open ranges need 2 iterator values to represent such ranges, thus consuming one more iterator value from the <code class="highlight"><c- n>istream_view</c-></code>. Similarly, the other example presented in <a data-link-type="biblio" href="#biblio-p2406r5" title="Add lazy_counted_iterator">[P2406R5]</a> can also be resolved by a proper abstraction for closed ranges:</p>
+   <p>This unintuitive behavior is a direct result of lacking an abstraction for closed ranges. Essentially, we are trying to create a range of 1 element, but half-open ranges need 2 iterator values to represent such ranges, thus consuming one more iterator value from the <code class="highlight"><c- n>istream_view</c-></code>. Similarly, the other example presented in <a data-link-type="biblio" href="#biblio-p2406r5" title="Add lazy_counted_iterator">[P2406R5]</a> can also be resolved by a proper abstraction for closed ranges:</p>
 <pre class="highlight language-cpp"><c- k>for</c-> <c- p>(</c-><c- k>auto</c-> <c- n>i</c-> <c- o>:</c-> <c- n>views</c-><c- o>::</c-><c- n>iota</c-><c- p>(</c-><c- mi>0</c-><c- p>)</c->
         <c- o>|</c-> <c- n>views</c-><c- o>::</c-><c- n>filter</c-><c- p>([](</c-><c- k>auto</c-> <c- n>i</c-><c- p>)</c-> <c- p>{</c-> <c- k>return</c-> <c- n>i</c-> <c- o>&lt;</c-> <c- mi>11</c-><c- p>;</c-> <c- p>})</c->
         <c- o>|</c-> <c- n>views</c-><c- o>::</c-><c- n>take</c-><c- p>(</c-><c- mi>11</c-><c- p>))</c->
