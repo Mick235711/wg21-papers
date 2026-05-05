@@ -1,0 +1,1223 @@
+<pre class='metadata'>
+Title: Adaptors For Closed Ranges
+Shortname: P4211
+Revision: 0
+Audience: SG9
+Status: P
+Group: WG21
+!Target: C++29
+URL: https://wg21.link/P4211R0
+!Source: <a href="https://github.com/Mick235711/wg21-papers/blob/main/P4211/P4211R0.bs">github.com/Mick235711/wg21-papers/blob/main/P4211/P4211R0.bs</a>
+!Issue Tracking: <a href="https://github.com/Mick235711/wg21-papers/issues">GitHub Mick235711/wg21-papers</a>
+Editor: Yihe Li, winmikedows@hotmail.com
+No abstract: true
+Date: 2026-05-05
+Markup Shorthands: markdown yes
+Default Highlight: cpp
+</pre>
+
+<style>
+table, th, td { border:1px solid grey; }
+</style>
+
+This proposal introduces a family of adaptors that convert closed ranges into half-open ranges, as expected by most other standard library facilities in C++, thus providing direct support for a range model that has been fundamentally incompatible with the C++ iterator model until now.
+
+# Revision History # {#revisions}
+
+## R0 (2026-05 pre-Brno mailing) ## {#r0}
+
+- Initial revision.
+
+# Background # {#background}
+
+Ever since C++98, ranges in C++ are modeled by half-open intervals `[a, b)`, and most other facilities in the standard library are built with this assumption in mind. All standard algorithms and containers accept an iterator pair that contains a *past*-the-end iterator, not the iterator pointing to the last element. Though this may seem unintuitive at first to many beginners, the adoption of half-open ranges has led to more intuitive behavior in many cases, such as avoiding +1/-1 adjustments when slicing.
+
+However, despite such regulations, closed ranges are still occasionally a useful abstraction to have. For instance, `views::iota(INT_MAX - 20, INT_MAX)` will only give you numbers up to `INT_MAX - 1`, since `iota`'s arguments also follow the half-open range abstraction. In this case, there is no way to obtain an `iota_view` that includes the largest value representable by its value type, because signed integer overflow is undefined behavior.
+
+A more common example can be found in [[!P2406R5]]:
+
+```cpp
+auto iss = std::istringstream("0 1 2");
+for (auto i : views::istream<int>(iss) | views::take(1))
+    std::cout << i << '\n';
+auto i = 0;
+iss >> i;
+assert(i == 1); // FAILS, i == 2
+```
+
+At first glance, this code looks like it should work, as we are taking one element from the `istream_view` and thus should consume one integer from the string. However, as `take_view` uses `counted_iterator` internally, which still advances the underlying iterator even when `count == 0`, an additional integer is consumed and subsequently lost.
+
+This unintuitive behavior is a direct result of lacking an abstraction for closed ranges. Essentially, we are t,rying to create a range of 1 element, but half-open ranges need 2 iterator values to represent such ranges, thus consuming one more iterator value from the `istream_view`. Similarly, the other example presented in [[!P2406R5]] can also be resolved by a proper abstraction for closed ranges:
+
+```cpp
+for (auto i : views::iota(0)
+        | views::filter([](auto i) { return i < 11; })
+        | views::take(11))
+    std::cout << i << '\n'; // Infinite loop!
+```
+
+Conceptually, we are also taking 11 elements from a range of 11 elements; however, to present the range as a half-open one, we actually need 12 iterator values. Computing the 12th iterator value ultimately results in an infinite loop, as there is no further value available after filtering.
+
+In light of these examples, this proposal introduces a family of adaptors for closed ranges to convert them into half-open ones. Using the facilities proposed by this proposal, the above examples can be rewritten as:
+
+```cpp
+auto iss = std::istringstream("0 1 2");
+for (auto i : views::istream<int>(iss) | views::lazy_take(1))
+    std::cout << i << '\n';
+auto i = 0;
+iss >> i;
+assert(i == 1); // OK
+```
+
+```cpp
+for (auto i : views::iota(0)
+        | views::filter([](auto i) { return i < 11; })
+        | views::lazy_take(11))
+    std::cout << i << '\n'; // OK
+
+for (auto i : views::iota(0)
+        | views::filter([](auto i) { return i < 11; })
+        | views::take(10) | views::as_closed)
+    std::cout << i << '\n'; // Also OK
+```
+
+# Design # {#design}
+
+## What Is Being Proposed? ## {#what-is-being-proposed}
+
+This proposal is essentially a continuation of [[!P2406R5]] with a broader scope. We propose the same facilities that are proposed in [[!P2406R5]]:
+
+- A `std::lazy_counted_iterator` (and the corresponding `views::lazy_counted` factory) that avoids incrementing the underlying iterator when `count == 0`.
+- A `views::lazy_take` adaptor that uses `lazy_counted_iterator` as its underlying iterator in non-random access cases.
+
+Additionally, we also proposes a general adaptor, `views::as_closed`, for all kinds of closed ranges (basically a range such that `*iter` is still valid even when `iter == end`). Such an adaptor is useful when a count is not readily available.
+
+Finally, we also proposes a convenient alias `views::closed_iota` that is equivalent to `views::as_closed` plus `views::iota`, as a convenient way to create closed integer interval ranges.
+
+## Prior Art ## {#prior-art}
+
+Looping over a closed range is actually pretty hard to get right, as evidenced by the multiple unintuitive methods suggested [on StackOverflow](https://stackoverflow.com/questions/2457389/looping-on-a-closed-range):
+
+```cpp
+// Half-open ranges are easy to iterate
+for (auto it = begin; it != end; ++it) { ... }
+
+// What if the range is closed?
+// Only valid with random access iterator, and become infinite/UB when end is the max value
+for (auto it = begin; it <= end; ++it) { ... }
+
+// end + 1 need to actually be valid
+for (auto it = begin; it != std::next(end); ++it) { ... }
+
+// Not valid for input iterators, and still UB when end is the max value
+auto it = begin; do { ... } while (it++ != end);
+
+// You must resort to one of
+auto it = begin; do { ... } while (it != end && (++it, true));
+for (auto it = begin; ; ++it) { ...; if (it == end) break; }
+
+// Or repeat the body
+auto it = begin;
+for (; it != end; ++it) body(*it);
+body(*it);
+```
+
+Such unintuitiveness is effectively what leads to range-v3's [`views::closed_iota`](https://ericniebler.github.io/range-v3/structranges_1_1closed__iota__view.html) adaptor, which provides a closed range version of `views::iota`.
+
+Obviously, such abstractions must incur some kind of overhead, since we need to pull out a past-the-end iterator value from thin air somehow. `closed_iota_view`'s iterator represents this new value via a `bool` member:
+
+```cpp
+struct closed_iota_view<W, Bound>::iterator
+{
+    W current;
+    Bound bound;
+    bool past_the_end;
+
+    iterator& operator++()
+    {
+        if (current == bound) past_the_end = true;
+        else ++current;
+        return *this;
+    }
+};
+```
+
+Not only is there an extra `bool` value, but each iterator also needs to store the bound value too (which is not needed in normal `iota_view`'s iterator). Furthermore, each increment needs to compare the current value to the bound value to determine if an increment is needed. However, these [overheads](https://quick-bench.com/q/qLqGdxGjspJxls2_yPmFz2NYSfA) are required to adapt an abstraction that is essentially foreign to the C++ iterator model.
+
+Given that we need to pay certain overheads already, it seems unwise to limit such a closed adaptor to `views::iota` only; this line of thought naturally leads to a general closed-to-half-open range adaptor:
+
+```cpp
+struct as_closed_view<I, S>::iterator
+{
+    I current;
+    S last;
+    bool past_the_end;
+
+    iterator& operator++()
+    {
+        if (current == last) past_the_end = true;
+        else ++current;
+        return *this;
+    }
+};
+```
+
+The iterator itself is nearly identical, with the only difference being that `operator*` actually dereference the iterator. With such a general adaptor, we can then construct arbitrary closed ranges easily:
+
+```cpp
+std::vector vec{1, 2, 3, 4, 5};
+views::as_closed(vec.begin() + 2, vec.begin() + 4); // [3, 4, 5]
+```
+
+Meanwhile, `closed_iota` can now be respecified as a simple combination of `as_closed_view` and `iota_view`, with the exact same memory layout and footprint, thereby requiring one less specification for adaptors. It is for this reason that this proposal argues for a general adaptor instead of proposing to standardize range-v3's `views::closed_iota`.
+
+## Naming ## {#naming}
+
+The exact-N version of `counted_iterator` and `take_view` are named with `lazy_` prefix, similar to [[!P2406R5]]'s choice. The reasoning for this choice is that `lazy_` prefix has a preexisting meaning in the standard library to be maximally lazy; for instance, `lazy_split_view` (introduced by [[P2210R2]]) will never touch any element until you increment to the element itself (i.e., it will not compute the next pattern's position beforehand, unlike `split_view`), which gives it the ability to support input ranges. Similarly, `lazy_counted_iterator` will never increment the underlying iterator past the given N positions.
+
+The newly proposed general closed to half-open range adaptor is named `views::as_closed` (and `ranges::as_closed_view`). Specifically:
+
+- `views::as_closed(begin, end)` will adapt the given iterator-sentinel pair into a normal half-open range by inventing an extra sentinel position.
+- `rng | views::as_closed` or `views::as_closed(rng)` will adapt the given range into a normal half-open range, as if by `views::as_closed(ranges::begin(rng), ranges::end(rng))`.
+
+Such naming follows the precedent set by `views::as_input` ([[P3828R1]]), where `as_` prefix is used to signal that the underlying range is seen *as* something different.
+
+Finally, `views::closed_iota` is chosen as the name for the convenient alias for closed value ranges, following the precedent of the naming in range-v3. The author considered several shorter names, including `views::upto`, `views::range` (like Python `range()`), and `views::ints`, but it seems that most of these names are ambiguous in terms of whether the resulting range is inclusive or exclusive. (`views::range` also has potential to be confused with the `range` concept, so perhaps NumPy-like `views::arange` is more appropriate; however, both `range()` and `arange()` are exclusive in Python.)
+
+It is worth noting that one of the opposition comments expressed to `views::upto` proposed by [[P3060R1]] was that `upto` is meant to be inclusive in English; so the author is also happy to change to these kinds of names if requested by SG9/LEWG.
+
+## Why Not A Breaking Change? ## {#why-not-a-breaking-change}
+
+During the review of [[!P2406R5]], LEWG expressed interest in treating the proposal as a breaking change: change the existing `counted_iterator` and `take_view` to have lazy semantics instead, as many people suggests that `views::take(N)` should only consume N iterator values, regardless of the underlying abstraction. An NB comment [[US46-107]] was submitted to do this change for C++23; however, the comment was ultimately rejected together with [[P2406R5]] despite having consensus to do a breaking change in LEWG due to lack of design time.
+
+Another proposal, [[D2578R0]], suggested a narrower breaking change that blocks input iterator's usage with `counted_iterator`, as the result in most cases is wrong (consumes one more iterator value that is not recoverable). However, the proposal also pointed out that any such blank refusal will necessarily also break valid usages of input iterators, such as using `istreambuf_iterator` with `counted_iterator`. Since the former is already lazy (only removing the current element from the stream on next `++`), the extra consumption is perfectly fine. [[D2578R0]] argues for a new concept, `lazy_weakly_incrementable`, to detect such cases. The proposal was eventually rejected by SG9 due to the inconsistency in treatment.
+
+Standing at two standard cycles later, C++20 Ranges and `views::take` have already been in deployment for more than 6 years, and it seems no longer wise to pursue a breaking change in this regard. Furthermore, [[!P2799R0]] pointed out that the underlying desire is some kind of adaptation from closed ranges into half-open ranges, and "fixing" the existing `counted_iterator` in most cases will only add unwanted performance overhead, which is not the correct way to support closed ranges.
+
+In light of these discussions, this proposal does not pursue a breaking change to any existing facility. Instead, new families of lazy `counted_iterator`, `take_view`, and a new general adaptor for closed ranges are proposed, returning the choice to the user and highlighting the potential overhead by requiring explicit adaptation.
+
+## Range Properties ## {#range-properties}
+
+The proposed `views::lazy_counted` and `views::closed_iota` views are range factories, i.e., cannot be piped into. This is consistent with the existing `views::counted` and `views::iota` as the first argument is an iterator. (Note that `views::closed_iota` always accepts two arguments, as the infinite variant makes no sense as a closed range.)
+
+The proposed `views::as_closed`, on the other hand, is a range adaptor, i.e., can be piped into. It is treated as a *range adaptor closure object* so that the two-argument version is not picked up in pipelines.
+
+### Category ### {#category}
+
+SG9 discussion on [[!P2406R5]] had consensus that the proposed `lazy_counted_iterator` should be capped to an forward iterator. The reason for the lack of bidirectional traversal is the requirement for supporting construction with 0 as count; such construction puts the iterator into an inconsistent state, as the underlying iterator is expected to be "one step back", as explained in section 6.1 of [[!P2406R5]]. As a result, `base()` is also removed from the iterator's API to prevent the user from observing the inconsistent state. Similarly, for non-random-access or non-sized inputs, `views::lazy_take` also degrades to a forward range at most.
+
+It is worth noting that the existing optimizations for `views::counted` and `views::take` (i.e., preserving the input range type when the input range is `empty_view` or similar) still hold, so random access iterator inputs still preserve their category.
+
+Such limitations in general do not apply to `as_closed_view`, as it does not support construction with `past_the_end == true`; the only way to construct an iterator with that state is through `end()` (with common range inputs), where we can guarantee the position of the underlying iterator. Therefore, we propose that `views::as_closed` retain the underlying iterator's category (except contiguous).
+
+Finally, as [[P2799R0]] pointed out, postfix `operator++` can return a proxy for input or output iterators, so we cannot support them in closed range adaptors. For this reason, both `lazy_counted_iterator` and `as_closed_view` only declare `void operator++(int)` when the underlying iterator is only input, and does not support output iterators at all. This decision makes them invalid C++17 input iterators, so `iterator_category` is not defined when the underlying iterator is only input.
+
+### Common ### {#common}
+
+For `views::lazy_counted`, if and only if the given iterator is random access, due to the usage of `ranges::subrange` in wrapping.
+
+For `views::lazy_take`, if and only if the underlying range is both random access and sized. Only in such cases do we reuse the `iter + size` position as the end iterator; in some of the other cases, `lazy_take_view` will need to add its own sentinel to allow early termination. This design is consistent with `take_view`.
+
+For `views::as_closed`, if and only if the underlying range is common. In such cases we can just pass `end(underlying)` as the current iterator value and manually set `past_the_end` to `true`.
+
+### Sized ### {#sized}
+
+For `views::lazy_counted`, always (as we can just return `N`).
+
+For `views::lazy_take`, if and only if the underlying range is sized, as we need to do `min(n, size(underlying))`.
+
+For `views::as_closed`, if and only if the provided sentinel is a sized sentinel. (Returns `end - start + 1` since we are inventing one more value.)
+
+### Const-Iterable ### {#const-iterable}
+
+For `views::lazy_counted` and `views::as_closed`, always, as we are degrading to iterators.
+
+For `views::lazy_take`, if and only if the underlying range is `const`-iterable.
+
+### Borrowed ### {#borrowed}
+
+For `views::lazy_counted` and `views::as_closed`, always, as the iterator stores all the information.
+
+For `views::lazy_take`, if and only if the underlying range is borrowed.
+
+## Feature Test Macro ## {#feature-test-macro}
+
+This proposal added two new feature test macros:
+
+- `__cpp_lib_lazy_counted_iterator` for `lazy_counted_iterator`, `views::lazy_counted` and `views::lazy_take`.
+- `__cpp_lib_ranges_as_closed` for both `views::as_closed` and `views::closed_iota`.
+
+Of course, the author is happy to split the FTMs further (such as separate FTMs for each adaptor) if LEWG requests.
+
+## Freestanding ## {#freestanding}
+
+All newly introduced FTMs, iterators, and adaptors should be in freestanding, as most facilities in `<iterator>` and `<ranges>` are already in freestanding after [[P1642R11]].
+
+# Implementation Experience # {#implementation-experience}
+
+The author implemented this proposal in [beman.closed_view](https://github.com/bemanproject/closed_view) as part of Beman Project. No significant obstacles are observed.
+
+# Wording # {#wording}
+
+The wording below is based on [[!N5032]], with [[P3828R1]]'s changes already applied on top.
+
+Most wording for `lazy_counted_iterator` and `lazy_take_view` is copied from [[!P2406R5]] with rebases to the latest working draft.
+
+## 17.3.2 Header `<version>` synopsis [version.syn] ## {#version.syn}
+
+In this clause's synopsis, insert a new macro definition in a place that respects the current alphabetical order of the synopsis, and substituting `20XXYYL` by the date of adoption.
+<pre>
+<ins>#define __cpp_lib_lazy_counted_iterator 20XXYYL // freestanding, also in &lt;iterator&gt;</ins>
+// [...]
+<ins>#define __cpp_lib_ranges_as_closed      20XXYYL // freestanding, also in &lt;ranges&gt;</ins>
+</pre>
+
+## 24.2 Header `<iterator>` synopsis [iterator.synopsis] ## {#iterator.synopsis}
+
+Modify the synopsis as follows:
+<pre>
+// [...]
+namespace std {
+  // [...]
+  // [iterators.counted], counted iterators
+  template&lt;input_or_output_iterator I&gt; class counted_iterator; // freestanding
+
+  template&lt;input_iterator I&gt;
+    requires <i>see below</i>
+    struct iterator_traits&lt;counted_iterator&lt;I&gt;&gt;; // freestanding
+
+  <ins>// [iterators.lazy.counted], lazy counted iterators
+  template&lt;input_iterator I&gt; class lazy_counted_iterator; // freestanding
+  </ins>
+  // [...]
+}
+</pre>
+
+Note: Editor's Note: Add the following subclause to 24.5 Iterator adaptors [predef.iterators], after 24.5.7 Counted iterators [iterators.counted]
+
+## 24.5.� Lazy counted iterators [iterators.lazy.counted] ## {#iterators.lazy.counted}
+
+### 24.5.�.1 Class template `lazy_counted_iterator` [lazy.counted.iterator] ### {#lazy.counted.iterator}
+
+Class template `lazy_counted_iterator` is an iterator adaptor with the same behavior as the underlying iterator except that it keeps track of the distance to the end of its range. It can be used together with `default_sentinel` in calls to generic algorithms to operate on a range of *N* elements starting at a given position without needing to know the end position a priori.
+
+[*Note 1:* The difference between `lazy_counted_iterator` and `counted_iterator` is that the former will not increment the underlying iterator when reaching the end of its range. — *end note*]
+
+Two values `i1` and `i2` of types `lazy_counted_iterator<I1>` and `lazy_counted_iterator<I2>` refer to elements of the same sequence if and only if there exists some integer *n* such that `next(i1.current, i1.count() + n)` and `next(i2.current, i2.count() + n)` refer to the same (possibly past-the-end) element.
+
+```cpp
+namespace std {
+  template<input_iterator I>
+  class lazy_counted_iterator {
+  public:
+    using iterator_type = I;
+    using value_type = iter_value_t<I>;
+    using difference_type = iter_difference_t<I>;
+    using iterator_concept  = see below;
+    using iterator_category = see below; // not always present
+    constexpr lazy_counted_iterator() requires default_initializable<I> = default;
+    constexpr lazy_counted_iterator(I x, iter_difference_t<I> n);
+    template<class I2>
+      requires convertible_to<const I2&, I>
+        constexpr lazy_counted_iterator(const lazy_counted_iterator<I2>& x);
+
+    template<class I2>
+      requires assignable_from<I&, const I2&>
+        constexpr lazy_counted_iterator& operator=(const lazy_counted_iterator<I2>& x);
+
+    constexpr iter_difference_t<I> count() const noexcept;
+    constexpr decltype(auto) operator*();
+    constexpr decltype(auto) operator*() const
+      requires dereferenceable<const I>;
+
+    constexpr lazy_counted_iterator& operator++();
+    constexpr void operator++(int);
+    constexpr lazy_counted_iterator operator++(int)
+      requires forward_iterator<I>;
+
+    template<common_with<I> I2>
+      friend constexpr iter_difference_t<I2> operator-(
+        const lazy_counted_iterator& x, const lazy_counted_iterator<I2>& y);
+    friend constexpr iter_difference_t<I> operator-(
+      const lazy_counted_iterator& x, default_sentinel_t);
+    friend constexpr iter_difference_t<I> operator-(
+      default_sentinel_t, const lazy_counted_iterator& y);
+
+    template<common_with<I> I2>
+      friend constexpr bool operator==(
+        const lazy_counted_iterator& x, const lazy_counted_iterator<I2>& y);
+    friend constexpr bool operator==(
+      const lazy_counted_iterator& x, default_sentinel_t);
+
+    template<common_with<I> I2>
+      friend constexpr strong_ordering operator<=>(
+        const lazy_counted_iterator& x, const lazy_counted_iterator<I2>& y);
+
+    friend constexpr iter_rvalue_reference_t<I> iter_move(const lazy_counted_iterator& i)
+      noexcept(noexcept(ranges::iter_move(i.current)));
+    template<indirectly_swappable<I> I2>
+      friend constexpr void iter_swap(const lazy_counted_iterator& x, const lazy_counted_iterator<I2>& y)
+        noexcept(noexcept(ranges::iter_swap(x.current, y.current)));
+
+  private:
+    I current = I();                    // exposition only
+    iter_difference_t<I> length = 0;    // exposition only
+  };
+}
+```
+
+The member *typedef-name* `iterator_concept` denotes `forward_iterator_tag` if `I` models `forward_iterator`, and `input_iterator_tag` otherwise.
+
+The member *typedef-name* `iterator_category` is defined if and only `I` models `forward_iterator`. In that case, `lazy_counted_iterator<I>::iterator_category` denotes the type `iterator_traits<I>::iterator_category`.
+
+### 24.5.�.2 Constructors and conversions [lazy.counted.iter.const] ### {#lazy.counted.iter.const}
+
+```cpp
+constexpr lazy_counted_iterator(I i, iter_difference_t<I> n);
+```
+
+1. *Hardened preconditions*: `n >= 0` is `true`.
+2. *Effects*: Initializes `current` with `std::move(i)` and `length` with `n`.
+
+```cpp
+template<class I2>
+  requires convertible_to<const I2&, I>
+    constexpr lazy_counted_iterator(const lazy_counted_iterator<I2>& x);
+```
+
+3. *Effects*: Initializes `current` with `x.current` and `length` with `x.length`.
+
+```cpp
+template<class I2>
+  requires assignable_from<I&, const I2&>
+    constexpr lazy_counted_iterator& operator=(const lazy_counted_iterator<I2>& x);
+```
+
+4. *Effects*: Assigns `x.current` to `current` and `x.length` to `length`.
+5. *Returns*: `*this`.
+
+### 24.5.�.3 Accessors [lazy.counted.iter.access] ### {#lazy.counted.iter.access}
+
+```cpp
+constexpr iter_difference_t<I> count() const noexcept;
+```
+
+1. *Effects*: Equivalent to: `return length;`
+
+### 24.5.�.4 Element access [lazy.counted.iter.elem] ### {#lazy.counted.iter.elem}
+
+```cpp
+constexpr decltype(auto) operator*();
+constexpr decltype(auto) operator*() const
+  requires dereferenceable<const I>;
+```
+
+1. *Hardened preconditions*: `length > 0` is `true`.
+2. *Effects*: Equivalent to: `return *current;`
+
+### 24.5.�.5 Navigation [lazy.counted.iter.nav] ### {#lazy.counted.iter.nav}
+
+```cpp
+constexpr lazy_counted_iterator& operator++();
+```
+
+4. *Hardened preconditions*: `length > 0` is `true`.
+5. *Effects*: Equivalent to:
+
+```cpp
+if (length > 1) ++current;
+--length;
+return *this;
+```
+
+```cpp
+constexpr void operator++(int);
+```
+
+6. *Hardened preconditions*: `length > 0` is `true`.
+7. *Effects*: Equivalent to `++*this`.
+
+```cpp
+constexpr lazy_counted_iterator operator++(int)
+  requires forward_iterator<I>;
+```
+
+8. *Effects*: Equivalent to:
+
+```cpp
+lazy_counted_iterator tmp = *this;
+++*this;
+return tmp;
+```
+
+```cpp
+template<common_with<I> I2>
+  friend constexpr iter_difference_t<I2> operator-(
+    const lazy_counted_iterator& x, const lazy_counted_iterator<I2>& y);
+```
+
+9. *Preconditions*: `x` and `y` refer to elements of the same sequence ([lazy.counted.iterator]).
+10. *Effects*: Equivalent to: `return y.length - x.length;`
+
+```cpp
+friend constexpr iter_difference_t<I> operator-(
+  const lazy_counted_iterator& x, default_sentinel_t);
+```
+
+11. *Effects*: Equivalent to: `return -x.length;`
+
+```cpp
+friend constexpr iter_difference_t<I> operator-(
+  default_sentinel_t, const lazy_counted_iterator& y);
+```
+
+12. *Effects*: Equivalent to: `return y.length;`
+
+### 24.5.�.6 Comparisons [lazy.counted.iter.cmp] ### {#lazy.counted.iter.cmp}
+
+```cpp
+template<common_with<I> I2>
+  friend constexpr bool operator==(
+    const lazy_counted_iterator& x, const lazy_counted_iterator<I2>& y);
+```
+
+1. *Preconditions*: `x` and `y` refer to elements of the same sequence ([lazy.counted.iterator]).
+2. *Effects*: Equivalent to: `return x.length == y.length;`
+
+```cpp
+friend constexpr bool operator==(
+  const lazy_counted_iterator& x, default_sentinel_t);
+```
+
+3. *Effects*: Equivalent to: `return x.length == 0;`
+
+```cpp
+template<common_with<I> I2>
+  friend constexpr strong_ordering operator<=>(
+    const lazy_counted_iterator& x, const lazy_counted_iterator<I2>& y);
+```
+
+4. *Preconditions*: `x` and `y` refer to elements of the same sequence ([lazy.counted.iterator]).
+5. *Effects*: Equivalent to: `return y.length <=> x.length;`
+
+[*Note 1*: The argument order in the *Effects:* element is reversed because `length` counts down, not up. — *end note*]
+
+### 24.5.�.7 Customizations [lazy.counted.iter.cust] ### {#lazy.counted.iter.cust}
+
+```cpp
+friend constexpr iter_rvalue_reference_t<I>
+  iter_move(const lazy_counted_iterator& i)
+    noexcept(noexcept(ranges::iter_move(i.current)));
+```
+
+1. *Hardened preconditions*: `i.length > 0` is `true`.
+2. *Effects*: Equivalent to: `return ranges::iter_move(i.current);`
+
+```cpp
+template<indirectly_swappable<I> I2>
+  friend constexpr void
+    iter_swap(const lazy_counted_iterator& x, const lazy_counted_iterator<I2>& y)
+      noexcept(noexcept(ranges::iter_swap(x.current, y.current)));
+```
+
+3. *Hardened preconditions*: Both `x.length > 0` and `y.length > 0` are `true`.
+4. *Effects*: Equivalent to `ranges::iter_swap(x.current, y.current)`.
+
+## 25.2 Header `<ranges>` synopsis [ranges.syn] ## {#ranges.syn}
+
+Modify the synopsis as follows:
+<pre>
+// [...]
+namespace std::ranges {
+  // [...]
+  // [range.take], take view
+  template&lt;view&gt; class take_view;
+
+  template&lt;class T&gt;
+    constexpr bool enable_borrowed_range&lt;take_view&lt;T&gt;&gt; =
+      enable_borrowed_range&lt;T&gt;;
+
+  namespace views { inline constexpr <i>unspecified</i> take = <i>unspecified</i>; }
+
+  <ins>// [range.lazy.take], lazy take view
+  template&lt;view&gt; class lazy_take_view;
+
+  template&lt;class T&gt;
+    constexpr bool enable_borrowed_range&lt;lazy_take_view&lt;T&gt;&gt; =
+      enable_borrowed_range&lt;T&gt;;
+
+  namespace views { inline constexpr <i>unspecified</i> lazy_take = <i>unspecified</i>; }
+  </ins>
+
+  // [...]
+  // [range.counted], counted view
+  namespace views { inline constexpr <i>unspecified</i> counted = <i>unspecified</i>; }
+
+  <ins>// [range.lazy.counted], lazy counted view
+  namespace views { inline constexpr <i>unspecified</i> lazy_counted = <i>unspecified</i>; }
+  </ins>
+
+  // [...]
+  // [range.as.input], as input view
+  template&lt;input_range V&gt;
+    requires view&lt;V&gt;
+  class as_input_view;
+
+  template&lt;class V&gt;
+    constexpr bool enable_borrowed_range&lt;as_input_view&lt;V&gt;&gt; =
+      enable_borrowed_range&lt;V&gt;;
+
+  namespace views { inline constexpr <i>unspecified</i> as_input = <i>unspecified</i>; }
+
+  <ins>// [range.as.closed], as closed view
+  template&lt;input_iterator I, sentinel_for&lt;I&gt; S&gt;
+  class as_closed_view;
+
+  template&lt;class I, class S&gt;
+    constexpr bool enable_borrowed_range&lt;as_closed_view&lt;I, S&gt;&gt; = true;
+
+  namespace views {
+    inline constexpr <i>unspecified</i> as_closed = <i>unspecified</i>;
+    inline constexpr <i>unspecified</i> closed_iota = <i>unspecified</i>;
+  }
+  </ins>
+
+  // [...]
+}
+</pre>
+
+Note: Editor's Note: Add the following subclause to 25.7 Range adaptors [range.adaptors], after 25.7.10 Take view [range.take]
+
+## 25.7.� Lazy take view [range.lazy.take] ## {#range.lazy.take}
+
+### 25.7.�.1 Overview [range.lazy.take.overview] ### {#range.lazy.take.overview}
+
+1. `lazy_take_view` produces a view of the first *N* elements from another view, or all the elements if the adapted view contains fewer than *N*.
+2. The name `views::lazy_take` denotes a range adaptor object ([range.adaptor.object]). Let `E` and `F` be expressions, let `T` be `remove_cvref_t<decltype((E))>`, and let `D` be `range_difference_t<decltype((E))>`. If `decltype((F))` does not model `convertible_to<D>`, `views::lazy_take(E, F)` is ill-formed. Otherwise, the expression `views::lazy_take(E, F)` is expression-equivalent to:
+
+- If `T` is a specialization of `ranges::empty_view` ([range.empty.view]), then <code>((void)F, <i>decay-copy</i>(E))</code>, except that the evaluations of `E` and `F` are indeterminately sequenced.
+- Otherwise, if `T` is a specialization of `optional` and `T` models `view`, then <code>(static_cast&lt;D&gt;(F) == D() ? ((void)E, T()) : <i>decay-copy</i>(E))</code>.
+- Otherwise, if `T` models `random_access_range` and `sized_range` and is a specialization of `span` ([views.span]), `basic_string_view` ([string.view]), or `ranges::subrange` ([range.subrange]), then `U(ranges::begin(E), ranges::begin(E) + std::min<D>(ranges::distance(E), F))`, except that `E` is evaluated only once, where `U` is a type determined as follows:
+    - if `T` is a specialization of span, then `U` is `span<typename T::element_type>`;
+    - otherwise, if `T` is a specialization of `basic_string_view`, then `U` is `T`;
+    - otherwise, `T` is a specialization of `ranges::subrange`, and `U` is `ranges::subrange<iterator_t<T>>`;
+- otherwise, if `T` is a specialization of `iota_view` ([range.iota.view]) that models `random_access_range` and `sized_range`, then `iota_view(*ranges::begin(E), *(ranges::begin(E) + std::min<D>(ranges::distance(E), F)))`, except that `E` is evaluated only once.
+- Otherwise, if `T` is a specialization of `repeat_view` ([range.repeat.view]):
+    - if `T` models `sized_range`, then `views::repeat(*E.value_, std::min<D>(ranges::distance(E), F))`, except that `E` is evaluated only once;
+    - otherwise, <code>views::repeat(*E.<i>value_</i>, static_cast&lt;D&gt;(F))</code>.
+- Otherwise, `lazy_take_view(E, F)`.
+
+[*Example 1*:
+```cpp
+vector<int> is{0,1,2,3,4,5,6,7,8,9};
+for (int i : is | views::lazy_take(5))
+  cout << i << ' '; // prints 0 1 2 3 4
+```
+— *end example*]
+
+### 25.7.�.2 Class template `lazy_take_view` [range.lazy.take.view] ### {#range.lazy.take.view}
+
+<pre>
+namespace std::ranges {
+  template&lt;view V&gt;
+  class lazy_take_view : public view_interface&lt;lazy_take_view&lt;V&gt;&gt; {
+  private:
+    V <i>base_</i> = V();                    // exposition only
+    range_difference_t&lt;V&gt; <i>count_</i> = 0; // exposition only
+
+    // [range.lazy.take.sentinel], class template lazy_take_view::<i>sentinel</i>
+    template&lt;bool&gt; class <i>sentinel</i>;    // exposition only
+
+  public:
+    lazy_take_view() requires default_initializable&lt;V&gt; = default;
+    constexpr lazy_take_view(V base, range_difference_t&lt;V&gt; count);
+
+    constexpr V base() const & requires copy_constructible&lt;V&gt; { return <i>base_</i>; }
+    constexpr V base() && { return std::move(<i>base_</i>); }
+
+    constexpr auto begin() requires (!<i>simple-view</i>&lt;V&gt;) {
+      if constexpr (sized_range&lt;V&gt;) {
+        if constexpr (random_access_range&lt;V&gt;) {
+          return ranges::begin(<i>base_</i>);
+        } else {
+          auto sz = range_difference_t&lt;V&gt;(size());
+          return lazy_counted_iterator(ranges::begin(<i>base_</i>), sz);
+        }
+      } else if constexpr (sized_sentinel_for&lt;sentinel_t&lt;V&gt;, iterator_t&lt;V&gt;&gt;) {
+        auto it = ranges::begin(<i>base_</i>);
+        auto sz = std::min(<i>count_</i>, ranges::end(<i>base_</i>) - it);
+        return lazy_counted_iterator(std::move(it), sz);
+      } else {
+        return lazy_counted_iterator(ranges::begin(<i>base_</i>), <i>count_</i>);
+      }
+    }
+
+    constexpr auto begin() const requires range&lt;const V&gt; {
+      if constexpr (sized_range&lt;const V&gt;) {
+        if constexpr (random_access_range&lt;const V&gt;) {
+          return ranges::begin(<i>base_</i>);
+        } else {
+          auto sz = range_difference_t&lt;const V&gt;(size());
+          return lazy_counted_iterator(ranges::begin(<i>base_</i>), sz);
+        }
+      } else if constexpr (sized_sentinel_for&lt;sentinel_t&lt;const V&gt;, iterator_t&lt;const V&gt;&gt;) {
+        auto it = ranges::begin(<i>base_</i>);
+        auto sz = std::min(<i>count_</i>, ranges::end(<i>base_</i>) - it);
+        return lazy_counted_iterator(std::move(it), sz);
+      } else {
+        return lazy_counted_iterator(ranges::begin(<i>base_</i>), <i>count_</i>);
+      }
+    }
+
+    constexpr auto end() requires (!<i>simple-view</i>&lt;V&gt;) {
+      if constexpr (sized_range&lt;V&gt;) {
+        if constexpr (random_access_range&lt;V&gt;)
+          return ranges::begin(<i>base_</i>) + range_difference_t&lt;V&gt;(size());
+        else
+          return default_sentinel;
+      } else if constexpr (sized_sentinel_for&lt;sentinel_t&lt;V&gt;, iterator_t&lt;V&gt;&gt;) {
+        return default_sentinel;
+      } else {
+        return <i>sentinel</i>&lt;false&gt;{ranges::end(<i>base_</i>)};
+      }
+    }
+
+    constexpr auto end() const requires range&lt;const V&gt; {
+      if constexpr (sized_range&lt;const V&gt;) {
+        if constexpr (random_access_range&lt;const V&gt;)
+          return ranges::begin(<i>base_</i>) + range_difference_t&lt;const V&gt;(size());
+        else
+          return default_sentinel;
+      } else if constexpr (sized_sentinel_for&lt;sentinel_t&lt;const V&gt;, iterator_t&lt;const V&gt;&gt;) {
+        return default_sentinel;
+      } else {
+        return <i>sentinel</i>&lt;true&gt;{ranges::end(<i>base_</i>)};
+      }
+    }
+
+    constexpr auto size() requires sized_range&lt;V&gt; {
+      auto n = ranges::size(<i>base_</i>);
+      return ranges::min(n, static_cast&lt;decltype(n)&gt;(<i>count_</i>));
+    }
+
+    constexpr auto size() const requires sized_range&lt;const V&gt; {
+      auto n = ranges::size(<i>base_</i>);
+      return ranges::min(n, static_cast&lt;decltype(n)&gt;(<i>count_</i>));
+    }
+
+    constexpr auto reserve_hint() {
+      if constexpr (approximately_sized_range&lt;V&gt;) {
+        auto n = static_cast&lt;range_difference_t&lt;V&gt;&gt;(ranges::reserve_hint(<i>base_</i>));
+        return <i>to-unsigned-like</i>(ranges::min(n, <i>count_</i>));
+      }
+      return <i>to-unsigned-like</i>(<i>count_</i>);
+    }
+
+    constexpr auto reserve_hint() const {
+      if constexpr (approximately_sized_range&lt;const V&gt;) {
+        auto n = static_cast&lt;range_difference_t&lt;const V&gt;&gt;(ranges::reserve_hint(<i>base_</i>));
+        return <i>to-unsigned-like</i>(ranges::min(n, <i>count_</i>));
+      }
+      return <i>to-unsigned-like</i>(<i>count_</i>);
+    }
+  };
+
+  template&lt;class R&gt;
+    lazy_take_view(R&&, range_difference_t&lt;R&gt;)
+      -&gt; lazy_take_view&lt;views::all_t&lt;R&gt;&gt;;
+}
+</pre>
+
+```cpp
+constexpr lazy_take_view(V base, range_difference_t<V> count);
+```
+
+1. *Preconditions*: `count >= 0` is `true`.
+2. *Effects*: Initializes <code><i>base_</i></code> with `std::move(base)` and <code><i>count_</i></code> with `count`.
+
+### 25.7.�.3 Class template <code>take_view::<i>sentinel</i></code> [range.lazy.take.sentinel] ### {#range.lazy.take.sentinel}
+
+<pre>
+namespace std::ranges {
+  template&lt;view V&gt;
+  template&lt;bool Const&gt;
+  class lazy_take_view&lt;V&gt;::<i>sentinel</i> {
+  private:
+    using <i>Base</i> = <i>maybe-const</i>&lt;Const, V&gt;; // exposition only
+    template&lt;bool OtherConst&gt;
+      using <i>CI</i> = lazy_counted_iterator&lt;iterator_t&lt;<i>maybe-const</i>&lt;OtherConst, V&gt;&gt;&gt;; // exposition only
+    sentinel_t&lt;<i>Base</i>&gt; <i>end_</i> = sentinel_t&lt;<i>Base</i>&gt;(); // exposition only
+
+  public:
+    <i>sentinel</i>() = default;
+    constexpr explicit <i>sentinel</i>(sentinel_t&lt;<i>Base</i>&gt; end);
+    constexpr <i>sentinel</i>(<i>sentinel</i>&lt;!Const&gt; s)
+      requires Const && convertible_to&lt;sentinel_t&lt;V&gt;, sentinel_t&lt;<i>Base</i>&gt;&gt;;
+
+    constexpr sentinel_t&lt;<i>Base</i>&gt; base() const;
+
+    friend constexpr bool operator==(const <i>CI</i>&lt;Const&gt;& y, const <i>sentinel</i>& x);
+
+    template&lt;bool OtherConst = !Const&gt;
+      requires sentinel_for&lt;sentinel_t&lt;<i>Base</i>&gt;, iterator_t&lt;<i>maybe-const</i>&lt;OtherConst, V&gt;&gt;&gt;
+    friend constexpr bool operator==(const <i>CI</i>&lt;OtherConst&gt;& y, const <i>sentinel</i>& x);
+  };
+}
+</pre>
+
+<pre>
+constexpr explicit <i>sentinel</i>(sentinel_t&lt;<i>Base</i>&gt; end);
+</pre>
+
+1. *Effects*: Initializes <code><i>end_</i></code> with `end`.
+
+<pre>
+constexpr sentinel(sentinel&lt;!Const&gt; s)
+  requires Const && convertible_to&lt;sentinel_t&lt;V&gt;, sentinel_t&lt;<i>Base</i>&gt;&gt;;
+</pre>
+
+2. *Effects*: Initializes <code><i>end_</i></code> with <code>std::move(s.<i>end_</i>)</code>.
+
+<pre>
+constexpr sentinel_t&lt;<i>Base</i>&gt; base() const;
+</pre>
+
+3. *Effects*: Equivalent to: <code>return <i>end_</i>;</code>
+
+<pre>
+friend constexpr bool operator==(const <i>CI</i>&lt;Const&gt;& y, const <i>sentinel</i>& x);
+
+template&lt;bool OtherConst = !Const&gt;
+  requires sentinel_for&lt;sentinel_t&lt;<i>Base</i>&gt;, iterator_t&lt;<i>maybe-const</i>&lt;OtherConst, V&gt;&gt;&gt;
+friend constexpr bool operator==(const <i>CI</i>&lt;OtherConst&gt;& y, const <i>sentinel</i>& x);
+</pre>
+
+4. *Effects*: Equivalent to: <code>return y.count() == 0 || y.current == x.<i>end_</i>;</code>
+
+Note: Editor's Note: Add the following subclause to 25.7 Range adaptors [range.adaptors], after 25.7.19 Counted view [range.counted]
+
+## 25.7.� Lazy counted view [range.lazy.counted] ## {#range.lazy.counted}
+
+1. A lazy counted view presents a view of the elements of the counted range ([iterator.requirements.general]) `i + [0, n)` for an iterator `i` and non-negative integer `n`.
+2. The name `views::lazy_counted` denotes a customization point object ([customization.point.object]). Let `E` and `F` be expressions, let `T` be `decay_t<decltype((E))>`, and let `D` be `iter_difference_t<T>`. If `decltype((F))` does not model `convertible_to<D>`, `views::lazy_counted(E, F)` is ill-formed.
+
+[*Note 1*: This case can result in substitution failure when `views::lazy_counted(E, F)` appears in the immediate context of a template instantiation. — *end note*]
+
+Otherwise, `views::lazy_counted(E, F)` is expression-equivalent to:
+
+- If `T` models `contiguous_iterator`, then `span(to_address(E), static_cast<size_t>(static_cast<D>(F)))`.
+- Otherwise, if `T` models `random_access_iterator`, then `subrange(E, E + static_cast<D>(F))`, except that `E` is evaluated only once.
+- Otherwise, `subrange(lazy_counted_iterator(E, F), default_sentinel)`.
+
+Note: Editor's Note: Add the following subclause to 25.7 Range adaptors [range.adaptors], after 25.7.35 As input view [range.as.input]
+
+## 25.7.� As closed view [range.as.closed] ## {#range.as.closed}
+
+1. `as_closed_view` presents a view of an underlying sequence as if it represents a fully closed range.
+
+[*Note 1*: A fully closed range is a range whose iterator is still valid to dereference even when comparing equal to its ending sentinel. — *end note*]
+
+[*Example 1*:
+```cpp
+vector<int> is{0,1,2,3,4,5,6,7,8,9};
+for (int i : views::as_closed(is.begin() + 2, is.begin() + 5))
+  cout << i << ' '; // prints 2 3 4 5
+```
+— *end example*]
+
+2. The name `views::as_closed` denotes a range adaptor closure object ([range.adaptor.object]). Given subexpressions `E` and `F`, the expressions `views::as_closed(E)` and `views::as_closed(E, F)` are expression-equivalent to `as_closed_view(E)` and `as_closed_view(E, F)`, respectively.
+3. The name `views::closed_iota` denotes a customization point object ([customization.point.object]). Given subexpressions `E` and `F`, the expressions `views::closed_iota(E, F)` is expression-equivalent to `views::as_closed(views::iota(E, F))`.
+
+[*Example 2*:
+```cpp
+for (int i : views::closed_iota(0, 5))
+  cout << i << ' '; // prints 0 1 2 3 4 5
+```
+— *end example*]
+
+### 25.7.�.1 Class template `as_closed_view` [range.as.closed.view] ### {#range.as.closed.view}
+
+<pre>
+namespace std::ranges {
+  template &lt;input_iterator I, sentinel_for&lt;I&gt; S&gt;
+  class as_closed_view : public view_interface&lt;as_closed_view&lt;I, S&gt;&gt; {
+  private:
+    // [range.as.closed.iterator], class iota_view::<i>iterator</i>
+    class <i>iterator</i>; // exposition only
+
+    I <i>start_</i> = I(); // exposition only
+    S <i>end_</i>   = S(); // exposition only
+
+  public:
+    as_closed_view() requires default_initializable&lt;I&gt; = default;
+    template&lt;range R&gt;
+      requires same_as&lt;iterator_t&lt;R&gt;, I&gt; && same_as&lt;sentinel_t&lt;R&gt;, S&gt;
+    constexpr explicit as_closed_view(R&& r);
+    constexpr as_closed_view(I start, S end);
+
+    constexpr <i>iterator</i> begin() const;
+    constexpr auto     end() const;
+    constexpr <i>iterator</i> end() const requires same_as&lt;I, S&gt;;
+
+    constexpr bool empty() const { return false; }
+    constexpr auto size() const requires sized_sentinel_for&lt;S, I&gt;;
+  };
+
+  template &lt;class R&gt;
+    as_closed_view(R&&)
+      -&gt; as_closed_view&lt;iterator_t&lt;R&gt;, sentinel_t&lt;R&gt;&gt;;
+}
+</pre>
+
+```cpp
+template<range R>
+  requires same_as<iterator_t<R>, I> && same_as<sentinel_t<R>, S>
+constexpr explicit as_closed_view(R&& r);
+```
+
+1. *Effects*: Initializes <code><i>start_</i></code> with `ranges::begin(r)` and <code><i>end_</i></code> with `ranges::end(r)`.
+
+```cpp
+constexpr as_closed_view(I start, S end);
+```
+
+2. *Effects*: Initializes <code><i>start_</i></code> with `std::move(start)` and <code><i>end_</i></code> with `std::move(end)`.
+
+<pre>
+constexpr <i>iterator</i> begin() const;
+</pre>
+
+3. *Effects*: Equivalent to: <code>return <i>iterator</i>{<i>start_</i>, <i>end_</i>};</code>
+
+```cpp
+constexpr auto end() const;
+```
+
+4. *Effects*: Equivalent to: `return default_sentinel;`
+
+<pre>
+constexpr <i>iterator</i> end() const requires same_as&lt;I, S&gt;;
+</pre>
+
+5. *Effects*: Equivalent to: <code>return <i>iterator</i>{<i>end_</i>, <i>end_</i>, true};</code>
+
+```cpp
+constexpr auto size() const requires sized_sentinel_for<S, I>;
+```
+
+6. *Effects*: Equivalent to: <code>return <i>end_</i> - <i>start_</i> + 1;</code>
+
+### 25.7.�.2 Class `as_closed_view::iterator` [range.as.closed.iterator] ### {#range.as.closed.iterator}
+
+<pre>
+namespace std::ranges {
+  template &lt;input_iterator I, sentinel_for&lt;I&gt; S&gt;
+  class as_closed_view&lt;I, S&gt;::<i>iterator</i> {
+  private:
+    I <i>current_</i> = I();     // exposition only
+    S <i>last_</i> = S();        // exposition only
+    bool <i>is_end_</i> = false; // exposition only
+
+    constexpr <i>iterator</i>(I current, S last, bool is_end);
+
+  public:
+    using iterator_concept  = <i>see below</i>;
+    using iterator_category = <i>see below</i>; // not always present
+    using value_type        = iter_value_t&lt;I&gt;;
+    using difference_type   = iter_difference_t&lt;I&gt;;
+
+    <i>iterator</i>() requires default_initializable&lt;I&gt; = default;
+    constexpr <i>iterator</i>(I current, S last);
+
+    constexpr decltype(auto) operator*() const { return *<i>current_</i>; }
+    constexpr decltype(auto) operator*() { return *<i>current_</i>; }
+    constexpr <i>iterator</i>& operator++();
+    constexpr void operator++(int);
+    constexpr <i>iterator</i> operator++(int)
+      requires forward_iterator&lt;I&gt;;
+    constexpr <i>iterator</i>& operator--()
+      requires bidirectional_iterator&lt;I&gt;;
+    constexpr <i>iterator</i> operator--(int)
+      requires bidirectional_iterator&lt;I&gt;;
+
+    constexpr <i>iterator</i>& operator+=(difference_type n)
+      requires random_access_iterator&lt;I&gt;;
+    constexpr <i>iterator</i>& operator-=(difference_type n)
+      requires random_access_iterator&lt;I&gt;;
+    constexpr decltype(auto) operator[](difference_type n) const
+      requires random_access_iterator&lt;I&gt;;
+    constexpr decltype(auto) operator[](difference_type n)
+      requires random_access_iterator&lt;I&gt;;
+
+    friend constexpr bool operator==(const <i>iterator</i>& x, const <i>iterator</i>& y)
+      requires equality_comparable&lt;I&gt;;
+    friend constexpr bool operator==(const <i>iterator</i>& x, default_sentinel_t) noexcept;
+    friend constexpr bool operator&lt;(const <i>iterator</i>& x, const <i>iterator</i>& y)
+      requires random_access_iterator&lt;I&gt;;
+    friend constexpr bool operator&gt;(const <i>iterator</i>& x, const <i>iterator</i>& y)
+      requires random_access_iterator&lt;I&gt;;
+    friend constexpr bool operator&lt;=(const <i>iterator</i>& x, const <i>iterator</i>& y)
+      requires random_access_iterator&lt;I&gt;;
+    friend constexpr bool operator&gt;=(const <i>iterator</i>& x, const <i>iterator</i>& y)
+      requires random_access_iterator&lt;I&gt;;
+    friend constexpr auto operator&lt;=&gt;(const <i>iterator</i>& x, const <i>iterator</i>& y)
+      requires random_access_iterator&lt;I&gt; && three_way_comparable&lt;I&gt;;
+
+    friend constexpr <i>iterator</i> operator+(<i>iterator</i> i, difference_type n)
+      requires random_access_iterator&lt;I&gt;;
+    friend constexpr <i>iterator</i> operator+(difference_type n, <i>iterator</i> i)
+      requires random_access_iterator&lt;I&gt;;
+    friend constexpr <i>iterator</i> operator-(<i>iterator</i> i, difference_type n)
+      requires random_access_iterator&lt;I&gt;;
+    friend constexpr difference_type operator-(const <i>iterator</i>& x, const <i>iterator</i>& y)
+      requires sized_sentinel_for&lt;S, I&gt;;
+    friend constexpr difference_type operator-(const <i>iterator</i>& x, default_sentinel_t)
+      requires sized_sentinel_for&lt;S, I&gt;;
+    friend constexpr difference_type operator-(default_sentinel_t, const <i>iterator</i>& x)
+      requires sized_sentinel_for&lt;S, I&gt;;
+  };
+}
+</pre>
+
+1. <code><i>iterator</i>::iterator_concept</code> is defined as follows:
+
+- If `I` models `random_access_iterator`, then `iterator_concept` denotes `random_access_iterator_tag`.
+- Otherwise, if `I` models `bidirectional_iterator`, then `iterator_concept` denotes `bidirectional_iterator_tag`.
+- Otherwise, if `I` models `forward_iterator`, then `iterator_concept` denotes `forward_iterator_tag`.
+- Otherwise, `iterator_concept` denotes `input_iterator_tag`.
+
+2. The member *typedef-name* `iterator_category` is defined if and only if `I` models `forward_iterator`. In that case, <code><i>iterator</i>::iterator_category</code> is defined as follows: Let `C` denote the type `iterator_traits<I>::iterator_category`.
+
+- If `C` models `derived_from<contiguous_iterator_tag>`, `iterator_category` denotes `random_access_iterator_tag`;
+- Otherwise, `iterator_category` denotes `C`.
+
+<pre>
+constexpr <i>iterator</i>(I current, S last, bool is_end);
+</pre>
+
+3. *Effects*: Initializes <code><i>current_</i></code> with `std::move(current)`, <code><i>last_</i></code> with `std::move(last)`, and <code><i>is_end_</i></code> with `is_end`.
+
+<pre>
+constexpr <i>iterator</i>(I current, S last);
+</pre>
+
+4. *Effects*: Initializes <code><i>current_</i></code> with `std::move(current)` and <code><i>last_</i></code> with `std::move(last)`.
+
+<pre>
+constexpr <i>iterator</i>& operator++();
+</pre>
+
+5. *Effects*: Equivalent to:
+
+<pre>
+if (<i>current_</i> == <i>last_</i>) <i>is_end_</i> = true;
+else ++<i>current_</i>;
+return *this;
+</pre>
+
+```cpp
+constexpr void operator++(int);
+```
+
+6. *Effects*: Equivalent to `++*this;`.
+
+<pre>
+constexpr <i>iterator</i> operator++(int)
+  requires forward_iterator&lt;I&gt;;
+</pre>
+
+7. *Effects*: Equivalent to:
+
+```cpp
+auto tmp = *this;
+++*this;
+return tmp;
+```
+
+<pre>
+constexpr <i>iterator</i>& operator--()
+  requires bidirectional_iterator&lt;I&gt;;
+</pre>
+
+8. *Effects*: Equivalent to:
+
+<pre>
+if (<i>is_end_</i>) <i>is_end_</i> = false;
+else --<i>current_</i>;
+return *this;
+</pre>
+
+<pre>
+constexpr <i>iterator</i> operator--(int)
+  requires bidirectional_iterator&lt;I&gt;;
+</pre>
+
+9. *Effects*: Equivalent to:
+
+```cpp
+auto tmp = *this;
+--*this;
+return tmp;
+```
+
+<pre>
+constexpr <i>iterator</i>& operator+=(difference_type n)
+  requires random_access_iterator&lt;I&gt;;
+</pre>
+
+10. *Effects*: Equivalent to:
+
+<pre>
+if (n >= 1 && <i>current_</i> + (n - 1) == <i>last_</i>) {
+  <i>current_</i> += n - 1;
+  <i>is_end_</i> = true;
+}
+else <i>current_</i> += n;
+return *this;
+</pre>
+
+<pre>
+constexpr <i>iterator</i>& operator-=(difference_type n)
+  requires random_access_iterator&lt;I&gt;;
+</pre>
+
+11. *Effects*: Equivalent to:
+
+<pre>
+if (<i>is_end_</i> && n >= 1) {
+  <i>is_end_</i> = false;
+  --n;
+}
+<i>current_</i> -= n;
+return *this;
+</pre>
+
+```cpp
+constexpr decltype(auto) operator[](difference_type n) const
+  requires random_access_iterator<I>;
+constexpr decltype(auto) operator[](difference_type n)
+  requires random_access_iterator<I>;
+```
+
+12. *Effects*: Equivalent to: <code>return <i>current_</i>[n];</code>
+
+<pre>
+friend constexpr bool operator==(const <i>iterator</i>& x, const <i>iterator</i>& y)
+  requires equality_comparable&lt;I&gt;;
+</pre>
+
+13. *Effects*: Equivalent to:
+
+<pre>
+return x.<i>current_</i> == y.<i>current_</i> && x.<i>last_</i> == y.<i>last_</i> && x.<i>is_end_</i> == y.<i>is_end_</i>;
+</pre>
+
+<pre>
+friend constexpr bool operator==(const <i>iterator</i>& x, default_sentinel_t) noexcept;
+</pre>
+
+14. *Effects*: Equivalent to: <code>return x.<i>is_end_</i>;</code>
+
+<pre>
+friend constexpr bool operator&lt;(const <i>iterator</i>& x, const <i>iterator</i>& y)
+  requires random_access_iterator&lt;I&gt;;
+</pre>
+
+15. *Effects*: Equivalent to:
+
+<pre>
+return x.<i>current_</i> &lt; y.<i>current_</i> || (!x.<i>is_end_</i> &amp;&amp; y.<i>is_end_</i>);
+</pre>
+
+<pre>
+friend constexpr bool operator&gt;(const <i>iterator</i>& x, const <i>iterator</i>& y)
+  requires random_access_iterator&lt;I&gt;;
+</pre>
+
+16. *Effects*: Equivalent to: `return y < x;`
+
+<pre>
+friend constexpr bool operator&lt;=(const <i>iterator</i>& x, const <i>iterator</i>& y)
+  requires random_access_iterator&lt;I&gt;;
+</pre>
+
+17. *Effects*: Equivalent to: `return !(y < x);`
+
+<pre>
+friend constexpr bool operator&gt;=(const <i>iterator</i>& x, const <i>iterator</i>& y)
+  requires random_access_iterator&lt;I&gt;;
+</pre>
+
+18. *Effects*: Equivalent to: `return !(x < y);`
+
+<pre>
+friend constexpr auto operator&lt;=&gt;(const <i>iterator</i>& x, const <i>iterator</i>& y)
+  requires random_access_iterator&lt;I&gt; && three_way_comparable&lt;I&gt;;
+</pre>
+
+19. *Effects*: Equivalent to:
+
+<pre>
+if (x.<i>is_end_</i> != y.<i>is_end_</i>) return x.<i>is_end_</i> <=> y.<i>is_end_</i>;
+return x.<i>current_</i> <=> y.<i>current_</i>;
+</pre>
+
+<pre>
+friend constexpr <i>iterator</i> operator+(<i>iterator</i> i, difference_type n)
+  requires random_access_iterator&lt;I&gt;;
+friend constexpr <i>iterator</i> operator+(difference_type n, <i>iterator</i> i)
+  requires random_access_iterator&lt;I&gt;;
+</pre>
+
+20. *Effects*: Equivalent to: `return i += n;`
+
+<pre>
+friend constexpr <i>iterator</i> operator-(<i>iterator</i> i, difference_type n)
+  requires random_access_iterator&lt;I&gt;;
+</pre>
+
+21. *Effects*: Equivalent to: `return i -= n;`
+
+<pre>
+friend constexpr difference_type operator-(const <i>iterator</i>& x, const <i>iterator</i>& y)
+  requires sized_sentinel_for&lt;S, I&gt;;
+</pre>
+
+22. *Effects*: Equivalent to: <code>return x.<i>current_</i> + x.<i>is_end_</i> - y.<i>current_</i> - y.<i>is_end_</i>;</code>
+
+<pre>
+friend constexpr difference_type operator-(const <i>iterator</i>& x, default_sentinel_t)
+  requires sized_sentinel_for&lt;S, I&gt;;
+</pre>
+
+23. *Effects*: Equivalent to: <code>return x.<i>current_</i> + x.<i>is_end_</i> - x.<i>last_</i>;</code>
+
+<pre>
+friend constexpr difference_type operator-(default_sentinel_t, const <i>iterator</i>& x)
+  requires sized_sentinel_for&lt;S, I&gt;;
+</pre>
+
+24. *Effects*: Equivalent to: <code>return x.<i>last_</i> - x.<i>current_</i> - x.<i>is_end_</i>;</code>
+
+<pre class=biblio>
+{
+    "US46-107": {
+        "authors": [
+            "US National Body"
+        ],
+        "date": "31 October 2022",
+        "href": "https://github.com/cplusplus/nbballot/issues/523",
+        "title": "[counted.iterator] Too many iterator increments"
+    },
+    "D2578R0": {
+        "authors": [
+            "Yehezkel Bernat",
+            "Yehuda Bernat"
+        ],
+        "date": "18 April 2022",
+        "href": "https://isocpp.org/files/papers/D2578R0.html",
+        "title": "Block eager input (non-forward) iterators from counted_iterator"
+    }
+}
+</pre>
+

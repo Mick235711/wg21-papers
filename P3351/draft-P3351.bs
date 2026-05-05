@@ -448,11 +448,11 @@ namespace std::ranges {
 }
 </pre>
 
-*Editor's Note: Add the following subclause to 25.7 Range adaptors [range.adaptors], after 25.7.9 Transform view [range.transform]*
+Note: Editor's Note: Add the following subclause to 25.7 Range adaptors [range.adaptors], after 25.7.9 Transform view [range.transform]
 
 ## 25.7.� Scan view [range.scan] ## {#range.scan}
 
-## 25.7.�.1 Overview [range.scan.overview] ## {#range.scan.overview}
+### 25.7.�.1 Overview [range.scan.overview] ### {#range.scan.overview}
 
 1. `scan_view` presents a view that accumulates the results of applying a transformation function to the current state and each element.
 
@@ -470,7 +470,7 @@ for (auto&& i : std::views::scan(vec, std::plus{}, 10)) {
 ```
 -- *end example*]
 
-## 25.7.�.2 Class template `scan_view` [range.scan.view] ## {#range.scan.view}
+### 25.7.�.2 Class template `scan_view` [range.scan.view] ### {#range.scan.view}
 
 <pre>
 namespace std::ranges {
@@ -552,7 +552,7 @@ constexpr <i>iterator</i>&lt;true&gt; begin() const
 </pre>
 4. *Effects*: Equivalent to: <code>return <i>iterator</i>&lt;true&gt;{*this, ranges::begin(<i>base_</i>)};</code>
 
-## 25.7.�.3 Class template <code>scan_view::<i>iterator</i></code> [range.scan.iterator] ## {#range.scan.iterator}
+### 25.7.�.3 Class template <code>scan_view::<i>iterator</i></code> [range.scan.iterator] ### {#range.scan.iterator}
 
 <pre>
 namespace std::ranges {

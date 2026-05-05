@@ -291,7 +291,7 @@ namespace std {
 }
 </pre>
 
-<i>Editor's Note: Insert the following subclause at the end of 22.10.18 Searchers [func.search]</i>
+Note: Editor's Note: Insert the following subclause at the end of 22.10.18 Searchers [func.search]
 
 ## 22.10.18.5 Range-based searchers [func.range.search] ## {#func.range.search}
 ### 22.10.18.5.1 Class template `default_searcher` [func.range.search.default] ### {#func.range.search.default}
@@ -569,7 +569,7 @@ namespace std {
 }
 </pre>
 
-<i>Editor's Note: Insert the following subclause between 24.3.7.5 Concept `indirectly_comparable` [alg.req.ind.cmp] and 24.3.7.6 Concept `permutable` [alg.req.permutable]</i>
+Note: Editor's Note: Insert the following subclause between 24.3.7.5 Concept `indirectly_comparable` [alg.req.ind.cmp] and 24.3.7.6 Concept `permutable` [alg.req.permutable]
 
 ## 24.3.7.� Concept `searchable` [alg.req.searchable] ## {#alg.req.searchable}
 
