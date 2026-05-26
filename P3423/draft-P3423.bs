@@ -12,7 +12,7 @@ URL: https://wg21.link/D3423R2
 !Issue Tracking: <a href="https://github.com/Mick235711/wg21-papers/issues">GitHub Mick235711/wg21-papers</a>
 Editor: Yihe Li, winmikedows@hotmail.com
 No abstract: true
-Date: 2025-11-06
+Date: 2026-05-27
 Markup Shorthands: markdown yes
 </pre>
 
@@ -24,10 +24,11 @@ During Varna (2023-06), [[!P2741R3]] had been adopted into the C++26 working dra
 
 # Revision History # {#revisions}
 
-## R2 ## {#r2}
+## R2 (2026-07 post-Brno Mailing) ## {#r2}
 - Retargeted to C++29, given time constraints.
 - In Kona (2025-11), EWG sees [[!P3423R1]] and forwarded it to CWG ([polls](#ewg-review-kona)). Audience is altered accordingly.
-- Rebase onto latest draft [[!N5014]], which incorporates changes induced by [[P2900R14]].
+- Rebase onto latest draft [[!N5046]], which incorporates changes induced by [[P2900R14]] and [[!P4149R1]].
+- Mention overlap with [[P3099R2]] and rebase wording on its suggestions.
 
 ## R1 (2025-01 pre-Hagenberg Mailing) ## {#r1}
 - Add discussion on instantiation timing of attributes, aka if SFINAE happens if the attribute argument clause results in invalid substitution.
@@ -123,7 +124,7 @@ Clearly, this new "potential best" error message is much superior to the previou
 
 ## Standard Library ## {#stl-usage}
 
-This part contains some concrete examples of how functions and classes in the standard library can benefit from the new flexibility of message parameters. All examples are based on [[!N5014]], and also assumes the existence of `constexpr std::format` ([[P3391R1]]) and Reflection ([[P2996R13]]).
+This part contains some concrete examples of how functions and classes in the standard library can benefit from the new flexibility of message parameters. All examples are based on [[!N5046]], which includes features such as `constexpr std::format` ([[P3391R2]]) and Reflection ([[P2996R13]]) already.
 
 One thing to note here is that `[[deprecated]]` is never required on the deprecated features in the standard library. Similarly, `[[nodiscard]]` is regarded as QoI after the adoption of [[P2422R1]] in St. Louis (2024-06) and no longer appears in the standard library's specification. Therefore, all the following examples only resemble some possible use of the attributes by a standard library vendor. All the examples below that used `[[nodiscard]]` were marked as so in the specification before [[P2422R1]] landed.
 
@@ -239,6 +240,9 @@ namespace my_lib
 }
 ```
 This design allows the library name to be changed easily by altering `lib_name` and also reduces the possibility of misspelling the library name across different message parameters. Furthermore, a similar design can be applied to functions within a class, with the class name factored out into a `fixed_string` static variable.
+
+## Future Language Evolution ## {#future-language-evolution}
+The Contracts MVP ([[P2900R14]]) was included in C++26 based on a minimal viable feature set, and one of the most anticipated post-MVP additions to Contracts is the ability to include a message parameter, as proposed by [[!P3099R2]]. The design chosen by [[!P3099R2]] is very similar to what will be achieved by this proposal: allowing arbitrary compile-time user-generated strings to be usable as the message parameter to `pre(cond, message)`, `post(cond, message)`, and `contract_assert(cond, message)` constructs. The author supports the addition, as allowing the same kind of string for message parameters across the entire language will lead to a unified design for compile-time message parameters and further increase the usefulness of this proposal.
 
 # Design # {#design}
 
@@ -424,6 +428,8 @@ Another approach is to make attributes and `= delete` to only be instantiated wh
 
 The author thinks that the second approach is more sensible, since `= delete` is conceptually a kind of function body, and the idea that `[[some_attribute]]` affects overload resolution is a bit nonsensical. The original response to [the issue](https://github.com/cplusplus/CWG/issues/624) agrees with this decision.
 
+In the NB Comment resolution period, [[!P4149R1]] was adopted for C++26, leading to a unified treatment of default arguments, `noexcept` specifiers, and function contract specifiers under the notion of *separately instantiated construct*s. This proposal thus added attributes and annotations appertaining to functions under its separately instantiated constructs too to achieve consistency across the language.
+
 ## Alternative Syntax Considered ## {#alternative-syntax}
 
 One possible alternative syntax proposed by [[P1267R0]] is to use a `[[reason]]` attribute to express the message uniformly. Such a design will look like:
@@ -454,7 +460,7 @@ Reflection ([[P2996R13]], approved for C++26) is a significant change to the cor
 
 However, a natural question arises: should there be a reflection facility to get the message specified to `= delete` and attributes?
 
-In the current C++26 Working Draft [[!N5014]], there is one metafunction that queries whether the function is deleted: `meta::is_deleted`. No attribute-reflecting mechanisms are proposed in [[P2996R13]], but there is ongoing work on reflecting attributes first by [[P1887R1]] and currently by [[P3385R6]]. Should these proposals also propose the ability to query the message provided to the attributes and `= delete`?
+In the current C++26 Working Draft [[!N5046]], there is one metafunction that queries whether the function is deleted: `meta::is_deleted`. No attribute-reflecting mechanisms are proposed in [[P2996R13]], but there is ongoing work on reflecting attributes first by [[P1887R1]] and currently by [[P3385R7]]. Should these proposals also propose the ability to query the message provided to the attributes and `= delete`?
 
 The author thinks that they probably should (for instance, by letting `meta::display_name_of` return the message or add a new `meta::message_of`), but this is certainly outside the scope of this proposal. The message parameter already exists in these attributes, and this proposal does not add any new parameters to them, so the difficulty of supporting them should not change drastically.
 
@@ -521,17 +527,28 @@ the proposed feature relatively easily. No significant obstacles are observed du
 
 # Wording # {#wording}
 
-The wording below is based on [[!N5014]].
+The wording below is based on [[!N5046]]. The wording below essentially renames *static_assert-message* to *diagnostic-message* and factor it out into its own section, following the guidance suggested in [[!P3099R2]] on wording strategy.
 
-Wording notes for CWG and editor:
-- The wording below renames *static_assert-message* to *diagnostic-message*, which is now used as the grammar for the general diagnostic message parameter. (Should we actually move *diagnostic-message* to another place?)
-- The phrase "text of the *diagnostic-message*" is treated as a word of power, and is referenced by other sections defining `= delete` and attributes to simplify the wording.
-- The wording for attributes that makes them not a part of a function's immediate context comes in two parts: Note in <a href="https://eel.is/c++draft/temp.deduct.general#7">[temp.deduct.general]/7</a> and normative wording in <a href="https://eel.is/c++draft/temp.inst#14">[temp.inst]/14</a> are both adjusted to give attribute specifiers the same instantiation timing with `noexcept` specifiers. This part of the wording is inspired by similar wording in <a href="https://eel.is/c++draft/dcl.contract.func#9">[dcl.contract.func]/9</a> (introduced by [[P2900R14]]) that makes contract specifiers not part of immediate context.
-    - `= delete` is not worded since that is considered a kind of function body and thus follows the same rule already.
+Note: Editor's Note: Insert the following subclause between 6.10 Program execution [basic.exec] and 6.11 Contract assertions [basic.contract]
 
-## 7.7 Constant expressions [expr.const] ## {#expr.const}
+## 6.� Diagnostic message strings [basic.message] ## {#basic.message}
 
-> [*Note 12*: Except for a <i><del>static_assert</del><ins>diagnostic</ins>-message</i>, a manifestly constant-evaluated expression is evaluated even in an
+<pre highlight=text>
+<i>diagnostic-message</i>:
+    <i>unevaluated-string</i>
+    <i>constant-expression</i>
+</pre>
+
+A *diagnostic-message* is a user-supplied string-like object for the purposes of specifying a diagnostic message. If a *diagnostic-message* matches the syntactic requirements of *unevaluated-string*, it is an *unevaluated-string* and the text of the diagnostic-message is the text of the *unevaluated-string*. Otherwise, a *diagnostic-message* shall be a *constant-expression* `M`, and the text of the *diagnostic-message* is determined as follows:
+
+- `M.size()` shall be a converted constant expression of type `std::size_t` and let `N` denote the value of that expression,
+- `M.data()`, implicitly converted to the type "pointer to `const char`", shall be a core constant expression and let `D` denote the converted expression,
+- for each `i` where `0 ≤ i < N`, `D[i]` shall be an integral constant expression, and
+- the text of the *diagnostic-message* is formed by the sequence of `N` code units, starting at `D`, of the ordinary literal encoding ([lex.charset]).
+
+## 7.7.7 Further definitions [expr.const.defns] ## {#expr.const.defns}
+
+> [*Note 1*: Except for a <i><del>static_assert</del><ins>diagnostic</ins>-message</i>, a manifestly constant-evaluated expression is evaluated even in an
 unevaluated operand ([expr.context]). — *end note*]
 
 ## 9.1 Preamble [dcl.pre] ## {#dcl.pre}
@@ -541,9 +558,9 @@ Paragraph 1:
 > Declarations generally specify how names are to be interpreted. Declarations have the form
 <pre highlight=text>
 [...]
-<i><del>static_assert</del><ins>diagnostic</ins>-message</i>:
+<del><i>static_assert-message</i>:
     <i>unevaluated-string</i>
-    <i>constant-expression</i>
+    <i>constant-expression</i></del>
 <i>static_assert-declaration</i>:
     static_assert ( <i>constant-expression</i> ) ;
     static_assert ( <i>constant-expression</i> , <i><del>static_assert</del><ins>diagnostic</ins>-message</i> ) ;
@@ -552,17 +569,20 @@ Paragraph 1:
 
 Paragraph 12:
 
-> If a <i><del>static_assert</del><ins>diagnostic</ins>-message</i> matches the syntactic requirements of *unevaluated-string*, it is an *unevaluated-string* and the text of the <i><del>static_assert</del><ins>diagnostic</ins>-message</i> is the text of the *unevaluated-string*. Otherwise, a <i><del>static_assert</del><ins>diagnostic</ins>-message</i> shall be an expression `M` such that [...]
+> <del>If a *static_assert-message* matches the syntactic requirements of *unevaluated-string*, it is an *unevaluated-string* and the text of the *static_assert-message* is the text of the *unevaluated-string*. Otherwise, a *static_assert-message* shall be an expression `M` such that
+> - the expression `M.size()` is implicitly convertible to the type `std::size_t`, and
+> - the expression `M.data()` is implicitly convertible to the type "pointer to `const char`".</del>
 
 Paragraph 13:
 
-> In a *static_assert-declaration*, the *constant-expression* `E` is contextually converted to `bool` and the converted expression shall be a constant expression ([expr.const]). If the value of the expression `E` when so converted is `true` or the expression is evaluated in the context of a template definition, the declaration has no effect and the <i><del>static_assert</del><ins>diagnostic</ins>-message</i> is an unevaluated operand ([expr.context]). Otherwise, the *static_assert-declaration* fails and
+> In a *static_assert-declaration*, the *constant-expression* `E` is contextually converted to `bool` and the converted expression shall be a constant expression ([expr.const]). If the value of the expression `E` when so converted is `true` or the expression is evaluated in the context of a template definition, the declaration has no effect and the <i><del>static_assert</del><ins>diagnostic</ins>-message</i><ins> ([basic.message])</ins> is an unevaluated operand ([expr.context]). Otherwise, the *static_assert-declaration* fails and <ins>the program is ill-formed.</ins>
+> <del>
 > - the program is ill-formed, and
-> - if the <i><del>static_assert</del><ins>diagnostic</ins>-message</i> is a *constant-expression* `M`,
+> - if the *static_assert-message* is a *constant-expression* `M`,
 >   - `M.size()` shall be a converted constant expression of type `std::size_t` and let `N` denote the value of that expression,
 >   - `M.data()`, implicitly converted to the type "pointer to `const char`", shall be a core constant expression and let `D` denote the converted expression,
 >   - for each `i` where `0 ≤ i < N`, `D[i]` shall be an integral constant expression, and
->   - the text of the <i><del>static_assert</del><ins>diagnostic</ins>-message</i> is formed by the sequence of `N` code units, starting at `D`, of the ordinary literal encoding ([lex.charset]).
+>   - the text of the *static_assert-message* is formed by the sequence of `N` code units, starting at `D`, of the ordinary literal encoding ([lex.charset]).</del>
 
 Paragraph 14:
 
@@ -594,7 +614,7 @@ Paragraph 2:
 
 > A program that refers to a deleted function implicitly or explicitly, other than to declare it, is ill-formed.
 
-> *Recommended practice*: The resulting diagnostic message should include the text of the <del><i>unevaluated-string</i></del><ins><i>diagnostic-message</i> ([dcl.pre])</ins>, if one is supplied.
+> *Recommended practice*: The resulting diagnostic message should include the text of the <del><i>unevaluated-string</i></del><ins><i>diagnostic-message</i> ([basic.message])</ins>, if one is supplied.
 
 > [*Note 1*: This includes calling the function implicitly or explicitly and forming a pointer or pointer-to-member to the function.
 It applies even for references in expressions that are not potentially-evaluated. For an overload set, only the function selected by overload resolution is referenced.
@@ -603,18 +623,18 @@ The implicit odr-use ([basic.def.odr]) of a virtual function does not, by itself
 ## 9.13 Attributes [dcl.attr] ## {#dcl.attr}
 ### 9.13.1 Attribute syntax and semantics [dcl.attr.grammar] ### {#dcl.attr.grammar}
 
-Paragraph 5-6:
+Paragraph 7-8:
 
 > Each *attribute-specifier-seq* is said to *appertain* to some entity or statement, identified by the syntactic context where it appears ([stmt.stmt], [dcl.dcl], [dcl.decl]). If an *attribute-specifier-seq* that appertains to some
 entity or statement contains an *attribute* or *alignment-specifier* that is not allowed to apply to that entity or statement, the program is ill-formed. If an *attribute-specifier-seq* appertains to a friend declaration ([class.friend]), that declaration shall be a definition.
 
 > [*Note 3*: An *attribute-specifier-seq* cannot appertain to an explicit instantiation ([temp.explicit]). — *end note*]
 
-> <ins>The *attribute-specifier-seq*s appertaining to a function are considered to be *needed* ([temp.inst]) when
-> - the function is odr-used ([basic.def.odr]), or
-> - the function is defined.</ins>
-
-> <ins>The *attribute-specifier-seq*s appertaining to a templated function is instantiated only when needed.</ins>
+> <ins>An *attribute-specifier* appertaining to a function is considered to be *needed* ([temp.inst]) when
+> - in an expression, the function is selected by overload resolution ([over.match], [over.over]);
+> - the function is odr-used ([basic.def.odr]);
+> - the function is defined; or
+> - the function is represented by a reflection.</ins>
 
 > For an *attribute-token* (including an *attribute-scoped-token*) not specified in this document, the behavior is implementation-defined; any such *attribute-token* that is not recognized by the implementation is ignored.
 
@@ -635,7 +655,7 @@ Paragraph 1:
 
 Paragraph 4:
 
-> *Recommended practice*: Implementations should use the `deprecated` attribute to produce a diagnostic message in case the program refers to a name or entity other than to declare it, after a declaration that specifies the attribute. The diagnostic message should include the text<ins> of the *diagnostic-message* ([dcl.pre])</ins> provided within the *attribute-argument-clause* of any `deprecated` attribute applied to the name or entity. The value of a *has-attribute-expression* for the `deprecated` attribute should be `0` unless the implementation can issue such diagnostic messages.
+> *Recommended practice*: Implementations should use the `deprecated` attribute to produce a diagnostic message in case the program refers to a name or entity other than to declare it, after a declaration that specifies the attribute. The diagnostic message should include the text<ins> of the *diagnostic-message* ([basic.message])</ins> provided within the *attribute-argument-clause* of any `deprecated` attribute applied to the name or entity. The value of a *has-attribute-expression* for the `deprecated` attribute should be `0` unless the implementation can issue such diagnostic messages.
 
 ### 9.13.9 Nodiscard attribute [dcl.attr.nodiscard] ### {#dcl.attr.nodiscard}
 
@@ -652,20 +672,33 @@ Paragraph 4:
 
 > [*Note 2*: This is typically because discarding the return value of a `nodiscard` call has surprising consequences. — *end note*]
 
-> The <i><del>unevaluated-string</del></i><ins>text of the <i>diagnostic-message</i> ([dcl.pre])</ins> in a `nodiscard` *attribute-argument-clause* should be used in the message of the warning as the rationale for why the result should not be discarded.
+> The <i><del>unevaluated-string</del></i><ins>text of the <i>diagnostic-message</i> ([basic.message])</ins> in a `nodiscard` *attribute-argument-clause* should be used in the message of the warning as the rationale for why the result should not be discarded.
+
+### 9.13.12 Annotations [dcl.attr.annotation] ### {#dcl.attr.annotation}
+Paragraph 4:
+
+> <ins>[*Note 2*:</ins> Substituting into an annotation is not in the immediate context. <ins>— *end note*]</ins>
+
+## 13.7.1 General [temp.decls.general] ## {#temp.decls.general}
+Paragraph 3:
+
+> A *separately instantiated construct* of a templated function `F` is a
+> - default argument,
+> - *noexcept-specifier*,<del> or</del>
+> - <ins><i>attribute-specifier</i>, or</ins>
+> - *function-contract-specifier*
 
 ## 13.9.2 Implicit instantiation [temp.inst] ## {#temp.inst}
 
-Paragraph 14:
+Paragraph 15:
 
-> The *noexcept-specifier*<ins>, *attribute-specifier-seq*s,</ins> and *function-contract-specifier*s of a function template specialization are not instantiated along with the function declaration; they are instantiated when needed ([except.spec], <ins>[dcl.attr.grammar], </ins>[dcl.contract.func]). If such a specifier is needed but has not yet been instantiated, the dependent names are looked up, the semantics constraints are checked, and the instantiation of any template used in the specifier is done as if it were being done as part of instantiating the declaration of the specialization at that point.
+> Other than as specified above, the separately instantiated constructs of a specialization of a templated function are instantiated only when needed ([except.spec], <ins>[dcl.attr.grammar], </ins>[dcl.contract.func]). When such a construct is instantiated, the dependent names are looked up, the semantics constraints are checked, and the instantiation of any template used in the construct is done as if it were being done as part of instantiating the declaration of the specialization at that point.
 
-## 13.10.3 Template argument deduction [temp.deduct] ## {#temp.deduct}
-### 13.10.3.1 General [temp.deduct.general] ### {#temp.deduct.general}
+## 13.10.3.1 General [temp.deduct.general] ## {#temp.deduct.general}
 
 Paragraph 7:
 
-> [*Note 4*: The equivalent substitution in exception specifications ([except.spec])<ins>, attribute specifications ([dcl.attr.grammar]),</ins> and function contract assertions ([dcl.contract.func]) is done only when the *noexcept-specifier*<ins>, *attribute-specifier-seq*,</ins> or *function-contract-specifier*, respectively, is instantiated, at which point a program is ill-formed if the substitution results in an invalid type or expression. — *end note*]
+> [*Note 4*: The equivalent substitution in exception specifications ([except.spec])<ins>, attribute specifications ([dcl.attr.grammar]),</ins> and function contract assertions ([dcl.contract.func]) is done only when the *noexcept-specifier*<ins>, *attribute-specifier*,</ins> or *function-contract-specifier*, respectively, is instantiated, at which point a program is ill-formed if the substitution results in an invalid type or expression. — *end note*]
 
 ## 15.2 Conditional inclusion [cpp.cond] ## {#cpp.cond}
 
