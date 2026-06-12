@@ -12,7 +12,7 @@ URL: https://wg21.link/D3423R2
 !Issue Tracking: <a href="https://github.com/Mick235711/wg21-papers/issues">GitHub Mick235711/wg21-papers</a>
 Editor: Yihe Li, winmikedows@hotmail.com
 No abstract: true
-Date: 2026-05-27
+Date: 2026-06-11
 Markup Shorthands: markdown yes
 </pre>
 
@@ -29,6 +29,7 @@ During Varna (2023-06), [[!P2741R3]] had been adopted into the C++26 working dra
 - In Kona (2025-11), EWG sees [[!P3423R1]] and forwarded it to CWG ([polls](#ewg-review-kona)). Audience is altered accordingly.
 - Rebase onto latest draft [[!N5046]], which incorporates changes induced by [[P2900R14]] and [[!P4149R1]].
 - Mention overlap with [[P3099R2]] and rebase wording on its suggestions.
+- Revised wording based on CWG suggestions in Brno (2026-06).
 
 ## R1 (2025-01 pre-Hagenberg Mailing) ## {#r1}
 - Add discussion on instantiation timing of attributes, aka if SFINAE happens if the attribute argument clause results in invalid substitution.
@@ -533,18 +534,27 @@ Note: Editor's Note: Insert the following subclause between 6.10 Program executi
 
 ## 6.� Diagnostic message strings [basic.message] ## {#basic.message}
 
+Note: Editor's Note: Wording in this section is moved from [dcl.pre]/12-13, and the only changes done are the addition of the opening sentence, the final note and the renaming of the grammar production
+
 <pre highlight=text>
-<i>diagnostic-message</i>:
+<ins><i>diagnostic-message</i>:
     <i>unevaluated-string</i>
-    <i>constant-expression</i>
+    <i>constant-expression</i></ins>
 </pre>
 
-A *diagnostic-message* is a user-supplied string-like object for the purposes of specifying a diagnostic message. If a *diagnostic-message* matches the syntactic requirements of *unevaluated-string*, it is an *unevaluated-string* and the text of the diagnostic-message is the text of the *unevaluated-string*. Otherwise, a *diagnostic-message* shall be a *constant-expression* `M`, and the text of the *diagnostic-message* is determined as follows:
+<ins>A *diagnostic-message* is a user-supplied string-like construct for the purposes of specifying a diagnostic message. If a *diagnostic-message* matches the syntactic requirements of *unevaluated-string*, it is an *unevaluated-string* and the text of the *diagnostic-message* is the text of the *unevaluated-string*. Otherwise, a *diagnostic-message* shall be a *constant-expression* `M` such that</ins>
 
-- `M.size()` shall be a converted constant expression of type `std::size_t` and let `N` denote the value of that expression,
-- `M.data()`, implicitly converted to the type "pointer to `const char`", shall be a core constant expression and let `D` denote the converted expression,
-- for each `i` where `0 ≤ i < N`, `D[i]` shall be an integral constant expression, and
-- the text of the *diagnostic-message* is formed by the sequence of `N` code units, starting at `D`, of the ordinary literal encoding ([lex.charset]).
+- <ins>the expression `M.size()` is implicitly convertible to the type `std::size_t`, and</ins>
+- <ins>the expression `M.data()` is implicitly convertible to the type "pointer to `const char`".</ins>
+
+<ins>The text of the *diagnostic-message* is determined as follows:</ins>
+
+- <ins>`M.size()` shall be a converted constant expression of type `std::size_t` and let `N` denote the value of that expression,</ins>
+- <ins>`M.data()`, implicitly converted to the type "pointer to `const char`", shall be a core constant expression and let `D` denote the converted expression,</ins>
+- <ins>for each `i` where `0 ≤ i < N`, `D[i]` shall be an integral constant expression, and</ins>
+- <ins>the text of the *diagnostic-message* is formed by the sequence of `N` code units, starting at `D`, of the ordinary literal encoding ([lex.charset]).</ins>
+
+<ins>[*Note 1*: An immediate invocation ([expr.const.imm]) that is a potentially-evaluated subexpression ([intro.execution]) of the *diagnostic-message* is evaluated at the point where the *diagnostic-message* appears. — *end note*]</ins>
 
 ## 7.7.7 Further definitions [expr.const.defns] ## {#expr.const.defns}
 
@@ -612,7 +622,7 @@ Paragraph 1:
 
 Paragraph 2:
 
-> A program that refers to a deleted function implicitly or explicitly, other than to declare it, is ill-formed.
+> A construct that designates a deleted function implicitly or explicitly, other than to declare it or to appear as the operand of a reflect-expression ([expr.reflect]), is ill-formed. <ins>The <i>diagnostic-message</i> in a *deleted-function-body* is evaluated at the first point where such a construct appears. It is an unevaluated operand ([expr.context]) if there is no such program point.</ins>
 
 > *Recommended practice*: The resulting diagnostic message should include the text of the <del><i>unevaluated-string</i></del><ins><i>diagnostic-message</i> ([basic.message])</ins>, if one is supplied.
 
@@ -630,11 +640,7 @@ entity or statement contains an *attribute* or *alignment-specifier* that is not
 
 > [*Note 3*: An *attribute-specifier-seq* cannot appertain to an explicit instantiation ([temp.explicit]). — *end note*]
 
-> <ins>An *attribute-specifier* appertaining to a function is considered to be *needed* ([temp.inst]) when
-> - in an expression, the function is selected by overload resolution ([over.match], [over.over]);
-> - the function is odr-used ([basic.def.odr]);
-> - the function is defined; or
-> - the function is represented by a reflection.</ins>
+> <ins>Substituting into an <i>attribute-specifier</i> is not in the immediate context.</ins>
 
 > For an *attribute-token* (including an *attribute-scoped-token*) not specified in this document, the behavior is implementation-defined; any such *attribute-token* that is not recognized by the implementation is ignored.
 
@@ -651,11 +657,13 @@ Paragraph 1:
 ( <i><del>unevaluated-string</del><ins>diagnostic-message</ins></i> )
 </pre>
 
-> [*Note 2*: The <i><del>unevaluated-string</del><ins>diagnostic-message</ins></i> in the *attribute-argument-clause* can be used to explain the rationale for deprecation and/or to suggest a replacing entity. — *end note*]
+> [*Note 2*: The <del><i>unevaluated-string</i></del><ins>text of the <i>diagnostic-message</i></ins> in the *attribute-argument-clause* can be used to explain the rationale for deprecation and/or to suggest a replacing entity. — *end note*]
 
 Paragraph 4:
 
-> *Recommended practice*: Implementations should use the `deprecated` attribute to produce a diagnostic message in case the program refers to a name or entity other than to declare it, after a declaration that specifies the attribute. The diagnostic message should include the text<ins> of the *diagnostic-message* ([basic.message])</ins> provided within the *attribute-argument-clause* of any `deprecated` attribute applied to the name or entity. The value of a *has-attribute-expression* for the `deprecated` attribute should be `0` unless the implementation can issue such diagnostic messages.
+> <ins>The <i>diagnostic-message</i> in a `deprecated` *attribute-argument-clause* is evaluated at the first point where the program refers to a name or entity other than to declare it, after a declaration that specifies the attribute. It is an unevaluated operand ([expr.context]) if there is no such program point.</ins>
+
+> *Recommended practice*: Implementations should use the `deprecated` attribute to produce a diagnostic message in <ins>such cases.</ins> <del>case the program refers to a name or entity other than to declare it, after a declaration that specifies the attribute.</del> The diagnostic message should include the text<ins> of the *diagnostic-message* ([basic.message])</ins> provided within the *attribute-argument-clause* of any `deprecated` attribute applied to the name or entity. The value of a *has-attribute-expression* for the `deprecated` attribute should be `0` unless the implementation can issue such diagnostic messages.
 
 ### 9.13.9 Nodiscard attribute [dcl.attr.nodiscard] ### {#dcl.attr.nodiscard}
 
@@ -666,18 +674,19 @@ Paragraph 1:
 ( <i><del>unevaluated-string</del><ins>diagnostic-message</ins></i> )
 </pre>
 
-Paragraph 4:
+Paragraph 3-4:
 
-> *Recommended practice*: Appearance of a `nodiscard` call as a potentially-evaluated discarded-value expression ([expr.prop]) is discouraged unless explicitly cast to `void`. Implementations should issue a warning in such cases. The value of a *has-attribute-expression* for the `nodiscard` attribute should be `0` unless the implementation can issue such warnings.
+> A *nodiscard type* is a (possibly cv-qualified) class or enumeration type marked `nodiscard` in a reachable declaration. A *nodiscard call* is either
+> - a function call expression ([expr.call]) that calls a function declared `nodiscard` in a reachable declaration or whose return type is a nodiscard type, or
+> - an explicit type conversion ([expr.type.conv], [expr.static.cast], [expr.cast]) that constructs an object through a constructor declared `nodiscard` in a reachable declaration, or that initializes an object of a nodiscard type.
+
+> <ins>The <i>diagnostic-message</i> in a `nodiscard` *attribute-argument-clause* is evaluated at the first point where a nodiscard call appears. It is an unevaluated operand ([expr.context]) if there is no such program point.</ins>
+
+> *Recommended practice*: Appearance of a nodiscard call as a potentially-evaluated discarded-value expression ([expr.prop]) is discouraged unless explicitly cast to `void`. Implementations should issue a warning in such cases. The value of a *has-attribute-expression* for the `nodiscard` attribute should be `0` unless the implementation can issue such warnings.
 
 > [*Note 2*: This is typically because discarding the return value of a `nodiscard` call has surprising consequences. — *end note*]
 
 > The <i><del>unevaluated-string</del></i><ins>text of the <i>diagnostic-message</i> ([basic.message])</ins> in a `nodiscard` *attribute-argument-clause* should be used in the message of the warning as the rationale for why the result should not be discarded.
-
-### 9.13.12 Annotations [dcl.attr.annotation] ### {#dcl.attr.annotation}
-Paragraph 4:
-
-> <ins>[*Note 2*:</ins> Substituting into an annotation is not in the immediate context. <ins>— *end note*]</ins>
 
 ## 13.7.1 General [temp.decls.general] ## {#temp.decls.general}
 Paragraph 3:
@@ -687,18 +696,6 @@ Paragraph 3:
 > - *noexcept-specifier*,<del> or</del>
 > - <ins><i>attribute-specifier</i>, or</ins>
 > - *function-contract-specifier*
-
-## 13.9.2 Implicit instantiation [temp.inst] ## {#temp.inst}
-
-Paragraph 15:
-
-> Other than as specified above, the separately instantiated constructs of a specialization of a templated function are instantiated only when needed ([except.spec], <ins>[dcl.attr.grammar], </ins>[dcl.contract.func]). When such a construct is instantiated, the dependent names are looked up, the semantics constraints are checked, and the instantiation of any template used in the construct is done as if it were being done as part of instantiating the declaration of the specialization at that point.
-
-## 13.10.3.1 General [temp.deduct.general] ## {#temp.deduct.general}
-
-Paragraph 7:
-
-> [*Note 4*: The equivalent substitution in exception specifications ([except.spec])<ins>, attribute specifications ([dcl.attr.grammar]),</ins> and function contract assertions ([dcl.contract.func]) is done only when the *noexcept-specifier*<ins>, *attribute-specifier*,</ins> or *function-contract-specifier*, respectively, is instantiated, at which point a program is ill-formed if the substitution results in an invalid type or expression. — *end note*]
 
 ## 15.2 Conditional inclusion [cpp.cond] ## {#cpp.cond}
 

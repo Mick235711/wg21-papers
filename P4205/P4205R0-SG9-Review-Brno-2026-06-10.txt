@@ -1,0 +1,16 @@
+std::search and ranges::search is a fancy invoke, introduce simply because we want a unified API
+
+const Searcher& means you need const-invocable in concept
+
+Polls:
+Both I/S and range for operator(): 2-0-4-1-0
+Only I/S for operator(): 2-2-3-0-0
+Only range for operator(): 0-0-2-5-0
+
+Need to use views::all and store the view
+Maybe remove the iterator/sentinel constructor? 
+
+TODO: Add base() and other convenience functions
+TODO: Add constexpr support
+TODO: Add a section describing usages of std:: searcher (user-defined searchers too) with std::ranges::search, and vice versa
+TODO: Use movable-box for Pred and Proj? Investigate it
