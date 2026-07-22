@@ -12,7 +12,7 @@ URL: https://wg21.link/D3423R2
 !Issue Tracking: <a href="https://github.com/Mick235711/wg21-papers/issues">GitHub Mick235711/wg21-papers</a>
 Editor: Yihe Li, winmikedows@hotmail.com
 No abstract: true
-Date: 2026-06-11
+Date: 2026-07-22
 Markup Shorthands: markdown yes
 </pre>
 
@@ -24,11 +24,11 @@ During Varna (2023-06), [[!P2741R3]] had been adopted into the C++26 working dra
 
 # Revision History # {#revisions}
 
-## R2 (2026-07 post-Brno Mailing) ## {#r2}
+## R2 (2026-08 Mailing) ## {#r2}
 - Retargeted to C++29, given time constraints.
 - In Kona (2025-11), EWG sees [[!P3423R1]] and forwarded it to CWG ([polls](#ewg-review-kona)). Audience is altered accordingly.
-- Rebase onto latest draft [[!N5046]], which incorporates changes induced by [[P2900R14]] and [[!P4149R1]].
-- Mention overlap with [[P3099R2]] and rebase wording on its suggestions.
+- Rebase onto latest draft [[!N5054]], which incorporates changes induced by [[P2900R14]] and [[!P4149R1]].
+- Mention overlap with [[P3099R3]] and rebase shared wording on it.
 - Revised wording based on CWG suggestions in Brno (2026-06).
 
 ## R1 (2025-01 pre-Hagenberg Mailing) ## {#r1}
@@ -125,7 +125,7 @@ Clearly, this new "potential best" error message is much superior to the previou
 
 ## Standard Library ## {#stl-usage}
 
-This part contains some concrete examples of how functions and classes in the standard library can benefit from the new flexibility of message parameters. All examples are based on [[!N5046]], which includes features such as `constexpr std::format` ([[P3391R2]]) and Reflection ([[P2996R13]]) already.
+This part contains some concrete examples of how functions and classes in the standard library can benefit from the new flexibility of message parameters. All examples are based on [[!N5054]], which includes features such as `constexpr std::format` ([[P3391R2]]) and Reflection ([[P2996R13]]) already.
 
 One thing to note here is that `[[deprecated]]` is never required on the deprecated features in the standard library. Similarly, `[[nodiscard]]` is regarded as QoI after the adoption of [[P2422R1]] in St. Louis (2024-06) and no longer appears in the standard library's specification. Therefore, all the following examples only resemble some possible use of the attributes by a standard library vendor. All the examples below that used `[[nodiscard]]` were marked as so in the specification before [[P2422R1]] landed.
 
@@ -243,7 +243,7 @@ namespace my_lib
 This design allows the library name to be changed easily by altering `lib_name` and also reduces the possibility of misspelling the library name across different message parameters. Furthermore, a similar design can be applied to functions within a class, with the class name factored out into a `fixed_string` static variable.
 
 ## Future Language Evolution ## {#future-language-evolution}
-The Contracts MVP ([[P2900R14]]) was included in C++26 based on a minimal viable feature set, and one of the most anticipated post-MVP additions to Contracts is the ability to include a message parameter, as proposed by [[!P3099R2]]. The design chosen by [[!P3099R2]] is very similar to what will be achieved by this proposal: allowing arbitrary compile-time user-generated strings to be usable as the message parameter to `pre(cond, message)`, `post(cond, message)`, and `contract_assert(cond, message)` constructs. The author supports the addition, as allowing the same kind of string for message parameters across the entire language will lead to a unified design for compile-time message parameters and further increase the usefulness of this proposal.
+The Contracts MVP ([[P2900R14]]) was included in C++26 based on a minimal viable feature set, and one of the most anticipated post-MVP additions to Contracts is the ability to include a message parameter, as proposed by [[!P3099R3]]. The design chosen by [[!P3099R3]] is very similar to what will be achieved by this proposal: allowing arbitrary compile-time user-generated strings to be usable as the message parameter to `pre(cond, message)`, `post(cond, message)`, and `contract_assert(cond, message)` constructs. The author supports the addition, as allowing the same kind of string for message parameters across the entire language will lead to a unified design for compile-time message parameters and further increase the usefulness of this proposal.
 
 # Design # {#design}
 
@@ -461,7 +461,7 @@ Reflection ([[P2996R13]], approved for C++26) is a significant change to the cor
 
 However, a natural question arises: should there be a reflection facility to get the message specified to `= delete` and attributes?
 
-In the current C++26 Working Draft [[!N5046]], there is one metafunction that queries whether the function is deleted: `meta::is_deleted`. No attribute-reflecting mechanisms are proposed in [[P2996R13]], but there is ongoing work on reflecting attributes first by [[P1887R1]] and currently by [[P3385R7]]. Should these proposals also propose the ability to query the message provided to the attributes and `= delete`?
+In the current C++26 Working Draft [[!N5054]], there is one metafunction that queries whether the function is deleted: `meta::is_deleted`. No attribute-reflecting mechanisms are proposed in [[P2996R13]], but there is ongoing work on reflecting attributes first by [[P1887R1]] and currently by [[P3385R8]]. Should these proposals also propose the ability to query the message provided to the attributes and `= delete`?
 
 The author thinks that they probably should (for instance, by letting `meta::display_name_of` return the message or add a new `meta::message_of`), but this is certainly outside the scope of this proposal. The message parameter already exists in these attributes, and this proposal does not add any new parameters to them, so the difficulty of supporting them should not change drastically.
 
@@ -528,75 +528,7 @@ the proposed feature relatively easily. No significant obstacles are observed du
 
 # Wording # {#wording}
 
-The wording below is based on [[!N5046]]. The wording below essentially renames *static_assert-message* to *diagnostic-message* and factor it out into its own section, following the guidance suggested in [[!P3099R2]] on wording strategy.
-
-Note: Editor's Note: Insert the following subclause between 6.10 Program execution [basic.exec] and 6.11 Contract assertions [basic.contract]
-
-## 6.� Diagnostic message strings [basic.message] ## {#basic.message}
-
-Note: Editor's Note: Wording in this section is moved from [dcl.pre]/12-13, and the only changes done are the addition of the opening sentence, the final note and the renaming of the grammar production
-
-<pre highlight=text>
-<ins><i>diagnostic-message</i>:
-    <i>unevaluated-string</i>
-    <i>constant-expression</i></ins>
-</pre>
-
-<ins>A *diagnostic-message* is a user-supplied string-like construct for the purposes of specifying a diagnostic message. If a *diagnostic-message* matches the syntactic requirements of *unevaluated-string*, it is an *unevaluated-string* and the text of the *diagnostic-message* is the text of the *unevaluated-string*. Otherwise, a *diagnostic-message* shall be a *constant-expression* `M` such that</ins>
-
-- <ins>the expression `M.size()` is implicitly convertible to the type `std::size_t`, and</ins>
-- <ins>the expression `M.data()` is implicitly convertible to the type "pointer to `const char`".</ins>
-
-<ins>The text of the *diagnostic-message* is determined as follows:</ins>
-
-- <ins>`M.size()` shall be a converted constant expression of type `std::size_t` and let `N` denote the value of that expression,</ins>
-- <ins>`M.data()`, implicitly converted to the type "pointer to `const char`", shall be a core constant expression and let `D` denote the converted expression,</ins>
-- <ins>for each `i` where `0 ≤ i < N`, `D[i]` shall be an integral constant expression, and</ins>
-- <ins>the text of the *diagnostic-message* is formed by the sequence of `N` code units, starting at `D`, of the ordinary literal encoding ([lex.charset]).</ins>
-
-<ins>[*Note 1*: An immediate invocation ([expr.const.imm]) that is a potentially-evaluated subexpression ([intro.execution]) of the *diagnostic-message* is evaluated at the point where the *diagnostic-message* appears. — *end note*]</ins>
-
-## 7.7.7 Further definitions [expr.const.defns] ## {#expr.const.defns}
-
-> [*Note 1*: Except for a <i><del>static_assert</del><ins>diagnostic</ins>-message</i>, a manifestly constant-evaluated expression is evaluated even in an
-unevaluated operand ([expr.context]). — *end note*]
-
-## 9.1 Preamble [dcl.pre] ## {#dcl.pre}
-
-Paragraph 1:
-
-> Declarations generally specify how names are to be interpreted. Declarations have the form
-<pre highlight=text>
-[...]
-<del><i>static_assert-message</i>:
-    <i>unevaluated-string</i>
-    <i>constant-expression</i></del>
-<i>static_assert-declaration</i>:
-    static_assert ( <i>constant-expression</i> ) ;
-    static_assert ( <i>constant-expression</i> , <i><del>static_assert</del><ins>diagnostic</ins>-message</i> ) ;
-[...]
-</pre>
-
-Paragraph 12:
-
-> <del>If a *static_assert-message* matches the syntactic requirements of *unevaluated-string*, it is an *unevaluated-string* and the text of the *static_assert-message* is the text of the *unevaluated-string*. Otherwise, a *static_assert-message* shall be an expression `M` such that
-> - the expression `M.size()` is implicitly convertible to the type `std::size_t`, and
-> - the expression `M.data()` is implicitly convertible to the type "pointer to `const char`".</del>
-
-Paragraph 13:
-
-> In a *static_assert-declaration*, the *constant-expression* `E` is contextually converted to `bool` and the converted expression shall be a constant expression ([expr.const]). If the value of the expression `E` when so converted is `true` or the expression is evaluated in the context of a template definition, the declaration has no effect and the <i><del>static_assert</del><ins>diagnostic</ins>-message</i><ins> ([basic.message])</ins> is an unevaluated operand ([expr.context]). Otherwise, the *static_assert-declaration* fails and <ins>the program is ill-formed.</ins>
-> <del>
-> - the program is ill-formed, and
-> - if the *static_assert-message* is a *constant-expression* `M`,
->   - `M.size()` shall be a converted constant expression of type `std::size_t` and let `N` denote the value of that expression,
->   - `M.data()`, implicitly converted to the type "pointer to `const char`", shall be a core constant expression and let `D` denote the converted expression,
->   - for each `i` where `0 ≤ i < N`, `D[i]` shall be an integral constant expression, and
->   - the text of the *static_assert-message* is formed by the sequence of `N` code units, starting at `D`, of the ordinary literal encoding ([lex.charset]).</del>
-
-Paragraph 14:
-
-> *Recommended practice*: When a *static_assert-declaration* fails, the resulting diagnostic message should include the text of the <i><del>static_assert</del><ins>diagnostic</ins>-message</i>, if one is supplied.
+The wording below is based on [[!N5054]] with changes proposed by [[!P3099R3]] applied. To avoid merge conflicts, this paper is rebased on top of the shared wording changes to *diagnostic-message* proposed by [[!P3099R3]].
 
 ## 9.6 Function definitions [dcl.fct.def] ## {#dcl.fct.def}
 ### 9.6.1 General [dcl.fct.def.general] ### {#dcl.fct.def.general}
@@ -680,22 +612,13 @@ Paragraph 3-4:
 > - a function call expression ([expr.call]) that calls a function declared `nodiscard` in a reachable declaration or whose return type is a nodiscard type, or
 > - an explicit type conversion ([expr.type.conv], [expr.static.cast], [expr.cast]) that constructs an object through a constructor declared `nodiscard` in a reachable declaration, or that initializes an object of a nodiscard type.
 
-> <ins>The <i>diagnostic-message</i> in a `nodiscard` *attribute-argument-clause* is evaluated at the first point where a nodiscard call appears. It is an unevaluated operand ([expr.context]) if there is no such program point.</ins>
+> <ins>The <i>diagnostic-message</i> in a `nodiscard` *attribute-argument-clause* is evaluated at the first point where a nodiscard call appears as a potentially-evaluated discarded-value expression ([expr.prop]) whose value is not explicitly cast to `void`. It is an unevaluated operand ([expr.context]) if there is no such program point.</ins>
 
-> *Recommended practice*: Appearance of a nodiscard call as a potentially-evaluated discarded-value expression ([expr.prop]) is discouraged unless explicitly cast to `void`. Implementations should issue a warning in such cases. The value of a *has-attribute-expression* for the `nodiscard` attribute should be `0` unless the implementation can issue such warnings.
+> *Recommended practice*: Appearance of a nodiscard call as a potentially-evaluated discarded-value expression <del>([expr.prop])</del> is discouraged unless explicitly cast to `void`. Implementations should issue a warning in such cases. The value of a *has-attribute-expression* for the `nodiscard` attribute should be `0` unless the implementation can issue such warnings.
 
 > [*Note 2*: This is typically because discarding the return value of a `nodiscard` call has surprising consequences. — *end note*]
 
 > The <i><del>unevaluated-string</del></i><ins>text of the <i>diagnostic-message</i> ([basic.message])</ins> in a `nodiscard` *attribute-argument-clause* should be used in the message of the warning as the rationale for why the result should not be discarded.
-
-## 13.7.1 General [temp.decls.general] ## {#temp.decls.general}
-Paragraph 3:
-
-> A *separately instantiated construct* of a templated function `F` is a
-> - default argument,
-> - *noexcept-specifier*,<del> or</del>
-> - <ins><i>attribute-specifier</i>, or</ins>
-> - *function-contract-specifier*
 
 ## 15.2 Conditional inclusion [cpp.cond] ## {#cpp.cond}
 
