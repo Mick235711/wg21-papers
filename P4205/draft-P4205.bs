@@ -11,7 +11,7 @@ URL: https://wg21.link/D4205R0
 !Issue Tracking: <a href="https://github.com/Mick235711/wg21-papers/issues">GitHub Mick235711/wg21-papers</a>
 Editor: Yihe Li, winmikedows@hotmail.com
 No abstract: true
-Date: 2026-06-10
+Date: 2026-07-22
 Markup Shorthands: markdown yes
 Default Highlight: cpp
 </pre>
@@ -27,12 +27,16 @@ As customary in Ranges algorithms, this proposal also proposes Range-ified versi
 
 # Revision History # {#revisions}
 
-## R1 (2026-07 post-Brno mailing) ## {#r1}
+## R1 (2026-08 mailing) ## {#r1}
 
 - Fix wrong invocation of searchers in the given examples.
 - Add `const`-invocable requirement to concept `searchable`.
 - Change to `views::all`-based design to avoid lifetime issues. This makes the proposed searchers no longer constructible from iterator-sentinel pairs.
+    - This implies that the range-based searchers are sometimes move-only; `concept searchable` is thus adjusted to only require `movable`.
+    - Additionally, adopt many design aspects employed by range adaptors, like the usage of <code><i>movable-box</i></code> to store predicates and projections, and the addition of `base()`, `pred()` and `proj()` members. 
 - Remove `operator()(Range&&)` overloads from searchers, following SG9 feedback in Brno (2026-06).
+- Add [interopability](#interopability) section and an optional additional change to the existing `std::search`.
+- Add [polls](#poll-results) section.
 
 ## R0 (2026-05 pre-Brno mailing) ## {#r0}
 
@@ -135,6 +139,12 @@ class ranges::default_searcher {
 public:
     constexpr explicit default_searcher(V base, Pred pred = {}, Proj proj = {});
 
+    constexpr V base() const & requires copy_constructible<V>;
+    constexpr V base() &&;
+
+    constexpr const Pred& pred() const;
+    constexpr const Proj& proj() const;
+
     template<forward_iterator I2, sentinel_for<I2> S2, class Proj2 = identity>
         requires indirectly_comparable<I2, iterator_t<V>, Pred, Proj2, Proj>
     constexpr subrange<I2> operator()(I2 first, S2 last, Proj2 proj2 = {}) const;
@@ -147,6 +157,8 @@ default_searcher(R&&, Pred = {}, Proj = {}) -> default_searcher<views::all_t<R>,
 
 Essentially, the API for `std::ranges::default_searcher` is a Range-ified version of `std::default_searcher`, with the intention that `ranges::search(r, ranges::default_searcher(r2, pred, proj2), proj)` (which calls `searcher(ranges::begin(r), ranges::end(r), proj)`) is always equivalent to `ranges::search(r, r2, pred, proj, proj2)`. It is for this reason that the concepts on `operator()` have its arguments flipped.
 
+The return type of `operator()` has been changed to `subrange` to represent the found range. This method will return `{last, last}` if no occurrences of needle is found, `{first, first}` if needle is empty, and the original (empty) range if the haystack is empty. This modification is consistent with the normal overload of `std::ranges::search`.
+
 The API for `std::ranges::boyer_moore_[horspool_]searcher` adds a `Hash` type argument as the last template argument (that defaults to `std::hash<projected_value_t<iterator_t<V>, Proj>>`), and adds a `Hash hf = {}` argument to the constructor. Apart from these changes, their API is identical to the default searchers (except requiring random-access iterators and ranges instead of forward ones). The `Hash` argument is changed from the second argument to the last because of its default argument dependency on the projection. It is expected that most users will utilize CTAD to construct these searchers (i.e. `boyer_moore_searcher{needle}`), so the positions of template argument are not that important anyways.
 
 One thing to be noted here is that the existing `std::` searchers have a lifetime dependency on the underlying ranges; they will store the iterators from the provided range, and thus is only valid for use while the provided range is alive (or if it is a borrowed range). The proposed `std::ranges::` searchers utilize the existing Ranges mechanism of wrapping the given range in `views::all_t` to eliminate this hazard.
@@ -158,18 +170,34 @@ The concept `std::searchable` itself does not fully capture the API proposed for
 ```cpp
 template<class Searcher, class I, class S, class P = identity>
 concept searchable =
-    copyable<Searcher> &&  // C++17 searchers require Cpp17CopyConstructible and Cpp17CopyAssignable already
+    movable<Searcher> &&
     invocable<const Searcher&, I, S, P> &&
     ranges::forward_range<invoke_result_t<const Searcher&, I, S, P>>
 ```
+
+It is worth noting that C++17 searchers are required to be copyable (<a href="https://eel.is/c++draft/func.search.general#2">[func.search.general]/2</a>); due to the usage of `views::all_t`, sometimes the new range-based searchers need to store an `owning_view`, which makes them move only. Therefore, the new concept only requires `movable` instead. The existing `std::search` algorithm is specifically constraint to not rely on searchers being copyable (<a href="https://eel.is/c++draft/alg.search#12">[alg.search]/12</a>), so this relaxing should not cause issues.
 
 Note that we deliberately use `invocable` here since most implementations of non-trivial searchers are stateful.
 
 ## `constexpr` And Return Type ## {#constexpr-and-return-type}
 
-It is worth noting that `boyer_moore_[horspool_]searcher` are *not* marked as `constexpr` currently, so the `std::ranges` versions also do not support compile-time evaluation. `default_searcher` on the other hand did support `constexpr`.
+It is worth noting that `boyer_moore_[horspool_]searcher` are *not* marked as `constexpr` currently, while `default_searcher` on the other hand did support `constexpr`. On the other hand, the existing `std::search` overload for searchers *is* marked as `constexpr`, making it incompatible with any non-trivial default searchers in compile-time invocation.
+
+After investigating the current implementation of searchers among [libstdc++](https://github.com/gcc-mirror/gcc/blob/17f084306c68c437b1350682bcde6075ae749f15/libstdc%2B%2B-v3/include/std/functional#L1299), [libc++](https://github.com/llvm/llvm-project/blob/2a00d50e6012e1ee31904d394c088be907b6aa8b/libcxx/include/__functional/boyer_moore_searcher.h#L36) and [MSVC STL](https://github.com/microsoft/STL/blob/020513e211529e7be30cb3e0ca310869701286da/stl/inc/functional#L2881), it seems that there is no inherent difficulty in making standard non-trivial searchers (`boyer_moore_[horspool_]searcher`) `constexpr`-compatible, as most implementation only relies on a `constexpr`-enabled hash map that is already provided by [[P3372R3]] in C++26. However, given that `<functional>` as a whole still lacked `constexpr` specifications, the author feels that `constexpr`-ifying the searchers is best left to a future proposal that tackles `constexpr` for the entire header instead. The added overloads on `ranges::search` and `ranges::contains_subrange` is marked `constexpr` in this proposal, as they can still work with third-party `constexpr`-enabled searchers. `ranges::default_searcher` is marked `constexpr` following the existing practice of `std::default_searcher`.
 
 The return type for the new overloads of `std::ranges::search` is specified as `auto` (i.e., copy the return type of the searcher's `operator()`). It is possible to require convertible to `subrange<I>` here too, but the author thinks that this is an unnecessary limitation. The searcher's `operator()` return type is constrained to be a forward range by the concept `searchable`.
+
+## Interopability With Existing Algorithms ## {#interopability}
+
+During SG9 review in Brno (2026-06), the author is asked to investigate whether the new range-based searchers can be used with the existing `std::search` algorithm, and whether the existing searchers can be used with `std::ranges::search`.
+
+For the former question, the current answer is no. Although as discussed above the `std::search` algorithm is currently required to not depend on searchers being copyable, the specification unfortunately requires returning `searcher(first, last).first`, which essentially limits the return type of searchers' `operator()` to `std::pair`-like structures. The newly purposed range-based searchers' `operator()` returns a `subrange`, which does not have `first` and `second` members.
+
+However, the author would like to purpose an additional change to `std::search` that can bridge this gap: make the algorithm return `std::get<0>(searcher(first, last))` instead. `std::pair` and most third-party pair-like structures should support the `tuple` protocol, and thus such a change will not be breaking for any standard searchers and most third-party searchers; furthermore, `subrange` also implements the `tuple` protocol, and thus this change will make `std::search` usable with the new range-based searchers (and return the begin iterator as usual). Of course, this will be a breaking change for searchers that have different behaviour for `.first` and `std::get<0>`, or pair-like return types that does not implement the tuple protocol, but the author estimate such searchers to be rare. This change is therefore presented as an optional additional change, with its wording section easily discarded if SG9/LEWG deemed the breakage to be too large.
+
+For the latter question, the answer is also no, mainly because `searchable` concept currently requires the return type of searchers' `operator()` to be a forward range, while traditional searchers return a pair of iterators. Although iterator pairs are commonly used to denote a range, they are not accepted by the range concepts. It is possible to drop the return type requirement from `searchable` (or require `forward_iterator<tuple_element<0, invoke_result>>` instead), and the author is happy to oblige if SG9/LEWG wants this change. It is worth noting that even with such a change this use case will not be fully supported as traditional searchers may not support iterator and sentinel with different types.
+
+Finally, another question asked during the review is whether user needs to write two version of searchers from now on to make it usable for both `std::search` and `std::ranges::search`. If one of the above changes (or both) is adopted, then the answer is no, as the user can simply provide a `subrange operator()(I, S, Proj = {})` or `pair<I, I> operator()(I, S, Proj = {})` overload that will be compatible with both. Even if both changes are rejected, the user can simply overload on two and three arguments as `std::ranges::search` always pass in a projection, so the author think that the risk of duplicating efforts are low.
 
 ## Header Choice ## {#header-choice}
 
@@ -186,6 +214,8 @@ This proposal ultimately decided to propose the following changes to feature-tes
 - Do not bump the existing `__cpp_lib_boyer_moore_searcher`; the author thinks that macro is more appropriate for direct functional changes to the searcher. This proposal also does not make any changes to the existing `std::boyer_moore_[horspool_]searcher` anyway
 - A new FTM `__cpp_lib_ranges_search` for `std::ranges::search` (should track all overloads)
 - Bump the existing `__cpp_lib_ranges_contains` FTM for `ranges::contains_subrange` (this FTM is also used by `ranges::contains` too)
+
+Note that `std::search` also does not have its own FTM; if it is decided to pursue the additional interopability changes, the author do not think another separate FTM is needed; the change can be tracked by `__cpp_lib_ranges_search`.
 
 Of course, the author is happy to split the FTMs further (such as separate FTMs for each Range searcher) if LEWG requests.
 
@@ -234,12 +264,12 @@ The author implemented this proposal in [beman.range_searcher](https://github.co
 - Should the searchers be templated on range types or iterator/sentinel types? - Resolved ✅ as the proposal switched to use `views::all` to solve lifetime issues.
 
 ## Questions for LEWG ## {#questions-for-lewg}
-- `std::search` does specify that the searchers don't need to satisfy *Cpp17CopyConstructible*; do we want to relax the `copyable` requirement in `searchable`?
+- `std::search` inherently does not require searchers to be copyable or movable; do we want to relax the `movable` requirement in `searchable`?
 - Should searchers' `operator()` be SFINAE-friendly (i.e., put the same value type requirements in the `requires` clause)?
 
 # Wording # {#wording}
 
-The wording below is based on [[!N5032]].
+The wording below is based on [[!N5054]].
 
 ## 17.3.2 Header `<version>` synopsis [version.syn] ## {#version.syn}
 
@@ -267,20 +297,20 @@ namespace std {
 
   <ins>namespace ranges {
     template &lt;forward_range V,
-              copy_constructible Pred = equal_to,
+              copy_constructible Pred = ranges::equal_to,
               indirectly_regular_unary_invocable&lt;iterator_t&lt;V&gt;&gt; Proj = identity&gt;
       requires view&lt;V&gt;
     class default_searcher;  // freestanding
     
     template &lt;random_access_range V,
-              copy_constructible Pred = equal_to,
+              copy_constructible Pred = ranges::equal_to,
               indirectly_regular_unary_invocable&lt;iterator_t&lt;V&gt;&gt; Proj = identity,
               class Hash = hash&lt;projected_value_t&lt;iterator_t&lt;V&gt;, Proj&gt;&gt;&gt;
       requires view&lt;V&gt; &amp;&amp; semiregular&lt;range_value_t&lt;V&gt;&gt;
     class boyer_moore_searcher;
     
     template &lt;random_access_range V,
-              copy_constructible Pred = equal_to,
+              copy_constructible Pred = ranges::equal_to,
               indirectly_regular_unary_invocable&lt;iterator_t&lt;V&gt;&gt; Proj = identity,
               class Hash = hash&lt;projected_value_t&lt;iterator_t&lt;V&gt;, Proj&gt;&gt;&gt;
       requires view&lt;V&gt; &amp;&amp; semiregular&lt;range_value_t&lt;V&gt;&gt;
@@ -291,6 +321,25 @@ namespace std {
 }
 </pre>
 
+## 22.10.18.1 General [func.search.general] ## {#func.search.general}
+
+Modify as follows:
+
+> Subclause [func.search] provides function object types ([function.objects]) for operations that search for a sequence `[pat_first, pat_last)` in another sequence `[first,last)` that is provided to the object’s function call operator. The first sequence (the pattern to be searched for) is provided to the object’s constructor, and the second (the sequence to be searched) is provided to the function call operator.
+
+> Each specialization of a class template specified in [func.search] shall meet the <del>*Cpp17CopyConstructible* and *Cpp17CopyAssignable*</del><ins>*Cpp17MoveConstructible* and *Cpp17MoveAssignable*</ins> requirements.<ins>In addition, each specialization of class template `std::default_searcher`, `std::boyer_moore_searcher`, and `std::boyer_moore_horspool_searcher` shall meet the *Cpp17CopyConstructible* and *Cpp17CopyAssignable* requirements.</ins> Template parameters named
+> - `ForwardIterator`,
+> - `ForwardIterator1`,
+> - `ForwardIterator2`,
+> - `RandomAccessIterator`,
+> - `RandomAccessIterator1`,
+> - `RandomAccessIterator2`, and
+> - `BinaryPredicate`
+>
+> of templates specified in [func.search] shall meet the same requirements and semantics as specified in [algorithms.general]. Template parameters named `Hash` shall meet the *Cpp17Hash* requirements ([tab:cpp17.hash]).
+
+> The Boyer-Moore searcher implements the Boyer-Moore search algorithm. The Boyer-Moore-Horspool searcher implements the Boyer-Moore-Horspool search algorithm. In general, the Boyer-Moore searcher will use more memory and give better runtime performance than Boyer-Moore-Horspool.
+
 Note: Editor's Note: Insert the following subclause at the end of 22.10.18 Searchers [func.search]
 
 ## 22.10.18.5 Range-based searchers [func.range.search] ## {#func.range.search}
@@ -299,25 +348,31 @@ Note: Editor's Note: Insert the following subclause at the end of 22.10.18 Searc
 <pre>
 namespace std::ranges {
   template &lt;forward_range V,
-            copy_constructible Pred = equal_to,
+            copy_constructible Pred = ranges::equal_to,
             indirectly_regular_unary_invocable&lt;iterator_t&lt;V&gt;&gt; Proj = identity&gt;
     requires view&lt;V&gt;
   class default_searcher {
   public:
     constexpr explicit default_searcher(V base, Pred pred = {}, Proj proj = {});
 
+    constexpr V base() const &amp; requires copy_constructible&lt;V&gt; { return <i>base_</i>; }
+    constexpr V base() &amp;&amp; { return std::move(<i>base_</i>); }
+
+    constexpr const Pred&amp; pred() const;
+    constexpr const Proj&amp; proj() const;
+
     template&lt;forward_iterator I2, sentinel_for&lt;I2&gt; S2, class Proj2 = identity&gt;
       constexpr subrange&lt;I2&gt; operator()(I2 first, S2 last, Proj2 proj2 = {}) const
         requires indirectly_comparable&lt;I2, iterator_t&lt;V&gt;, Pred, Proj2, Proj&gt;;
 
   private:
-    [[no_unique_address]] V    <i>base_</i>; // <i>exposition only</i>
-    [[no_unique_address]] Pred <i>pred_</i>; // <i>exposition only</i>
-    [[no_unique_address]] Proj <i>proj_</i>; // <i>exposition only</i>
+    V    <i>base_</i>; // <i>exposition only</i>
+    <i>movable-box</i>&lt;Pred&gt; <i>pred_</i>; // <i>exposition only</i>
+    <i>movable-box</i>&lt;Proj&gt; <i>proj_</i>; // <i>exposition only</i>
   }
 
   template &lt;forward_range R,
-            copy_constructible Pred = equal_to,
+            copy_constructible Pred = ranges::equal_to,
             indirectly_regular_unary_invocable&lt;iterator_t&lt;R&gt;&gt; Proj = identity&gt;
     default_searcher(R&&, Pred = {}, Proj = {})
       -> default_searcher&lt;views::all_t&lt;R&gt;, Pred, Proj&gt;
@@ -330,18 +385,28 @@ constexpr explicit default_searcher(V base, Pred pred = {}, Proj proj = {});
 1. *Effects*: Constructs a `default_searcher` object, initializing <code><i>base_</i></code> with `move(base)`, <code><i>pred_</i></code> with `move(pred)`, and <code><i>proj_</i></code> with `move(proj)`.
 
 ```cpp
+constexpr const Pred& pred() const;
+```
+2. *Effects*: Equivalent to: <code>return *<i>pred_</i>;</code>
+
+```cpp
+constexpr const Proj& proj() const;
+```
+3. *Effects*: Equivalent to: <code>return *<i>proj_</i>;</code>
+
+```cpp
 template<forward_iterator I2, sentinel_for<I2> S2, class Proj2 = identity>
   constexpr subrange<I2> operator()(I2 first, S2 last, Proj2 proj2 = {}) const
     requires indirectly_comparable<I2, iterator_t<V>, Pred, Proj2, Proj>;
 ```
-2. *Effects*: Equivalent to: <code>return ranges::search(first, last, ranges::begin(<i>base_</i>), ranges::end(<i>base_</i>), <i>pred_</i>, move(proj2), <i>proj_</i>);</code>
+4. *Effects*: Equivalent to: <code>return ranges::search(first, last, ranges::begin(<i>base_</i>), ranges::end(<i>base_</i>), *<i>pred_</i>, move(proj2), *<i>proj_</i>);</code>
 
 ### 22.10.18.5.2 Class template `boyer_moore_searcher` [func.range.search.bm] ### {#func.range.search.bm}
 
 <pre>
 namespace std::ranges {
   template &lt;random_access_range V,
-            copy_constructible Pred = equal_to,
+            copy_constructible Pred = ranges::equal_to,
             indirectly_regular_unary_invocable&lt;iterator_t&lt;V&gt;&gt; Proj = identity,
             class Hash = hash&lt;projected_value_t&lt;iterator_t&lt;V&gt;, Proj&gt;&gt;&gt;
     requires view&lt;V&gt; &amp;&amp; semiregular&lt;range_value_t&lt;R&gt;&gt;
@@ -349,19 +414,25 @@ namespace std::ranges {
   public:
     explicit boyer_moore_searcher(V base, Pred pred = {}, Proj proj = {}, Hash hf = {});
 
+    constexpr V base() const &amp; requires copy_constructible&lt;V&gt; { return <i>base_</i>; }
+    constexpr V base() &amp;&amp; { return std::move(<i>base_</i>); }
+
+    constexpr const Pred&amp; pred() const;
+    constexpr const Proj&amp; proj() const;
+
     template&lt;random_access_iterator I2, sentinel_for&lt;I2&gt; S2, class Proj2 = identity&gt;
       subrange&lt;I2&gt; operator()(I2 first, S2 last, Proj2 proj2 = {}) const
         requires indirectly_comparable&lt;I2, iterator_t&lt;V&gt;, Pred, Proj2, Proj&gt;;
 
   private:
-    [[no_unique_address]] V    <i>base_</i>; // <i>exposition only</i>
-    [[no_unique_address]] Pred <i>pred_</i>; // <i>exposition only</i>
-    [[no_unique_address]] Proj <i>proj_</i>; // <i>exposition only</i>
-    [[no_unique_address]] Hash <i>hash_</i>; // <i>exposition only</i>
+    V                 <i>base_</i>; // <i>exposition only</i>
+    <i>movable-box</i>&lt;Pred&gt; <i>pred_</i>; // <i>exposition only</i>
+    <i>movable-box</i>&lt;Proj&gt; <i>proj_</i>; // <i>exposition only</i>
+    Hash              <i>hash_</i>; // <i>exposition only</i>
   }
 
   template &lt;random_access_range R,
-            copy_constructible Pred = equal_to,
+            copy_constructible Pred = ranges::equal_to,
             indirectly_regular_unary_invocable&lt;iterator_t&lt;R&gt;&gt; Proj = identity,
             class Hash = hash&lt;projected_value_t&lt;iterator_t&lt;R&gt;, Proj&gt;&gt;&gt;
     requires semiregular&lt;range_value_t&lt;R&gt;&gt;
@@ -373,105 +444,108 @@ namespace std::ranges {
 ```cpp
 explicit boyer_moore_searcher(V base, Pred pred = {}, Proj proj = {}, Hash hf = {});
 ```
-1. *Preconditions*: Let `T` be `range_value_t<V>`. For any two values `A` and `B` of type `T`, if `pred(invoke(proj, A), invoke(proj, B)) == true`, then `hf(invoke(proj, A)) == hf(invoke(proj, B))` is `true`.
+1. *Preconditions*: Let `T` be `range_value_t<V>`. For any two values `A` and `B` of type `T`, if `invoke(pred, invoke(proj, A), invoke(proj, B)) == true`, then `hf(invoke(proj, A)) == hf(invoke(proj, B))` is `true`.
 2. *Effects*: Constructs a `boyer_moore_searcher` object, initializing <code><i>base_</i></code> with `move(base)`, <code><i>pred_</i></code> with `move(pred)`, <code><i>proj_</i></code> with `move(proj)`, and <code><i>hash_</i></code> with `move(hf)`.
-3. *Throws*: Any exception thrown by the default constructor, copy constructor, or the copy assignment operator of `T`, or `operator()` of `Pred` or `Hash`. May throw `bad_alloc` if additional memory needed for internal data structures cannot be allocated.
+3. *Throws*: Any exception thrown by the default constructor, copy constructor, or the copy assignment operator of `T`, the `invoke` expression, or the copy constructor or `operator()` of `Hash`. May throw `bad_alloc` if additional memory needed for internal data structures cannot be allocated.
+
+```cpp
+constexpr const Pred& pred() const;
+```
+4. *Effects*: Equivalent to: <code>return *<i>pred_</i>;</code>
+
+```cpp
+constexpr const Proj& proj() const;
+```
+5. *Effects*: Equivalent to: <code>return *<i>proj_</i>;</code>
 
 ```cpp
 template<random_access_iterator I2, sentinel_for<I2> S2, class Proj2 = identity>
   subrange<I2> operator()(I2 first, S2 last, Proj2 proj2 = {}) const
     requires indirectly_comparable<I2, iterator_t<V>, Pred, Proj2, Proj>;
 ```
-4. *Mandates*: `is_same_v<remove_cvref_t<projected_value_t<iterator_t<V>, Proj>>, remove_cvref_t<projected_value_t<I2, Proj2>>>` is `true`.
-5. *Effects*: Finds a subsequence of equal values in a sequence.
-6. *Returns*: `subrange(i, j)`, where `i` and `j` is a pair of iterators such that
+6. *Mandates*: `is_same_v<remove_cvref_t<projected_value_t<iterator_t<V>, Proj>>, remove_cvref_t<projected_value_t<I2, Proj2>>>` is `true`.
+7. *Effects*: Finds a subsequence of equal values in a sequence.
+8. *Returns*: `subrange(i, j)`, where `i` and `j` is a pair of iterators such that
 
-- `i` is the first iterator in the range <code>[first, last - ranges::size(<i>base_</i>))</code> such that for every non-negative integer `n` less than <code>ranges::size(<i>base_</i>))</code> the following condition holds: <code><i>pred_</i>(invoke(proj2, *(i + n)), invoke(<i>proj_</i>, *(ranges::begin(<i>base_</i>) + n))) != false</code>, and
-- <code>j == ranges::next(i, ranges::size(<i>base_</i>))</code>.
+- `i` is the first iterator in the range <code>[first, last - ranges::distance(<i>base_</i>))</code> such that for every non-negative integer `n` less than <code>ranges::distance(<i>base_</i>)</code> the following condition holds: <code>invoke(*<i>pred_</i>, invoke(proj2, *(i + n)), </code><code>invoke(*<i>proj_</i>, *(ranges::begin(<i>base_</i>) + n))) != false</code>, and
+- <code>j == ranges::next(i, ranges::distance(<i>base_</i>))</code>.
 
 Returns `subrange(first, first)` if <code>ranges::empty(<i>base_</i>)</code> is `true`, otherwise returns `subrange(last, last)` if no such iterator is found.
 
-7. *Complexity*: At most <code>(last - first) * ranges::size(<i>base_</i>)</code> applications of the predicate, and at most <code>(last - first) * (ranges::size(<i>base_</i>) + 1)</code> applications of either projection.
+9. *Complexity*: At most <code>(last - first) * ranges::distance(<i>base_</i>)</code> applications of the predicate, and at most <code>(last - first) * (ranges::distance(<i>base_</i>) + 1)</code> applications of either projection.
 
 ### 22.10.18.5.3 Class template `boyer_moore_horspool_searcher` [func.range.search.bmh] ### {#func.range.search.bmh}
 
 <pre>
 namespace std::ranges {
-  template &lt;random_access_range R,
-            copy_constructible Pred = equal_to,
-            indirectly_regular_unary_invocable&lt;iterator_t&lt;R&gt;&gt; Proj = identity,
-            class Hash = hash&lt;projected_value_t&lt;iterator_t&lt;R&gt;, Proj&gt;&gt;&gt;
-    requires semiregular&lt;range_value_t&lt;R&gt;&gt;
+  template &lt;random_access_range V,
+            copy_constructible Pred = ranges::equal_to,
+            indirectly_regular_unary_invocable&lt;iterator_t&lt;V&gt;&gt; Proj = identity,
+            class Hash = hash&lt;projected_value_t&lt;iterator_t&lt;V&gt;, Proj&gt;&gt;&gt;
+    requires view&lt;V&gt; &amp;&amp; semiregular&lt;range_value_t&lt;R&gt;&gt;
   class boyer_moore_horspool_searcher {
   public:
-    boyer_moore_horspool_searcher(iterator_t&lt;R&gt; pat_first, sentinel_t&lt;R&gt; pat_last,
-                                  Pred pred = {}, Proj proj = {}, Hash hf = {});
-    template&lt;typename R2&gt; requires same_as&lt;remove_reference_t&lt;R2&gt;, R&gt;
-    explicit boyer_moore_horspool_searcher(R2&amp;&amp; r);
-    template&lt;typename R2&gt; requires same_as&lt;remove_reference_t&lt;R2&gt;, R&gt;
-    boyer_moore_horspool_searcher(R2&amp;&amp; r, Pred pred, Proj proj = {}, Hash hf = {});
+    explicit boyer_moore_horspool_searcher(V base, Pred pred = {}, Proj proj = {}, Hash hf = {});
+
+    constexpr V base() const &amp; requires copy_constructible&lt;V&gt; { return <i>base_</i>; }
+    constexpr V base() &amp;&amp; { return std::move(<i>base_</i>); }
+
+    constexpr const Pred&amp; pred() const;
+    constexpr const Proj&amp; proj() const;
 
     template&lt;random_access_iterator I2, sentinel_for&lt;I2&gt; S2, class Proj2 = identity&gt;
       subrange&lt;I2&gt; operator()(I2 first, S2 last, Proj2 proj2 = {}) const
-        requires indirectly_comparable&lt;I2, iterator_t&lt;R&gt;, Pred, Proj2, Proj&gt;;
+        requires indirectly_comparable&lt;I2, iterator_t&lt;V&gt;, Pred, Proj2, Proj&gt;;
 
   private:
-    [[no_unique_address]] std::ranges::iterator_t&lt;R&gt; <i>pat_first_</i>; // <i>exposition only</i>
-    [[no_unique_address]] std::ranges::sentinel_t&lt;R&gt; <i>pat_last_</i>;  // <i>exposition only</i>
-    [[no_unique_address]] Pred <i>pred_</i>;                            // <i>exposition only</i>
-    [[no_unique_address]] Proj <i>proj_</i>;                            // <i>exposition only</i>
-    [[no_unique_address]] Hash <i>hash_</i>;                            // <i>exposition only</i>
+    V                 <i>base_</i>; // <i>exposition only</i>
+    <i>movable-box</i>&lt;Pred&gt; <i>pred_</i>; // <i>exposition only</i>
+    <i>movable-box</i>&lt;Proj&gt; <i>proj_</i>; // <i>exposition only</i>
+    Hash              <i>hash_</i>; // <i>exposition only</i>
   }
 
   template &lt;random_access_range R,
-            copy_constructible Pred = equal_to,
+            copy_constructible Pred = ranges::equal_to,
             indirectly_regular_unary_invocable&lt;iterator_t&lt;R&gt;&gt; Proj = identity,
             class Hash = hash&lt;projected_value_t&lt;iterator_t&lt;R&gt;, Proj&gt;&gt;&gt;
     requires semiregular&lt;range_value_t&lt;R&gt;&gt;
     boyer_moore_horspool_searcher(R&amp;&amp;, Pred = {}, Proj = {}, Hash = {})
-      -&gt; boyer_moore_horspool_searcher&lt;remove_reference_t&lt;R&gt;, Pred, Proj, Hash&gt;;
+      -&gt; boyer_moore_horspool_searcher&lt;views::all_t&lt;R&gt;, Pred, Proj, Hash&gt;;
 }
 </pre>
 
 ```cpp
-boyer_moore_horspool_searcher(iterator_t<R> pat_first, sentinel_t<R> pat_last,
-                              Pred pred = {}, Proj proj = {}, Hash hf = {});
+explicit boyer_moore_horspool_searcher(V base, Pred pred = {}, Proj proj = {}, Hash hf = {});
 ```
-1. *Preconditions*: Let `V` be `range_value_t<R>`. For any two values `A` and `B` of type `V`, if `pred(invoke(proj, A), invoke(proj, B)) == true`, then `hf(invoke(proj, A)) == hf(invoke(proj, B))` is `true`.
-2. *Effects*: Constructs a `boyer_moore_horspool_searcher` object, initializing <code><i>pat_first_</i></code> with `pat_first`, <code><i>pat_last_</i></code> with `pat_last`, <code><i>pred_</i></code> with `move(pred)`, <code><i>proj_</i></code> with `move(proj)`, and <code><i>hash_</i></code> with `move(hf)`.
-3. *Throws*: Any exception thrown by the copy constructor of `iterator_t<R>` or `sentinel_t<R>`, or by the default constructor, copy constructor, or the copy assignment operator of the value type of `R`, or `operator()` of `Pred` or `Hash`. May throw `bad_alloc` if additional memory needed for internal data structures cannot be allocated.
+1. *Preconditions*: Let `T` be `range_value_t<V>`. For any two values `A` and `B` of type `T`, if `invoke(pred, invoke(proj, A), invoke(proj, B)) == true`, then `hf(invoke(proj, A)) == hf(invoke(proj, B))` is `true`.
+2. *Effects*: Constructs a `boyer_moore_horspool_searcher` object, initializing <code><i>base_</i></code> with `move(base)`, <code><i>pred_</i></code> with `move(pred)`, <code><i>proj_</i></code> with `move(proj)`, and <code><i>hash_</i></code> with `move(hf)`.
+3. *Throws*: Any exception thrown by the default constructor, copy constructor, or the copy assignment operator of `T`, the `invoke` expression, or the copy constructor or `operator()` of `Hash`. May throw `bad_alloc` if additional memory needed for internal data structures cannot be allocated.
 
 ```cpp
-template<typename R2> requires same_as<remove_reference_t<R2>, R>
-  explicit boyer_moore_horspool_searcher(R2&& r);
+constexpr const Pred& pred() const;
 ```
-4. *Preconditions*: Let `V` be `range_value_t<R>`. For any two values `A` and `B` of type `V`, if `Pred{}(invoke(proj, A), invoke(proj, B)) == true`, then `Hash{}(invoke(proj, A)) == Hash{}(invoke(proj, B))` is `true`.
-5. *Effects*: Constructs a `boyer_moore_horspool_searcher` object, initializing <code><i>pat_first_</i></code> with `ranges::begin(r)` and <code><i>pat_last_</i></code> with `ranges::end(r)`.
-6. *Throws*: Any exception thrown by the copy constructor of `iterator_t<R>` or `sentinel_t<R>`, or by the default constructor, copy constructor, or the copy assignment operator of the value type of `R`, or `operator()` of `Pred` or `Hash`. May throw `bad_alloc` if additional memory needed for internal data structures cannot be allocated.
+4. *Effects*: Equivalent to: <code>return *<i>pred_</i>;</code>
 
 ```cpp
-template<typename R2> requires same_as<remove_reference_t<R2>, R>
-  boyer_moore_horspool_searcher(R2&& r, Pred pred, Proj proj = {}, Hash hf = {});
+constexpr const Proj& proj() const;
 ```
-7. *Preconditions*: Let `V` be `range_value_t<R>`. For any two values `A` and `B` of type `V`, if `pred(invoke(proj, A), invoke(proj, B)) == true`, then `hf(invoke(proj, A)) == hf(invoke(proj, B))` is `true`.
-8. *Effects*: Constructs a `boyer_moore_horspool_searcher` object, initializing <code><i>pat_first_</i></code> with `ranges::begin(r)`, <code><i>pat_last_</i></code> with `ranges::end(r)`, <code><i>pred_</i></code> with `move(pred)`, <code><i>proj_</i></code> with `move(proj)`, and <code><i>hash_</i></code> with `move(hf)`.
-9. *Throws*: Any exception thrown by the copy constructor of `iterator_t<R>` or `sentinel_t<R>`, or by the default constructor, copy constructor, or the copy assignment operator of the value type of `R`, or `operator()` of `Pred` or `Hash`. May throw `bad_alloc` if additional memory needed for internal data structures cannot be allocated.
+5. *Effects*: Equivalent to: <code>return *<i>proj_</i>;</code>
 
 ```cpp
 template<random_access_iterator I2, sentinel_for<I2> S2, class Proj2 = identity>
   subrange<I2> operator()(I2 first, S2 last, Proj2 proj2 = {}) const
-    requires indirectly_comparable<I2, iterator_t<R>, Pred, Proj2, Proj>;
+    requires indirectly_comparable<I2, iterator_t<V>, Pred, Proj2, Proj>;
 ```
-10. *Mandates*: `is_same_v<remove_cvref_t<projected_value_t<iterator_t<R>, Proj>>, remove_cvref_t<projected_value_t<I2, Proj2>>>` is `true`.
-11. *Effects*: Finds a subsequence of equal values in a sequence.
-12. *Returns*: `subrange(i, j)`, where `i` and `j` is a pair of iterators such that
+6. *Mandates*: `is_same_v<remove_cvref_t<projected_value_t<iterator_t<V>, Proj>>, remove_cvref_t<projected_value_t<I2, Proj2>>>` is `true`.
+7. *Effects*: Finds a subsequence of equal values in a sequence.
+8. *Returns*: `subrange(i, j)`, where `i` and `j` is a pair of iterators such that
 
-- `i` is the first iterator in the range <code>[first, last - (<i>pat_last_</i> - <i>pat_first_</i>))</code> such that for every non-negative integer `n` less than <code><i>pat_last_</i> - <i>pat_first_</i></code> the following condition holds: <code><i>pred_</i>(invoke(proj2, *(i + n)), invoke(<i>proj_</i>, *(<i>pat_first_</i> + n))) != false</code>, and
-- <code>j == ranges::next(i, ranges::distance(<i>pat_first_</i>, <i>pat_last_</i>))</code>.
+- `i` is the first iterator in the range <code>[first, last - ranges::distance(<i>base_</i>))</code> such that for every non-negative integer `n` less than <code>ranges::distance(<i>base_</i>)</code> the following condition holds: <code>invoke(*<i>pred_</i>, invoke(proj2, *(i + n)), </code><code>invoke(*<i>proj_</i>, *(ranges::begin(<i>base_</i>) + n))) != false</code>, and
+- <code>j == ranges::next(i, ranges::distance(<i>base_</i>))</code>.
 
-Returns `subrange(first, first)` if <code>[<i>pat_first_</i>, <i>pat_last_</i>)</code> is empty, otherwise returns `subrange(last, last)` if no such iterator is found.
+Returns `subrange(first, first)` if <code>ranges::empty(<i>base_</i>)</code> is `true`, otherwise returns `subrange(last, last)` if no such iterator is found.
 
-13. *Complexity*: At most <code>(last - first) * (<i>pat_last_</i> - <i>pat_first_</i>)</code> applications of the predicate, and at most <code>(last - first) * (<i>pat_last_</i> - <i>pat_first_</i> + 1)</code> applications of either projection.
+9. *Complexity*: At most <code>(last - first) * ranges::distance(<i>base_</i>)</code> applications of the predicate, and at most <code>(last - first) * (ranges::distance(<i>base_</i>) + 1)</code> applications of either projection.
 
 ## 24.2 Header `<iterator>` synopsis [iterator.synopsis] ## {#iterator.synopsis}
 
@@ -504,7 +578,7 @@ Note: Editor's Note: Insert the following subclause between 24.3.7.5 Concept `in
 ```cpp
 template<class Searcher, class I, class S, class P = identity>
   concept searchable =
-    copyable<Searcher> &&
+    movable<Searcher> &&
     invocable<const Searcher&, I, S, P> &&
     ranges::forward_range<invoke_result_t<const Searcher&, I, S, P>>
 ```
@@ -607,4 +681,51 @@ template<forward_range R, class Searcher, class Proj = identity>
 ```
 
 14. *Effects*: Equivalent to: `return searcher(ranges::begin(r), ranges::end(r), move(proj));`
+
+# Wording for Optional Additional Changes # {#wording-optional}
+
+Note: The wording below is for the standalone additional breaking change to `std::search`.
+
+## 26.6.15 Search [alg.search] ## {#alg.search-optional}
+
+Modify paragraph 11-12 as indicated:
+
+```cpp
+template<class ForwardIterator, class Searcher>
+  constexpr ForwardIterator
+    search(ForwardIterator first, ForwardIterator last, const Searcher& searcher);
+```
+
+11. *Effects*: Equivalent to: <del>`return searcher(first, last).first;`</del><ins>`return std::get<0>(searcher(first, last));`</ins>
+12. *Remarks*: `Searcher` need not meet the *Cpp17CopyConstructible* requirements.
+
+# Poll Results # {#poll-results}
+## SG9 Review, Brno (2026-06) ## {#sg9-review-brno}
+
+**Poll 1**: We want both `operator()(begin, end)` and `operator()(range)` on the standardized searchers.
+
+<table>
+    <thead><tr><td>Strongly Favor</td><td>Favor</td><td>Neutral</td><td>Against</td><td>Strongly Against</td></tr></thead>
+    <tbody><tr><td>2</td><td>0</td><td>4</td><td>1</td><td>0</td></tr></tbody>
+</table>
+
+- **Outcome**: No consensus.
+
+**Poll 2**: We want only `operator()(begin, end)` on the standardized searchers.
+
+<table>
+    <thead><tr><td>Strongly Favor</td><td>Favor</td><td>Neutral</td><td>Against</td><td>Strongly Against</td></tr></thead>
+    <tbody><tr><td>2</td><td>2</td><td>3</td><td>0</td><td>0</td></tr></tbody>
+</table>
+
+- **Outcome**: Consensus in favor.
+
+**Poll 3**: We want only `operator()(range)` on the standardized searchers.
+
+<table>
+    <thead><tr><td>Strongly Favor</td><td>Favor</td><td>Neutral</td><td>Against</td><td>Strongly Against</td></tr></thead>
+    <tbody><tr><td>0</td><td>0</td><td>2</td><td>5</td><td>0</td></tr></tbody>
+</table>
+
+- **Outcome**: Consensus against.
 
