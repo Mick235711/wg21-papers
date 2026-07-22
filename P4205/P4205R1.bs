@@ -11,7 +11,7 @@ URL: https://wg21.link/P4205R1
 !Issue Tracking: <a href="https://github.com/Mick235711/wg21-papers/issues">GitHub Mick235711/wg21-papers</a>
 Editor: Yihe Li, winmikedows@hotmail.com
 No abstract: true
-Date: 2026-07-22
+Date: 2026-07-21
 Markup Shorthands: markdown yes
 Default Highlight: cpp
 </pre>
@@ -366,7 +366,7 @@ namespace std::ranges {
         requires indirectly_comparable&lt;I2, iterator_t&lt;V&gt;, Pred, Proj2, Proj&gt;;
 
   private:
-    V    <i>base_</i>; // <i>exposition only</i>
+    V                 <i>base_</i>; // <i>exposition only</i>
     <i>movable-box</i>&lt;Pred&gt; <i>pred_</i>; // <i>exposition only</i>
     <i>movable-box</i>&lt;Proj&gt; <i>proj_</i>; // <i>exposition only</i>
   }

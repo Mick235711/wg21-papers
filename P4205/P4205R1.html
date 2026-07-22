@@ -1564,7 +1564,7 @@ Possible extra rowspan handling
   <meta content="Bikeshed version d113b2e81, updated Tue Jun 9 14:57:55 2026 -0700" name="generator">
   <link href="https://wg21.link/P4205R1" rel="canonical">
   <link href="https://isocpp.org/favicon.ico" rel="icon">
-  <meta content="2407be9d2c0a642958ab8e05fda6f3471d145842" name="revision">
+  <meta content="b11808337aed7e23c1173e612518ecf366d700f6" name="revision">
   <meta content="dark light" name="color-scheme">
 <style>
 table, th, td { border:1px solid grey; }
@@ -2124,7 +2124,7 @@ c-[il] { color: #000000 } /* Literal.Number.Integer.Long */
    <p data-fill-with="logo"></p>
    <h1 class="no-ref p-name" id="title">P4205R1<br>Range-Based Searchers</h1>
    <h2 class="heading no-num no-ref no-toc settled" id="profile-and-date"><span class="content">Published Proposal,
-    <time class="dt-updated" datetime="2026-07-22">2026-07-22</time></span></h2>
+    <time class="dt-updated" datetime="2026-07-21">2026-07-21</time></span></h2>
    <div data-fill-with="spec-metadata">
     <dl>
      <dt>This version:
@@ -2525,7 +2525,7 @@ It was originally introduced for more performant specialized searching.</p>
         <c- k>requires</c-> <c- n>indirectly_comparable</c-><c- o>&lt;</c-><c- n>I2</c-><c- p>,</c-> <c- n>iterator_t</c-><c- o>&lt;</c-><c- n>V</c-><c- o>></c-><c- p>,</c-> <c- n>Pred</c-><c- p>,</c-> <c- n>Proj2</c-><c- p>,</c-> <c- n>Proj</c-><c- o>></c-><c- p>;</c->
 
   <c- k>private</c-><c- o>:</c->
-    <c- n>V</c->    <i><c- n>base_</c-></i><c- p>;</c-> <c- c1>// </c-><i><c- c1>exposition only</c-></i>
+    <c- n>V</c->                 <i><c- n>base_</c-></i><c- p>;</c-> <c- c1>// </c-><i><c- c1>exposition only</c-></i>
     <i><c- n>movable</c-><c- o>-</c-><c- n>box</c-></i><c- o>&lt;</c-><c- n>Pred</c-><c- o>></c-> <i><c- n>pred_</c-></i><c- p>;</c-> <c- c1>// </c-><i><c- c1>exposition only</c-></i>
     <i><c- n>movable</c-><c- o>-</c-><c- n>box</c-></i><c- o>&lt;</c-><c- n>Proj</c-><c- o>></c-> <i><c- n>proj_</c-></i><c- p>;</c-> <c- c1>// </c-><i><c- c1>exposition only</c-></i>
   <c- p>}</c->
