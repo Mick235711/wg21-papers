@@ -458,7 +458,7 @@ The wording below is based on [[!N5054]].
 
 Wording notes for LWG and editor:
 - Currently, the three views' definition reside just after `views::transform`'s definition and synopsis, due to the author's perception that they are pretty similar.
-- The exposition-only concept `scannable` is basically the same as `indirectly-binary-left-foldable`; the only difference is that `F` is required to be move constructible instead of copy constructible.
+- The exposition-only concept `scannable` is basically the same as `indirectly-binary-left-foldable`; the only difference is that `F` is required to be move constructible instead of copy constructible, and an additional constructible requirement in unseeded cases.
 
 ## 17.3.2 Header `<version>` synopsis [version.syn] ## {#version.syn}
 
@@ -538,17 +538,19 @@ for (auto&& i : std::views::scan(vec, std::plus{}, 10)) {
 
 <pre>
 namespace std::ranges {
-  template&lt;typename V, typename F, typename T&gt;
+  template&lt;typename V, typename F, typename T, scan_view_kind K&gt;
     concept <i>scannable</i> =  // exposition only
       move_constructible&lt;F&gt; &&
       invocable&lt;F&, T, range_reference_t&lt;V&gt;&gt; &&
       convertible_to&lt;invoke_result_t&lt;F&, T, range_reference_t&lt;V&gt;&gt;,
              decay_t&lt;invoke_result_t&lt;F&, T, range_reference_t&lt;V&gt;&gt;&gt;&gt; &&
+      (K == scan_view_kind::seeded || constructible_from&lt;
+             decay_t&lt;invoke_result_t&lt;F&, T, range_reference_t&lt;V&gt;&gt;&gt;, range_reference_t&lt;V&gt;&gt;) &&
       <i>indirectly-binary-left-foldable-impl</i>&lt;F, T, iterator_t&lt;V&gt;,
              decay_t&lt;invoke_result_t&lt;F&, T, range_reference_t&lt;V&gt;&gt;&gt;&gt;;
 
   template&lt;input_range V, move_constructible F, move_constructible T, scan_view_kind K&gt;
-    requires view&lt;V&gt; && is_object_v&lt;F&gt; && is_object_v&lt;T&gt; && <i>scannable</i>&lt;V, F, T&gt;
+    requires view&lt;V&gt; && is_object_v&lt;F&gt; && is_object_v&lt;T&gt; && <i>scannable</i>&lt;V, F, T, K&gt;
   class scan_view : public view_interface&lt;scan_view&lt;V, F, T, K&gt;&gt; {
   private:
     // [range.scan.iterator], class template scan_view::<i>iterator</i>
@@ -568,7 +570,7 @@ namespace std::ranges {
 
     constexpr <i>iterator</i>&lt;false&gt; begin();
     constexpr <i>iterator</i>&lt;true&gt; begin() const
-      requires range&lt;const V&gt; && <i>scannable</i>&lt;const V, const F, T&gt;;
+      requires range&lt;const V&gt; && <i>scannable</i>&lt;const V, const F, T, K&gt;;
 
     constexpr default_sentinel_t end() const noexcept { return default_sentinel; }
 
@@ -607,7 +609,7 @@ constexpr <i>iterator</i>&lt;false&gt; begin();
 
 <pre>
 constexpr <i>iterator</i>&lt;true&gt; begin() const
-  requires range&lt;const V&gt; && <i>scannable</i>&lt;const V, const F, T&gt;;
+  requires range&lt;const V&gt; && <i>scannable</i>&lt;const V, const F, T, K&gt;;
 </pre>
 4. *Effects*: Equivalent to: <code>return <i>iterator</i>&lt;true&gt;{*this, ranges::begin(<i>base_</i>)};</code>
 
@@ -619,7 +621,7 @@ Note: If [[!P3117R1]] is not adopted, please incorporate the changes in [[#range
 <pre>
 namespace std::ranges {
   template&lt;input_range V, move_constructible F, move_constructible T, scan_view_kind K&gt;
-    requires view&lt;V&gt; && is_object_v&lt;F&gt; && is_object_v&lt;T&gt; && <i>scannable</i>&lt;V, F, T&gt;
+    requires view&lt;V&gt; && is_object_v&lt;F&gt; && is_object_v&lt;T&gt; && <i>scannable</i>&lt;V, F, T, K&gt;
   template&lt;bool Const&gt;
   class scan_view&lt;V, F, T, K&gt;::<i>iterator</i> {
   private:
@@ -631,7 +633,6 @@ namespace std::ranges {
     struct <i>Holder</i> { // exposition only
         sentinel_t&lt;<i>Base</i>&gt; <i>end_</i> = sentinel_t&lt;<i>Base</i>&gt;(); // exposition only
         <i>movable-box</i>&lt;F&gt; <i>fun_</i>;                        // exposition only
-        <i>movable-box</i>&lt;T&gt; <i>init_</i>;                       // exposition only
     };
     using <i>HolderType</i> = conditional_t&lt;<i>tidy-func</i>&lt;F&gt;, <i>Holder</i>, <i>Parent</i>*&gt;; // exposition only
 
@@ -647,15 +648,9 @@ namespace std::ranges {
         else
             return *<i>parent_</i>-&gt;<i>fun_</i>;
     }
-    constexpr T& <i>get-init</i>() { // exposition only
-        if constexpr (<i>tidy-func</i>&lt;F&gt;)
-            return *<i>parent_</i>.<i>init_</i>;
-        else
-            return *<i>parent_</i>-&gt;<i>init_</i>;
-    }
     static constexpr <i>HolderType</i> <i>init</i>(<i>Parent</i>& parent) { // exposition only
         if constexpr (<i>tidy-func</i>&lt;F&gt;)
-            return {ranges::end(parent.<i>base_</i>), <i>movable-box</i>&lt;F&gt;{}, parent.<i>init_</i>};
+            return {ranges::end(parent.<i>base_</i>), <i>movable-box</i>&lt;F&gt;{}};
         else
             return addressof(parent);
     }
@@ -697,7 +692,7 @@ constexpr <i>iterator</i>(<i>Parent</i>& parent, iterator_t&lt;<i>Base</i>&gt; c
 <pre>
 if (<i>current_</i> == <i>get-end</i>()) return;
 if constexpr (K == scan_view_kind::seeded) {
-  <i>sum_</i> = invoke(<i>get-fun</i>(), <i>get-init</i>(), *<i>current_</i>);
+  <i>sum_</i> = invoke(<i>get-fun</i>(), *parent.<i>init_</i>, *<i>current_</i>);
 } else {
   <i>sum_</i> = *<i>current_</i>;
 }
@@ -744,7 +739,7 @@ Note: If [[!P3117R1]] is already adopted, please incorporate the changes in [[#r
 <pre>
 namespace std::ranges {
   template&lt;input_range V, move_constructible F, move_constructible T, scan_view_kind K&gt;
-    requires view&lt;V&gt; && is_object_v&lt;F&gt; && is_object_v&lt;T&gt; && <i>scannable</i>&lt;V, F, T&gt;
+    requires view&lt;V&gt; && is_object_v&lt;F&gt; && is_object_v&lt;T&gt; && <i>scannable</i>&lt;V, F, T, K&gt;
   template&lt;bool Const&gt;
   class scan_view&lt;V, F, T, K&gt;::<i>iterator</i> {
   private:

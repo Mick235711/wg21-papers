@@ -1564,7 +1564,7 @@ Possible extra rowspan handling
   <meta content="Bikeshed version d113b2e81, updated Tue Jun 9 14:57:55 2026 -0700" name="generator">
   <link href="https://wg21.link/P3351R5" rel="canonical">
   <link href="https://isocpp.org/favicon.ico" rel="icon">
-  <meta content="a6194a508203c5b243202ffc1f0053565f741f1a" name="revision">
+  <meta content="4ec6a43458ed89f35b159b302e81f65a2eecba4a" name="revision">
   <meta content="dark light" name="color-scheme">
 <style>
 table, th, td { border:1px solid grey; }
@@ -2901,7 +2901,7 @@ LEWG had decided to settle on the name <code class="highlight"><c- n>views</c-><
     <li data-md>
      <p>Currently, the three views' definition reside just after <code class="highlight"><c- n>views</c-><c- o>::</c-><c- n>transform</c-></code>’s definition and synopsis, due to the author’s perception that they are pretty similar.</p>
     <li data-md>
-     <p>The exposition-only concept <code class="highlight"><c- n>scannable</c-></code> is basically the same as <code class="highlight"><c- n>indirectly</c-><c- o>-</c-><c- n>binary</c-><c- o>-</c-><c- n>left</c-><c- o>-</c-><c- n>foldable</c-></code>; the only difference is that <code class="highlight"><c- n>F</c-></code> is required to be move constructible instead of copy constructible.</p>
+     <p>The exposition-only concept <code class="highlight"><c- n>scannable</c-></code> is basically the same as <code class="highlight"><c- n>indirectly</c-><c- o>-</c-><c- n>binary</c-><c- o>-</c-><c- n>left</c-><c- o>-</c-><c- n>foldable</c-></code>; the only difference is that <code class="highlight"><c- n>F</c-></code> is required to be move constructible instead of copy constructible, and an additional constructible requirement in unseeded cases.</p>
    </ul>
    <h3 class="heading settled" data-level="6.1" id="version.syn"><span class="secno">6.1. </span><span class="content">17.3.2 Header <code class="highlight"><c- o>&lt;</c-><c- n>version</c-><c- o>></c-></code> synopsis [version.syn]</span><a class="self-link" href="#version.syn"></a></h3>
    <p>In this clause’s synopsis, insert a new macro definition in a place that respects the current alphabetical order of the synopsis, and substituting <code class="highlight"><c- mi>20</c-><c- n>XXYYL</c-></code> by the date of adoption.</p>
@@ -2972,17 +2972,19 @@ LEWG had decided to settle on the name <code class="highlight"><c- n>views</c-><
 
    <h4 class="heading settled" data-level="6.3.2" id="range.scan.view"><span class="secno">6.3.2. </span><span class="content">25.7.�.2 Class template <code class="highlight"><c- n>scan_view</c-></code> [range.scan.view]</span><a class="self-link" href="#range.scan.view"></a></h4>
 <pre class="highlight"><c- k>namespace</c-> <c- nn>std</c-><c- o>::</c-><c- nn>ranges</c-> <c- p>{</c->
-  <c- k>template</c-><c- o>&lt;</c-><c- k>typename</c-> <c- nc>V</c-><c- p>,</c-> <c- k>typename</c-> <c- nc>F</c-><c- p>,</c-> <c- k>typename</c-> <c- nc>T</c-><c- o>></c->
+  <c- k>template</c-><c- o>&lt;</c-><c- k>typename</c-> <c- nc>V</c-><c- p>,</c-> <c- k>typename</c-> <c- nc>F</c-><c- p>,</c-> <c- k>typename</c-> <c- nc>T</c-><c- p>,</c-> <c- n>scan_view_kind</c-> <c- n>K</c-><c- o>></c->
     <c- k>concept</c-> <i><c- nc>scannable</c-></i> <c- o>=</c->  <c- c1>// exposition only</c->
       <c- n>move_constructible</c-><c- o>&lt;</c-><c- n>F</c-><c- o>></c-> <c- o>&amp;&amp;</c->
       <c- n>invocable</c-><c- o>&lt;</c-><c- n>F</c-><c- o>&amp;</c-><c- p>,</c-> <c- n>T</c-><c- p>,</c-> <c- n>range_reference_t</c-><c- o>&lt;</c-><c- n>V</c-><c- o>>></c-> <c- o>&amp;&amp;</c->
       <c- n>convertible_to</c-><c- o>&lt;</c-><c- n>invoke_result_t</c-><c- o>&lt;</c-><c- n>F</c-><c- o>&amp;</c-><c- p>,</c-> <c- n>T</c-><c- p>,</c-> <c- n>range_reference_t</c-><c- o>&lt;</c-><c- n>V</c-><c- o>>></c-><c- p>,</c->
              <c- n>decay_t</c-><c- o>&lt;</c-><c- n>invoke_result_t</c-><c- o>&lt;</c-><c- n>F</c-><c- o>&amp;</c-><c- p>,</c-> <c- n>T</c-><c- p>,</c-> <c- n>range_reference_t</c-><c- o>&lt;</c-><c- n>V</c-><c- o>>>>></c-> <c- o>&amp;&amp;</c->
+      <c- p>(</c-><c- n>K</c-> <c- o>==</c-> <c- n>scan_view_kind</c-><c- o>::</c-><c- n>seeded</c-> <c- o>||</c-> <c- n>constructible_from</c-><c- o>&lt;</c->
+             <c- n>decay_t</c-><c- o>&lt;</c-><c- n>invoke_result_t</c-><c- o>&lt;</c-><c- n>F</c-><c- o>&amp;</c-><c- p>,</c-> <c- n>T</c-><c- p>,</c-> <c- n>range_reference_t</c-><c- o>&lt;</c-><c- n>V</c-><c- o>>>></c-><c- p>,</c-> <c- n>range_reference_t</c-><c- o>&lt;</c-><c- n>V</c-><c- o>>></c-><c- p>)</c-> <c- o>&amp;&amp;</c->
       <i><c- n>indirectly</c-><c- o>-</c-><c- n>binary</c-><c- o>-</c-><c- n>left</c-><c- o>-</c-><c- n>foldable</c-><c- o>-</c-><c- n>impl</c-></i><c- o>&lt;</c-><c- n>F</c-><c- p>,</c-> <c- n>T</c-><c- p>,</c-> <c- n>iterator_t</c-><c- o>&lt;</c-><c- n>V</c-><c- o>></c-><c- p>,</c->
              <c- n>decay_t</c-><c- o>&lt;</c-><c- n>invoke_result_t</c-><c- o>&lt;</c-><c- n>F</c-><c- o>&amp;</c-><c- p>,</c-> <c- n>T</c-><c- p>,</c-> <c- n>range_reference_t</c-><c- o>&lt;</c-><c- n>V</c-><c- o>>>>></c-><c- p>;</c->
 
   <c- k>template</c-><c- o>&lt;</c-><c- n>input_range</c-> <c- n>V</c-><c- p>,</c-> <c- n>move_constructible</c-> <c- n>F</c-><c- p>,</c-> <c- n>move_constructible</c-> <c- n>T</c-><c- p>,</c-> <c- n>scan_view_kind</c-> <c- n>K</c-><c- o>></c->
-    <c- k>requires</c-> <c- n>view</c-><c- o>&lt;</c-><c- n>V</c-><c- o>></c-> <c- o>&amp;&amp;</c-> <c- n>is_object_v</c-><c- o>&lt;</c-><c- n>F</c-><c- o>></c-> <c- o>&amp;&amp;</c-> <c- n>is_object_v</c-><c- o>&lt;</c-><c- n>T</c-><c- o>></c-> <c- o>&amp;&amp;</c-> <i><c- n>scannable</c-></i><c- o>&lt;</c-><c- n>V</c-><c- p>,</c-> <c- n>F</c-><c- p>,</c-> <c- n>T</c-><c- o>></c->
+    <c- k>requires</c-> <c- n>view</c-><c- o>&lt;</c-><c- n>V</c-><c- o>></c-> <c- o>&amp;&amp;</c-> <c- n>is_object_v</c-><c- o>&lt;</c-><c- n>F</c-><c- o>></c-> <c- o>&amp;&amp;</c-> <c- n>is_object_v</c-><c- o>&lt;</c-><c- n>T</c-><c- o>></c-> <c- o>&amp;&amp;</c-> <i><c- n>scannable</c-></i><c- o>&lt;</c-><c- n>V</c-><c- p>,</c-> <c- n>F</c-><c- p>,</c-> <c- n>T</c-><c- p>,</c-> <c- n>K</c-><c- o>></c->
   <c- k>class</c-> <c- nc>scan_view</c-> <c- o>:</c-> <c- k>public</c-> <c- n>view_interface</c-><c- o>&lt;</c-><c- n>scan_view</c-><c- o>&lt;</c-><c- n>V</c-><c- p>,</c-> <c- n>F</c-><c- p>,</c-> <c- n>T</c-><c- p>,</c-> <c- n>K</c-><c- o>>></c-> <c- p>{</c->
   <c- k>private</c-><c- o>:</c->
     <c- c1>// [range.scan.iterator], class template scan_view::</c-><i><c- c1>iterator</c-></i>
@@ -3002,7 +3004,7 @@ LEWG had decided to settle on the name <code class="highlight"><c- n>views</c-><
 
     <c- k>constexpr</c-> <i><c- n>iterator</c-></i><c- o>&lt;</c->false<c- o>></c-> <c- n>begin</c-><c- p>();</c->
     <c- k>constexpr</c-> <i><c- n>iterator</c-></i><c- o>&lt;</c->true<c- o>></c-> <c- n>begin</c-><c- p>()</c-> <c- k>const</c->
-      <c- k>requires</c-> <c- n>range</c-><c- o>&lt;</c-><c- k>const</c-> <c- n>V</c-><c- o>></c-> <c- o>&amp;&amp;</c-> <i><c- n>scannable</c-></i><c- o>&lt;</c-><c- k>const</c-> <c- n>V</c-><c- p>,</c-> <c- k>const</c-> <c- n>F</c-><c- p>,</c-> <c- n>T</c-><c- o>></c-><c- p>;</c->
+      <c- k>requires</c-> <c- n>range</c-><c- o>&lt;</c-><c- k>const</c-> <c- n>V</c-><c- o>></c-> <c- o>&amp;&amp;</c-> <i><c- n>scannable</c-></i><c- o>&lt;</c-><c- k>const</c-> <c- n>V</c-><c- p>,</c-> <c- k>const</c-> <c- n>F</c-><c- p>,</c-> <c- n>T</c-><c- p>,</c-> <c- n>K</c-><c- o>></c-><c- p>;</c->
 
     <c- k>constexpr</c-> <c- n>default_sentinel_t</c-> <c- nf>end</c-><c- p>()</c-> <c- k>const</c-> <c- k>noexcept</c-> <c- p>{</c-> <c- k>return</c-> <c- n>default_sentinel</c-><c- p>;</c-> <c- p>}</c->
 
@@ -3042,7 +3044,7 @@ LEWG had decided to settle on the name <code class="highlight"><c- n>views</c-><
      <p><em>Effects</em>: Equivalent to: <code class="highlight"><c- k>return</c-> <i><c- n>iterator</c-></i><c- o>&lt;</c->false<c- o>></c-><c- p>{</c-><c- o>*</c-><c- k>this</c-><c- p>,</c-> <c- n>ranges</c-><c- o>::</c-><c- n>begin</c-><c- p>(</c-><i><c- n>base_</c-></i><c- p>)};</c-></code></p>
    </ol>
 <pre class="highlight"><c- k>constexpr</c-> <i><c- n>iterator</c-></i><c- o>&lt;</c->true<c- o>></c-> <c- n>begin</c-><c- p>()</c-> <c- k>const</c->
-  <c- k>requires</c-> <c- n>range</c-><c- o>&lt;</c-><c- k>const</c-> <c- n>V</c-><c- o>></c-> <c- o>&amp;&amp;</c-> <i><c- n>scannable</c-></i><c- o>&lt;</c-><c- k>const</c-> <c- n>V</c-><c- p>,</c-> <c- k>const</c-> <c- n>F</c-><c- p>,</c-> <c- n>T</c-><c- o>></c-><c- p>;</c->
+  <c- k>requires</c-> <c- n>range</c-><c- o>&lt;</c-><c- k>const</c-> <c- n>V</c-><c- o>></c-> <c- o>&amp;&amp;</c-> <i><c- n>scannable</c-></i><c- o>&lt;</c-><c- k>const</c-> <c- n>V</c-><c- p>,</c-> <c- k>const</c-> <c- n>F</c-><c- p>,</c-> <c- n>T</c-><c- p>,</c-> <c- n>K</c-><c- o>></c-><c- p>;</c->
 </pre>
    <ol start="4">
     <li data-md>
@@ -3053,7 +3055,7 @@ LEWG had decided to settle on the name <code class="highlight"><c- n>views</c-><
    <p class="note" role="note"><span class="marker">Note:</span> If <a data-link-type="biblio" href="#biblio-p3117r1" title="Extending Conditionally Borrowed">[P3117R1]</a> is not adopted, please incorporate the changes in <a href="#range.scan.iterator.2">§ 6.3.3.2 If P3117 is not adopted</a> instead.</p>
 <pre class="highlight"><c- k>namespace</c-> <c- nn>std</c-><c- o>::</c-><c- nn>ranges</c-> <c- p>{</c->
   <c- k>template</c-><c- o>&lt;</c-><c- n>input_range</c-> <c- n>V</c-><c- p>,</c-> <c- n>move_constructible</c-> <c- n>F</c-><c- p>,</c-> <c- n>move_constructible</c-> <c- n>T</c-><c- p>,</c-> <c- n>scan_view_kind</c-> <c- n>K</c-><c- o>></c->
-    <c- k>requires</c-> <c- n>view</c-><c- o>&lt;</c-><c- n>V</c-><c- o>></c-> <c- o>&amp;&amp;</c-> <c- n>is_object_v</c-><c- o>&lt;</c-><c- n>F</c-><c- o>></c-> <c- o>&amp;&amp;</c-> <c- n>is_object_v</c-><c- o>&lt;</c-><c- n>T</c-><c- o>></c-> <c- o>&amp;&amp;</c-> <i><c- n>scannable</c-></i><c- o>&lt;</c-><c- n>V</c-><c- p>,</c-> <c- n>F</c-><c- p>,</c-> <c- n>T</c-><c- o>></c->
+    <c- k>requires</c-> <c- n>view</c-><c- o>&lt;</c-><c- n>V</c-><c- o>></c-> <c- o>&amp;&amp;</c-> <c- n>is_object_v</c-><c- o>&lt;</c-><c- n>F</c-><c- o>></c-> <c- o>&amp;&amp;</c-> <c- n>is_object_v</c-><c- o>&lt;</c-><c- n>T</c-><c- o>></c-> <c- o>&amp;&amp;</c-> <i><c- n>scannable</c-></i><c- o>&lt;</c-><c- n>V</c-><c- p>,</c-> <c- n>F</c-><c- p>,</c-> <c- n>T</c-><c- p>,</c-> <c- n>K</c-><c- o>></c->
   <c- k>template</c-><c- o>&lt;</c-><c- b>bool</c-> <c- n>Const</c-><c- o>></c->
   <c- k>class</c-> <c- nc>scan_view</c-><c- o>&lt;</c-><c- n>V</c-><c- p>,</c-> <c- n>F</c-><c- p>,</c-> <c- n>T</c-><c- p>,</c-> <c- n>K</c-><c- o>>::</c-><i><c- n>iterator</c-></i> <c- p>{</c->
   <c- k>private</c-><c- o>:</c->
@@ -3065,7 +3067,6 @@ LEWG had decided to settle on the name <code class="highlight"><c- n>views</c-><
     <c- k>struct</c-> <i><c- nc>Holder</c-></i> <c- p>{</c-> <c- c1>// exposition only</c->
         <c- n>sentinel_t</c-><c- o>&lt;</c-><i><c- n>Base</c-></i><c- o>></c-> <i><c- n>end_</c-></i> <c- o>=</c-> <c- n>sentinel_t</c-><c- o>&lt;</c-><i><c- n>Base</c-></i><c- o>></c-><c- p>();</c-> <c- c1>// exposition only</c->
         <i><c- n>movable</c-><c- o>-</c-><c- n>box</c-></i><c- o>&lt;</c-><c- n>F</c-><c- o>></c-> <i><c- n>fun_</c-></i><c- p>;</c->                        <c- c1>// exposition only</c->
-        <i><c- n>movable</c-><c- o>-</c-><c- n>box</c-></i><c- o>&lt;</c-><c- n>T</c-><c- o>></c-> <i><c- n>init_</c-></i><c- p>;</c->                       <c- c1>// exposition only</c->
     <c- p>};</c->
     <c- k>using</c-> <i><c- n>HolderType</c-></i> <c- o>=</c-> <c- n>conditional_t</c-><c- o>&lt;</c-><i><c- n>tidy</c-><c- o>-</c-><c- n>func</c-></i><c- o>&lt;</c-><c- n>F</c-><c- o>></c-><c- p>,</c-> <i><c- n>Holder</c-></i><c- p>,</c-> <i><c- n>Parent</c-></i><c- o>*></c-><c- p>;</c-> <c- c1>// exposition only</c->
 
@@ -3081,15 +3082,9 @@ LEWG had decided to settle on the name <code class="highlight"><c- n>views</c-><
         <c- k>else</c->
             <c- k>return</c-> <c- o>*</c-><i><c- n>parent_</c-></i><c- o>-></c-><i><c- n>fun_</c-></i><c- p>;</c->
     <c- p>}</c->
-    <c- k>constexpr</c-> <c- n>T</c-><c- o>&amp;</c-> <i><c- n>get</c-><c- o>-</c-><c- n>init</c-></i><c- p>()</c-> <c- p>{</c-> <c- c1>// exposition only</c->
-        <c- k>if</c-> <c- k>constexpr</c-> <c- p>(</c-><i><c- n>tidy</c-><c- o>-</c-><c- n>func</c-></i><c- o>&lt;</c-><c- n>F</c-><c- o>></c-><c- p>)</c->
-            <c- k>return</c-> <c- o>*</c-><i><c- n>parent_</c-></i><c- p>.</c-><i><c- n>init_</c-></i><c- p>;</c->
-        <c- k>else</c->
-            <c- k>return</c-> <c- o>*</c-><i><c- n>parent_</c-></i><c- o>-></c-><i><c- n>init_</c-></i><c- p>;</c->
-    <c- p>}</c->
     <c- k>static</c-> <c- k>constexpr</c-> <i><c- n>HolderType</c-></i> <i><c- n>init</c-></i><c- p>(</c-><i><c- n>Parent</c-></i><c- o>&amp;</c-> <c- n>parent</c-><c- p>)</c-> <c- p>{</c-> <c- c1>// exposition only</c->
         <c- k>if</c-> <c- k>constexpr</c-> <c- p>(</c-><i><c- n>tidy</c-><c- o>-</c-><c- n>func</c-></i><c- o>&lt;</c-><c- n>F</c-><c- o>></c-><c- p>)</c->
-            <c- k>return</c-> <c- p>{</c-><c- n>ranges</c-><c- o>::</c-><c- n>end</c-><c- p>(</c-><c- n>parent</c-><c- p>.</c-><i><c- n>base_</c-></i><c- p>),</c-> <i><c- n>movable</c-><c- o>-</c-><c- n>box</c-></i><c- o>&lt;</c-><c- n>F</c-><c- o>></c-><c- p>{},</c-> <c- n>parent</c-><c- p>.</c-><i><c- n>init_</c-></i><c- p>};</c->
+            <c- k>return</c-> <c- p>{</c-><c- n>ranges</c-><c- o>::</c-><c- n>end</c-><c- p>(</c-><c- n>parent</c-><c- p>.</c-><i><c- n>base_</c-></i><c- p>),</c-> <i><c- n>movable</c-><c- o>-</c-><c- n>box</c-></i><c- o>&lt;</c-><c- n>F</c-><c- o>></c-><c- p>{}};</c->
         <c- k>else</c->
             <c- k>return</c-> <c- n>addressof</c-><c- p>(</c-><c- n>parent</c-><c- p>);</c->
     <c- p>}</c->
@@ -3130,7 +3125,7 @@ LEWG had decided to settle on the name <code class="highlight"><c- n>views</c-><
    </ol>
 <pre class="highlight"><c- k>if</c-> <c- p>(</c-><i><c- n>current_</c-></i> <c- o>==</c-> <i><c- n>get</c-><c- o>-</c-><c- n>end</c-></i><c- p>())</c-> <c- k>return</c-><c- p>;</c->
 <c- k>if</c-> <c- k>constexpr</c-> <c- p>(</c-><c- n>K</c-> <c- o>==</c-> <c- n>scan_view_kind</c-><c- o>::</c-><c- n>seeded</c-><c- p>)</c-> <c- p>{</c->
-  <i><c- n>sum_</c-></i> <c- o>=</c-> <c- n>invoke</c-><c- p>(</c-><i><c- n>get</c-><c- o>-</c-><c- n>fun</c-></i><c- p>(),</c-> <i><c- n>get</c-><c- o>-</c-><c- n>init</c-></i><c- p>(),</c-> <c- o>*</c-><i><c- n>current_</c-></i><c- p>);</c->
+  <i><c- n>sum_</c-></i> <c- o>=</c-> <c- n>invoke</c-><c- p>(</c-><i><c- n>get</c-><c- o>-</c-><c- n>fun</c-></i><c- p>(),</c-> <c- o>*</c-><c- n>parent</c-><c- p>.</c-><i><c- n>init_</c-></i><c- p>,</c-> <c- o>*</c-><i><c- n>current_</c-></i><c- p>);</c->
 <c- p>}</c-> <c- k>else</c-> <c- p>{</c->
   <i><c- n>sum_</c-></i> <c- o>=</c-> <c- o>*</c-><i><c- n>current_</c-></i><c- p>;</c->
 <c- p>}</c->
@@ -3176,7 +3171,7 @@ LEWG had decided to settle on the name <code class="highlight"><c- n>views</c-><
    <p class="note" role="note"><span class="marker">Note:</span> If <a data-link-type="biblio" href="#biblio-p3117r1" title="Extending Conditionally Borrowed">[P3117R1]</a> is already adopted, please incorporate the changes in <a href="#range.scan.iterator.1">§ 6.3.3.1 If P3117 is adopted</a> instead.</p>
 <pre class="highlight"><c- k>namespace</c-> <c- nn>std</c-><c- o>::</c-><c- nn>ranges</c-> <c- p>{</c->
   <c- k>template</c-><c- o>&lt;</c-><c- n>input_range</c-> <c- n>V</c-><c- p>,</c-> <c- n>move_constructible</c-> <c- n>F</c-><c- p>,</c-> <c- n>move_constructible</c-> <c- n>T</c-><c- p>,</c-> <c- n>scan_view_kind</c-> <c- n>K</c-><c- o>></c->
-    <c- k>requires</c-> <c- n>view</c-><c- o>&lt;</c-><c- n>V</c-><c- o>></c-> <c- o>&amp;&amp;</c-> <c- n>is_object_v</c-><c- o>&lt;</c-><c- n>F</c-><c- o>></c-> <c- o>&amp;&amp;</c-> <c- n>is_object_v</c-><c- o>&lt;</c-><c- n>T</c-><c- o>></c-> <c- o>&amp;&amp;</c-> <i><c- n>scannable</c-></i><c- o>&lt;</c-><c- n>V</c-><c- p>,</c-> <c- n>F</c-><c- p>,</c-> <c- n>T</c-><c- o>></c->
+    <c- k>requires</c-> <c- n>view</c-><c- o>&lt;</c-><c- n>V</c-><c- o>></c-> <c- o>&amp;&amp;</c-> <c- n>is_object_v</c-><c- o>&lt;</c-><c- n>F</c-><c- o>></c-> <c- o>&amp;&amp;</c-> <c- n>is_object_v</c-><c- o>&lt;</c-><c- n>T</c-><c- o>></c-> <c- o>&amp;&amp;</c-> <i><c- n>scannable</c-></i><c- o>&lt;</c-><c- n>V</c-><c- p>,</c-> <c- n>F</c-><c- p>,</c-> <c- n>T</c-><c- p>,</c-> <c- n>K</c-><c- o>></c->
   <c- k>template</c-><c- o>&lt;</c-><c- b>bool</c-> <c- n>Const</c-><c- o>></c->
   <c- k>class</c-> <c- nc>scan_view</c-><c- o>&lt;</c-><c- n>V</c-><c- p>,</c-> <c- n>F</c-><c- p>,</c-> <c- n>T</c-><c- p>,</c-> <c- n>K</c-><c- o>>::</c-><i><c- n>iterator</c-></i> <c- p>{</c->
   <c- k>private</c-><c- o>:</c->
