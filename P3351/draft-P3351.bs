@@ -2,17 +2,17 @@
 Title: views::scan
 H1: <code>views::scan</code>
 Shortname: D3351
-Revision: 4
+Revision: 6
 Audience: LEWG
 Status: D
 Group: WG21
 !Target: C++29
-URL: https://wg21.link/D3351R4
+URL: https://wg21.link/D3351R6
 !Source: <a href="https://github.com/Mick235711/wg21-papers/blob/main/P3351/draft-P3351.bs">github.com/Mick235711/wg21-papers/blob/main/P3351/draft-P3351.bs</a>
 !Issue Tracking: <a href="https://github.com/Mick235711/wg21-papers/issues">GitHub Mick235711/wg21-papers</a>
 Editor: Yihe Li, winmikedows@hotmail.com
 No abstract: true
-Date: 2026-04-26
+Date: 2026-08-12
 Markup Shorthands: markdown yes
 Default Highlight: cpp
 </pre>
@@ -27,9 +27,17 @@ The `views::scan` adaptor is classified as a Tier 1 item in the Ranges plan for 
 
 # Revision History # {#revisions}
 
+## R5 (2026-08 mailing) ## {#r5}
+
+- Incorporated review feedback received from LEWG review in the 2026-08-11 telecon:
+    - Add more prior arts and explain the naming issue in more detail
+    - Split the wording into two cases depending on whether [[!P3117R1]] gets adopted before this paper
+    - Add poll results
+- Rebase onto latest draft [[!N5054]], and removed `scannable-impl` concept since it is equivalent to the existing `indirectly-binary-left-foldable-impl` concept
+
 ## R4 (2026-05 pre-Brno mailing) ## {#r4}
 
-- In Kona (2025-11), SG9 sees [[!P3351R3]] and forwarded it to LEWG ([polls](#sg9-review-kona)). Audience is altered accordingly.
+- In Kona (2025-11), SG9 sees [[!P3351R3]] and forwarded it to LEWG ([[#sg9-review-kona]]). Audience is altered accordingly.
 - Wording changes since [[!P3351R3]] based on SG9 feedback:
     - Removed impossible requirements on `forward_range` in iterator's postfix `operator++`.
     - Changed `bool IsInit` parameter to an `enum class` for clarity
@@ -135,50 +143,67 @@ In light of this, a third, more general scan semantics was implemented by some l
     </tbody>
 </table>
 
-C++ STL provides `std::partial_sum` and `std::inclusive_scan` (latter since C++17) with the inclusive semantics, and `std::exclusive_scan` (since C++17) with the exclusive semantics. Previous revisions of this proposal proposes both the inclusive and the `prescan` semantics, while the current revision only proposes the inclusive semantics. As can be seen in the Prior Arts sections below, inclusive semantics is the most commonly used and provided semantic in most languages, and other two semantics can be easily constructed by manipulating the inclusive result with existing range adaptors:
+C++ STL provides `std::partial_sum` and `std::inclusive_scan` (latter since C++17) with the inclusive semantics, and `std::exclusive_scan` (since C++17) with the exclusive semantics. Previous revisions of this proposal proposes both the inclusive and the `prescan` semantics, while the current revision only proposes the inclusive semantics. As can be seen in [[#prior-arts]], inclusive semantics is the most commonly used and provided semantic in most languages, and other two semantics can be easily constructed by manipulating the inclusive result with existing range adaptors:
 ```cpp
 exclusive_scan(rng, func, init) = concat(single(init), scan(rng, func, init) | drop_last(1))
 prescan(rng, func, init) = concat(single(init), scan(rng, func, init))
 ```
 Therefore, the author thinks that providing only the inclusive semantics is sufficient.
 
-## Prior Art ## {#prior-art}
+## Prior Arts ## {#prior-arts}
 
 The scan adaptor/algorithm had made an appearance in many different libraries and languages:
-- range-v3 has a <a href="https://ericniebler.github.io/range-v3/structranges_1_1partial__sum__view.html">`views::partial_sum` adaptor</a> that don't take initial seeds, but takes arbitrary function parameter (defaults to `+`).
-    - range-v3 also has an <a href="https://ericniebler.github.io/range-v3/structranges_1_1exclusive__scan__view.html">`views::exclusive_scan` adaptor</a> that implements exclusive scan semantics. Its initial seed parameter is mandatory, but also takes an optional function parameter.
+- range-v3 has a [`views::partial_sum` adaptor](https://ericniebler.github.io/range-v3/structranges_1_1partial__sum__view.html) that don't take initial seeds, but takes arbitrary function parameter (defaults to `+`).
+    - range-v3 also has an [`views::exclusive_scan` adaptor](https://ericniebler.github.io/range-v3/structranges_1_1exclusive__scan__view.html) that implements exclusive scan semantics. Its initial seed parameter is mandatory, but also takes an optional function parameter.
 - STL has `std::partial_sum` algorithm in `<numeric>` since C++98, and `std::[in, ex]clusive_scan` algorithms in `<numeric>` since C++17.
-- <a href="https://github.com/TartanLlama/ranges/blob/main/include/tl/partial_sum.hpp">`tl::ranges` also has an implementation of `views::partial_sum`.</a>
-- Python has an <a href="https://docs.python.org/3/library/itertools.html#itertools.accumulate">`itertools.accumulate` algorithm</a> that optionally takes initial seeds (with a named argument), and takes arbitrary function parameter (defaults to `+`).
-    - Furthermore, NumPy provides <a href="https://numpy.org/doc/stable/reference/generated/numpy.cumsum.html">`cumsum` algorithm</a> that returns a partial sum (without function parameter), and an <a href="https://numpy.org/doc/stable/reference/generated/numpy.ufunc.accumulate.html">`ufunc.accumulate` algorithm</a> that performs arbitrary scans with arbitrary function parameter that have no default. Neither of those algorithms takes an initial seed.
-- Rust has an <a href="https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.scan">`iter.scan` adaptor</a> that takes initial seeds and arbitrary function parameters (no defaults provided). Kotlin also provides a <a href="https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.collections/scan.html">`scan` member</a> that works similarly.
-- Haskell provides two variants of left scan: <a href="https://hackage.haskell.org/package/base-4.21.0.0/docs/Prelude.html#v:scanl1">`scanl1`</a> and <a href="https://hackage.haskell.org/package/base-4.21.0.0/docs/Prelude.html#v:scanl">`scanl`</a>. The former performs an inclusive scan, but does not permit an initial seed. The latter performs a `prescan`-like operation that preserve both the initial seed provided and the last fold result, resulting in a one-larger range than passed in.
+- [`tl::ranges` also has an implementation of `views::partial_sum`.](https://github.com/TartanLlama/ranges/blob/main/include/tl/partial_sum.hpp)
+- Influential alternative C++ Ranges library [Flux](https://github.com/tcbrindle/flux) also has implementation of a [`flux::scan` adaptor](https://tristanbrindle.com/flux/reference/adaptors.html#scan) and a [`flux::prescan` adaptor](https://tristanbrindle.com/flux/reference/adaptors.html#prescan).
+    - Notice that `flux::scan(rng, fun)` actually uses a default-constructed `range_value_t<R>` as the initial seed; to use the first element as the initial seed `flux::scan_first(rng, fun)` should be used instead.
+- Python has an [`itertools.accumulate` algorithm](https://docs.python.org/3/library/itertools.html#itertools.accumulate) that optionally takes initial seeds (with a named argument), and takes arbitrary function parameter (defaults to `+`).
+    - Furthermore, NumPy provides [`cumsum` algorithm](https://numpy.org/doc/stable/reference/generated/numpy.cumsum.html) that returns a partial sum (without function parameter), and an [`ufunc.accumulate` algorithm](https://numpy.org/doc/stable/reference/generated/numpy.ufunc.accumulate.html) that performs arbitrary scans with arbitrary function parameter that have no default. Neither of those algorithms takes an initial seed.
+    - TensorFlow also provides [`tf.scan` algorithm](https://www.tensorflow.org/api_docs/python/tf/scan) and [`tfp.math.scan_associative` algorithm](https://www.tensorflow.org/probability/api_docs/python/tfp/math/scan_associative) that differs in whether the functor is required to be associative.
+- Rust has an [`iter.scan` adaptor](https://doc.rust-lang.org/std/iter/trait.Iterator.html#method.scan) that takes initial seeds and arbitrary function parameters (no defaults provided). Kotlin also provides a [`scan` member](https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.collections/scan.html) (lazy when [applying on `Sequence`](https://kotlinlang.org/api/core/kotlin-stdlib/kotlin.sequences/scan.html)) that works similarly.
+- Scala provides both `scanLeft` and `scanRight` [members](https://www.scala-lang.org/api/current/scala/collection/ArrayOps.html#scanLeft-fffff43c) (and also a `scan` that does not guarantee sequential application), while also providing a lazy [`View.ScanLeft` adaptor](https://www.scala-lang.org/api/3.x/scala/collection/View$$ScanLeft.html).
+- Julia provides both (eager) [`accumulate`](https://docs.julialang.org/en/v1/base/arrays/#Base.accumulate) and (lazy) [`Iterators.accumulate`](https://docs.julialang.org/en/v1/base/iterators/#Base.Iterators.accumulate).
+- Haskell provides two variants of left scan: [`scanl1`](https://hackage.haskell.org/package/base-4.21.0.0/docs/Prelude.html#v:scanl1) and [`scanl`](https://hackage.haskell.org/package/base-4.21.0.0/docs/Prelude.html#v:scanl). The former performs an inclusive scan, but does not permit an initial seed. The latter performs a `prescan`-like operation that preserve both the initial seed provided and the last fold result, resulting in a one-larger range than passed in.
 
-Summarized in a table (without additional note, all functions provide inclusive scan semantics):
+Summarized in a table (without additional note, all functions provide inclusive scan semantics; ❌/✅ means an initial seed is optional):
 <table>
-    <thead><tr><td>Library</td><td>Signature</td><td>Parameter</td><td>Function</td><td>With<br />Default</td><td>Initial<br />Seed</td></tr></thead>
+    <thead><tr><td>Library</td><td>Function</td><td>Parameter</td><td>Sequential</td><td>Functor<br />Default</td><td>Initial<br />Seed</td></tr></thead>
     <tbody>
         <tr><td colspan="6">**Lazy Adaptors**</td></tr>
-        <tr><td rowspan="2">range-v3 /<br />`tl::ranges`</td><td>`partial_sum`</td><td>`(rng[, fun])`</td><td>✅</td><td>✅</td><td>❌</td></tr>
-        <tr><td>`exclusive_scan`<br />(Exclusive semantics)</td><td>`(rng, init[, fun])`</td><td>✅</td><td>✅</td><td>✅</td></tr>
-        <tr><td>Proposed</td><td>`scan`</td><td>`(rng, func[, init])`</td><td>✅</td><td>❌</td><td>✅</td></tr>
+        <tr><td rowspan="2">range-v3 /<br />`tl::ranges`</td><td>`views::partial_sum`</td><td>`(rng[, fun])`</td><td>✅</td><td>✅</td><td>❌</td></tr>
+        <tr><td>`views::exclusive_scan`<br />(Exclusive semantics)</td><td>`(rng, init[, fun])`</td><td>✅</td><td>✅</td><td>✅</td></tr>
+        <tr><td rowspan="2">Flux</td><td>`flux::scan[_first]`</td><td>`(rng, fun[, init])`</td><td>✅</td><td>❌</td><td>❌/✅</td></tr>
+        <tr><td>`flux::prescan`<br />(`prescan` semantics)</td><td>`(rng, fun, init)`</td><td>✅</td><td>❌</td><td>✅</td></tr>
+        <tr><td>**Proposed**</td><td>`views::scan`</td><td>`(rng, fun[, init])`</td><td>✅</td><td>❌</td><td>❌/✅</td></tr>
+        <tr><td>Rust</td><td>`iter.scan`</td><td>`(init, fun)`</td><td>✅</td><td>❌</td><td>✅</td></tr>
+        <tr><td>Kotlin</td><td>`Sequence.scan`</td><td>`(init, fun)`</td><td>✅</td><td>❌</td><td>✅</td></tr>
+        <tr><td>Scala</td><td>`<view>.scanLeft`</td><td>`(init)(fun)`</td><td>✅</td><td>❌</td><td>✅</td></tr>
+        <tr><td>Julia</td><td>`Iterators.accumulate`</td><td>`(fun, rng[; init=init])`</td><td>✅</td><td>❌</td><td>❌/✅</td></tr>
         <tr><td colspan="6">**Eager Algorithms**</td></tr>
-        <tr><td rowspan="3">STL</td><td>`std::partial_sum`</td><td>`(rng, out[, func])`</td><td>✅</td><td>✅</td><td>❌</td></tr>
-        <tr><td>`std::inclusive_scan`</td><td>`(rng, out[, func[, init]])`</td><td>✅</td><td>✅</td><td>✅</td></tr>
-        <tr><td>`std::exclusive_scan`<br />(Exclusive semantics)</td><td>`(rng, out, init[, func])`</td><td>✅</td><td>✅</td><td>✅</td></tr>
-        <tr><td>Python<br />`itertools`</td><td>`accumulate`</td><td>`(rng[, fun[, init=init]])`</td><td>✅</td><td>✅</td><td>✅</td></tr>
-        <tr><td rowspan="2">NumPy</td><td>`cumsum`</td><td>`(rng)`</td><td>❌</td><td>N/A</td><td>❌</td></tr>
-        <tr><td>`<func>.accumulate`</td><td>`(rng)`</td><td>✅</td><td>❌</td><td>❌</td></tr>
-        <tr><td>Rust</td><td>`iter.scan`</td><td>`(init, func)`</td><td>✅</td><td>❌</td><td>✅</td></tr>
-        <tr><td>Kotlin</td><td>`<rng>.scan`</td><td>`(init, func)`</td><td>✅</td><td>❌</td><td>✅</td></tr>
-        <tr><td rowspan="2">Haskell</td><td>`scanl1`</td><td>`(func, rng)`</td><td>✅</td><td>❌</td><td>❌</td></tr>
-        <tr><td>`scanl`<br />(`prescan` semantics)</td><td>`(func, init, rng)`</td><td>✅</td><td>❌</td><td>✅</td></tr>
+        <tr><td rowspan="3">STL</td><td>`std::partial_sum`</td><td>`(rng, out[, fun])`</td><td>✅</td><td>✅</td><td>❌</td></tr>
+        <tr><td>`std::inclusive_scan`</td><td>`(rng, out[, fun[, init]])`</td><td>❌</td><td>✅</td><td>❌/✅</td></tr>
+        <tr><td>`std::exclusive_scan`<br />(Exclusive semantics)</td><td>`(rng, out, init[, fun])`</td><td>❌</td><td>✅</td><td>✅</td></tr>
+        <tr><td>Python<br />`itertools`</td><td>`accumulate`</td><td>`(rng[, fun[, init=init]])`</td><td>✅</td><td>✅</td><td>❌/✅</td></tr>
+        <tr><td rowspan="2">NumPy</td><td>`cumsum`</td><td>`(rng)`</td><td>✅</td><td>N/A</td><td>❌</td></tr>
+        <tr><td>`<fun>.accumulate`</td><td>`(rng)`</td><td>✅</td><td>❌</td><td>❌</td></tr>
+        <tr><td rowspan="2">TensorFlow</td><td>`tf.scan`</td><td>`(fun, rng[, initializer=init])`</td><td>✅</td><td>❌</td><td>❌/✅</td></tr>
+        <tr><td>`tfp.math.`<br />`scan_associative`</td><td>`(fun, rng)`</td><td>❌</td><td>❌</td><td>❌</td></tr>
+        <tr><td>Kotlin</td><td>`<rng>.scan`</td><td>`(init, fun)`</td><td>✅</td><td>❌</td><td>✅</td></tr>
+        <tr><td rowspan="2">Scala</td><td>`scanLeft`</td><td>`(init)(fun)`</td><td>✅</td><td>❌</td><td>✅</td></tr>
+        <tr><td>`scan`</td><td>`(init)(fun)`</td><td>❌</td><td>❌</td><td>✅</td></tr>
+        <tr><td>Julia</td><td>`accumulate`</td><td>`(fun, rng[, init=init])`</td><td>✅</td><td>❌</td><td>❌/✅</td></tr>
+        <tr><td rowspan="2">Haskell</td><td>`scanl1`</td><td>`(fun, rng)`</td><td>✅</td><td>❌</td><td>❌</td></tr>
+        <tr><td>`scanl`<br />(`prescan` semantics)</td><td>`(fun, init, rng)`</td><td>✅</td><td>❌</td><td>✅</td></tr>
     </tbody>
 </table>
 
 ## Alternative Names ## {#alternative-names}
 
-The author thinks `views::scan` is a pretty good name, which have prior example in `std::[in,ex]clusive_scan` and in Rust/Kotlin, and is a generic enough name that will not cause confusion.
+The author thinks `views::scan` is a pretty good name, which have prior example in `std::[in,ex]clusive_scan` and in canonical literatures describing this operation, and is a generic enough name that will not cause confusion.
+
+People had expressed some concerns in not knowing whether this is a left scan or right scan, and `ranges::fold` was indeed renamed to `ranges::fold_left` to solve similar concerns; however, the author feels that the fundamental difference here is that the C++20 Ranges library had historically chosen to prefer a left-to-right evaluation order (e.g. input ranges only permit such order), so `scan` on its own will convey the left scan semantics clear enough.
 
 However, one possible naming conflict recently has arisen: `std::scan` ([[P1729R5]]). Here, the name `scan` refers to a completely different concept: scanning user's input, and `std::scan` is proposed as an upgraded version of the `scanf` family and uses `std::format`-like syntax to parse variables from a given string input:
 ```cpp
@@ -188,33 +213,38 @@ const auto& [key, value] = result->values();
 ```
 As noted above, this interpretation of the name `scan` also has precedence in the standard library: the `scanf` family, so this meaning also makes some sense.
 
-Notice that `std::scan` and `views::scan` do not conflict with each other since these two names are in different namespaces. However, it may be of interest to LEWG to rename `views::scan` to a different name in order to avoid user confusion about two unrelated facilities being named the same. In light of this, the following list of alternative names is provided for consideration:
+Notice that `std::scan` and `views::scan` do not conflict with each other since these two names are in different namespaces. However, it may be of interest to LEWG to rename `views::scan` to a different name in order to avoid user confusion about two unrelated facilities being named the same.
 
-Alternative names considered for `views::scan`: (in order of decreasing preference)
+Another important concern brought up by people during this paper's review is the ordering issue. Currently, to permit more efficient calculation, `std::[in,ex]clusive_scan` (even without supplying execution policy) permits the functor supplied to not apply sequentially (via the use of *GENERALIZED_NONCOMMUTATIVE_SUM* macro), and thus effectively requires the provided functor to be associative. However, as a view adaptor, it is expected that `views::scan` call its functor sequentially (from left to right), especially in case of input ranges. As a result, people suggested to change to a `fold`-based name to highlight the sequential nature. However, the author thinks that `scan` and `fold` are two fundamentally different algorithms (outputting ranges and values respectively), and any `fold`-based names will only induce confusion.
+
+Finally, another consideration worth pointing out is the consistency with the Range-ified versions of the existing `<numeric>` algorithms. [[P3732R2]] proposed `ranges::{in,ex}clusive_scan` as the newer version of the existing `std::{in,ex}clusive_scan` algorithms; if consistency in naming is desired, `views::inclusive_scan` may be a more appropriate name in some people's eyes.
+
+In light of these concerns, the following list of alternative names is provided for consideration: (in order of decreasing preference)
 - `views::partial_fold` (suggested by [[P2214R2]], and makes the connection with `ranges::fold` clear): Pretty good name, since `scan` is just a `fold` with intermediate state saved. However, the correct analogy is actually `ranges::fold_left_first`, and `ranges::fold_left` actually corresponds to an exclusive scan, which the author felt may cause some confusion.
 - `views::inclusive_scan`: Makes the equivalence with the STL numeric algorithm clear, and have no conflict potential with `scanf` anymore. However, the author felt that this name is a bit too long.
 - `views::accumulate`, `views::fold`, `views::fold_left`: The output is a range instead of a number, so using the same name probably is not accurate. The latter two also suffer from the same displaced correspondence problem.
 
-Overall, the author doesn't find any of these options particularly intriguing and opts to propose the original naming of `scan`. This does not actually conflict with `std::scan`, and besides, the standard library is already adopting two meanings of `scan` by introducing both `scanf` and `std::[in, ex]clusive_scan`, so it shouldn't be that much of a confusion risk to the users.
+Overall, the author doesn't find any of these options particularly intriguing and opts to propose the original naming of `scan`. This does not actually conflict with `std::scan`, and besides, the standard library is already adopting two meanings of `scan` by introducing both `scanf` and `std::[in, ex]clusive_scan`, so it shouldn't be that much of a confusion risk to the users. Also, from the above table it can be seen that nearly all languages choose between `scan` or `accumulate` to name this operation, and the latter is already taken to mean fold in C++.
 
-Another consideration worth pointing out is the consistency with the Range-ified versions of the existing `<numeric>` algorithms. [[P3732R2]] proposed `ranges::{in,ex}clusive_scan` as the newer version of the existing `std::{in,ex}clusive_scan` algorithms; if consistency in naming is desired, `views::inclusive_scan` may be a more appropriate name. However, the author lean towards naming the new algorithm `ranges::scan` to gain consistency instead, to provide convenience to the users.
+### LEWG Review, 2026-08-11 Telecon ### {#naming-lewg-review-2026-08-11}
+All the concerns were discussed thoroughly, but there is not enough enthusiasm for names other than `views::scan`. Therefore, this proposal will keep the name for now.
 
 ## Left or Right Fold? ## {#left-or-right-fold}
 
 Theoretically, there are two possible direction of scanning a range:
 ```cpp
-// rng = [x1, x2, x3, ...]
-scan_left(rng, f, i) // [x1, f(x1, x2), f(f(x1, x2), x3), ...]
-scan_right(rng, f, i) // [x1, f(x2, x1), f(x3, f(x2, x1)), ...]
+// rng = [x1, x2, x3, ..., xn]
+scan_left(rng, f, i) // [f(i, x1), f(f(i, x1), x2), ...]
+scan_right(rng, f, i) // [f(xn, i), f(xn-1, f(xn, i)), ...]
 ```
 Both are certainly viable, which begs the question: Should we provide both?
 
-On the one hand, `ranges::fold` provided both the left and the right fold version, despite the fact that right fold can be simulated by reversing the range and the function parameter order. However, here, the simulation is even easier: just reversing the order of the function parameters will turn a left scan to a right scan.
+On the one hand, `ranges::fold` provided both the left and the right fold version, despite the fact that right fold can be simulated by reversing the range and the function parameter order. However, here, as a range adaptor `views::scan` can only perform a left scan; reversing a range is definitely not easy and even impossible in case of input ranges, which means that a potential `views::scan_right` will only support bidirectional range as inputs. As an algorithm it might be justified (e.g. `ranges::fold_right`), but as an adaptor the author thinks that `| views::reverse | views::scan(flip(op))` is a close enough alternative.
 
-Furthermore, all of the mentioned prior arts perform left scan, and it is hard to come up with a valid use case of right scan that cannot be easily covered by left scan. Therefore, the author only proposes left scan in this proposal.
+Furthermore, nearly all of the mentioned prior arts only provided left scan, and it is hard to come up with a valid use case of right scan that cannot be easily covered by left scan. Therefore, the author only proposes left scan in this proposal.
 
 ### SG9 Review, Wrocław (2024-11) ### {#left-right-sg9-review-wroclaw}
-SG9 agreed that only left scan is needed, since a right scan can be easily simulated by flipping the arguments of the function provided. The fundamental difference between `fold` and `scan` here is that `fold` requires both reversing the range *and* flipping the arguments when changing from left to right, while `scan` only requires the latter.
+SG9 agreed that only left scan is needed, since a right scan can be easily simulated by reversing and flipping the arguments of the function provided. Of course, this decision can always be revisited later if a compelling use case for right scan comes up later.
 
 ## More Convenience Aliases ## {#more-convenience-aliases}
 
@@ -287,7 +317,7 @@ Given that `ranges::fold_left[_first]` chose the second approach, the author thi
 
 Always input.
 
-The resulting range cannot be bidirectional, since the function parameter cannot be applied in reverse. A future extension may enable a `scan` with both forward and backward function parameter, but that is outside the scope of this paper.
+The resulting range cannot be bidirectional, since the function parameter cannot be applied in reverse. A future extension may enable a `scan` with both forward and backward function parameter, but that is outside the scope of this paper. Technically, you can provide a bidirectional range that goes "back" by still calling the functor (i.e. going back is equivalent to going forward), but that will be a very confusing semantic to the user.
 
 However, making `scan_view` forward also have its consequences. To support ranges with move-only element types, `scan_view::iterator::operator*` must return a *reference* to the underlying accumulator, which makes it a stashing iterator (an iterator that returns a reference to something within itself). <a href="https://eel.is/c++draft/iterator.concept.forward#3">[iterator.concept.forward]/3</a> specifies that stashing iterators are only allowed to be input, so we have a difficult choice:
 - Either, accept that `scan_view` is input only, and returns a reference in `operator*`.
@@ -325,7 +355,7 @@ Currently, `views::transform` is never borrowed, but after [[!P3117R1]] determin
 
 #### SG9 Review, Hagenberg (2025-02) #### {#borrowed-sg9-review-hagenberg}
 
-SG9 had consensus that `scan_view` should be conditionally borrowed similar to `transform_view`. The wording is thus modified to be rebased on [[!P3117R1]]'s changes.
+SG9 had consensus that `scan_view` should be conditionally borrowed similar to `transform_view`. The wording is thus modified to be rebased on [[!P3117R1]]'s changes. Note that it was SG9's intention that if this proposal landed earlier than [[!P3117R1]], then `scan_view` should just never be borrowed (and P3117 is expected to include `scan_view` in its wording). The proposed wording had been adjusted to reflect this decision.
 
 ## Feature Test Macro ## {#feature-test-macro}
 
@@ -348,7 +378,33 @@ One obvious extension is to provide a variant that allows functions that operate
 ```
 This is already achievable in C++ by using `views::enumerate` and manually unpacking the tuple elements inside the function. A direct `scan_indexed` adaptor would be more convenient but ultimately does not provide new functionalities that cannot be achieved using existing tools, so it is not proposed.
 
-Another extension concerns the parallelism potential for the scan algorithm. At first glance, scan seems to be a completely serial algorithm that cannot be paralleled, as each term depends on the previous intermediate result. However, by iteratively performing the scanned function, the algorithm can actually be paralleled and can be completed in logarithmic time regarding to the number of elements when parallel resources are abundant. See [the Wikipedia page](https://en.wikipedia.org/wiki/Prefix_sum#Parallel_algorithms) for details.
+It is also possible to further generalize the `scan` algorithm by allowing the functor to return both the next accumulator and an output state:
+
+```python
+def general_scan(fun: (A, T) -> (A, U), rng: [T], init: A) -> (A, [U])
+    result = []
+    for x in rng:
+        init, y = fun(init, x)
+        result.append(y)
+    return init, result
+
+general_scan(lambda acc, x: (acc + x, f"{acc}:{x}"), [1, 2, 3, 4, 5], 0)
+# 15, ("0:1", "1:2", "3:3", "6:4", "10:5")
+```
+
+This is the algorithm implemented by PyTorch's [`torch.scan`](https://docs.pytorch.org/docs/2.13/higher_order_ops/scan.html). While more general, we can actually implement this semantic by folding the output state into the accumulator:
+
+```cpp
+std::vector vec{1, 2, 3, 4, 5};
+std::println("{}", vec | views::scan([](auto acc, auto elem) {
+    return std::pair{acc.first + elem, std::format("{}:{}", acc.first, elem)};
+}, std::pair{0, std::string{}}) | views::values);
+// ["0:1", "1:2", "3:3", "6:4", "10:5"]
+```
+
+Since the generalized form does not really add any power, it is not proposed.
+
+Another extension concerns the parallelism potential for the `scan` algorithm. At first glance, `scan` seems to be a completely serial algorithm that cannot be paralleled, as each term depends on the previous intermediate result. However, by iteratively performing the functor on carefully chosen elements, the algorithm can actually be paralleled and can be completed in logarithmic time regarding to the number of elements when parallel resources are abundant. See [the Wikipedia page](https://en.wikipedia.org/wiki/Prefix_sum#Parallel_algorithms) for details.
 
 In light of this, concerns are raised about the proposed `scan` adaptor in that it does not permit this kind of reorder for paralleled execution:
 ```cpp
@@ -387,16 +443,22 @@ The author implemented this proposal in [beman.scan_view](https://github.com/bem
 The poll results indicated that the function parameter should not have a default, and no more convenience aliases should be added.
 
 ## Questions for LEWG ## {#questions-for-lewg}
-- Should the naming be `views::inclusive_scan` to avoid conflict?
-- `regular_invocable` or `invocable`? Currently the wording uses the latter (following range-v3), but `transform_view` used the former.
+- Should the naming be `views::inclusive_scan` to avoid conflict?  - Resolved ✅
+- `regular_invocable` or `invocable`? - Resolved ✅
+    - Currently the wording uses the latter (following range-v3), but `transform_view` used the former.
+
+### LEWG Review, 2026-08-11 Telecon ### {#questions-lewg-review-2026-08-11}
+LEWG had decided to settle on the name `views::scan` for now as no other name gained traction in the discussion. Also, it was determined that `invocable` should be used here as non-regular functors may be useful in fold/scan-like scenarios, and `ranges::fold_left` intentionally chose `invocable` in its requirements as well.
 
 # Wording # {#wording}
 
-The wording below is based on [[!N5032]], and assumes that [[!P3117R1]]'s `tidy-func` concept is already applied on top.
+Note: The wording below is split into two cases depending on whether [[!P3117R1]] landed before this proposal. If it does, then the wording will assume that its `tidy-func` concept already exists.
+
+The wording below is based on [[!N5054]].
 
 Wording notes for LWG and editor:
 - Currently, the three views' definition reside just after `views::transform`'s definition and synopsis, due to the author's perception that they are pretty similar.
-- The exposition-only concept <code><i>scannable</i></code> and <code><i>scannable-impl</i></code> is basically the same as <code><i>indirectly-binary-left-foldable</i></code> and <code><i>indirectly-binary-left-foldable-impl</i></code>; the only difference is that `F` is required to be move constructible instead of copy constructible.
+- The exposition-only concept `scannable` is basically the same as `indirectly-binary-left-foldable`; the only difference is that `F` is required to be move constructible instead of copy constructible.
 
 ## 17.3.2 Header `<version>` synopsis [version.syn] ## {#version.syn}
 
@@ -406,6 +468,8 @@ In this clause's synopsis, insert a new macro definition in a place that respect
 </pre>
 
 ## 25.2 Header `<ranges>` synopsis [ranges.syn] ## {#ranges.syn}
+
+Note: If [[!P3117R1]] is not adopted, remove the changes to `enable_borrowed_range`.
 
 Modify the synopsis as follows:
 <pre>
@@ -474,18 +538,13 @@ for (auto&& i : std::views::scan(vec, std::plus{}, 10)) {
 
 <pre>
 namespace std::ranges {
-  template&lt;typename V, typename F, typename T, typename U&gt;
-    concept <i>scannable-impl</i> =  // exposition only
-      movable&lt;U&gt; &&
-      convertible_to&lt;T, U&gt; && invocable&lt;F&, U, range_reference_t&lt;V&gt;&gt; &&
-      assignable_from&lt;U&, invoke_result_t&lt;F&, U, range_reference_t&lt;V&gt;&gt;&gt;;
-
   template&lt;typename V, typename F, typename T&gt;
     concept <i>scannable</i> =  // exposition only
+      move_constructible&lt;F&gt; &&
       invocable&lt;F&, T, range_reference_t&lt;V&gt;&gt; &&
       convertible_to&lt;invoke_result_t&lt;F&, T, range_reference_t&lt;V&gt;&gt;,
              decay_t&lt;invoke_result_t&lt;F&, T, range_reference_t&lt;V&gt;&gt;&gt;&gt; &&
-      <i>scannable-impl</i>&lt;V, F, T,
+      <i>indirectly-binary-left-foldable-impl</i>&lt;F, T, iterator_t&lt;V&gt;,
              decay_t&lt;invoke_result_t&lt;F&, T, range_reference_t&lt;V&gt;&gt;&gt;&gt;;
 
   template&lt;input_range V, move_constructible F, move_constructible T, scan_view_kind K&gt;
@@ -553,6 +612,9 @@ constexpr <i>iterator</i>&lt;true&gt; begin() const
 4. *Effects*: Equivalent to: <code>return <i>iterator</i>&lt;true&gt;{*this, ranges::begin(<i>base_</i>)};</code>
 
 ### 25.7.�.3 Class template <code>scan_view::<i>iterator</i></code> [range.scan.iterator] ### {#range.scan.iterator}
+#### If P3117 is adopted #### {#range.scan.iterator.1}
+
+Note: If [[!P3117R1]] is not adopted, please incorporate the changes in [[#range.scan.iterator.2]] instead.
 
 <pre>
 namespace std::ranges {
@@ -577,7 +639,7 @@ namespace std::ranges {
         if constexpr (<i>tidy-func</i>&lt;F&gt;)
             return <i>parent_</i>.<i>end_</i>;
         else
-            return std::ranges::end(<i>parent_</i>-&gt;<i>base_</i>);
+            return ranges::end(<i>parent_</i>-&gt;<i>base_</i>);
     }
     constexpr <i>Func</i>& <i>get-fun</i>() { // exposition only
         if constexpr (<i>tidy-func</i>&lt;F&gt;)
@@ -593,7 +655,7 @@ namespace std::ranges {
     }
     static constexpr <i>HolderType</i> <i>init</i>(<i>Parent</i>& parent) { // exposition only
         if constexpr (<i>tidy-func</i>&lt;F&gt;)
-            return {end(parent.<i>base_</i>), <i>movable-box</i>&lt;F&gt;{}, parent.<i>init_</i>};
+            return {ranges::end(parent.<i>base_</i>), <i>movable-box</i>&lt;F&gt;{}, parent.<i>init_</i>};
         else
             return addressof(parent);
     }
@@ -674,6 +736,99 @@ friend constexpr bool operator==(const <i>iterator</i>& x, const <i>iterator</i>
 friend constexpr bool operator==(const <i>iterator</i>& x, default_sentinel_t);
 </pre>
 6. *Effects*: Equivalent to: <code>return x.<i>current_</i> == x.<i>get-end</i>();</code>
+
+#### If P3117 is not adopted #### {#range.scan.iterator.2}
+
+Note: If [[!P3117R1]] is already adopted, please incorporate the changes in [[#range.scan.iterator.1]] instead.
+
+<pre>
+namespace std::ranges {
+  template&lt;input_range V, move_constructible F, move_constructible T, scan_view_kind K&gt;
+    requires view&lt;V&gt; && is_object_v&lt;F&gt; && is_object_v&lt;T&gt; && <i>scannable</i>&lt;V, F, T&gt;
+  template&lt;bool Const&gt;
+  class scan_view&lt;V, F, T, K&gt;::<i>iterator</i> {
+  private:
+    using <i>Parent</i> = <i>maybe-const</i>&lt;Const, scan_view&gt;; // exposition only
+    using <i>Base</i> = <i>maybe-const</i>&lt;Const, V&gt;;           // exposition only
+    using <i>Func</i> = <i>maybe-const</i>&lt;Const, F&gt;;           // exposition only
+    using <i>ResultType</i> = decay_t&lt;invoke_result_t&lt;Func&, T, range_reference_t&lt;<i>Base</i>&gt;&gt;&gt;; // exposition only
+
+    iterator_t&lt;<i>Base</i>&gt; <i>current_</i> = iterator_t&lt;<i>Base</i>&gt;(); // exposition only
+    <i>Parent</i>* <i>parent_</i> = nullptr;                      // exposition only
+    <i>movable-box</i>&lt;<i>ResultType</i>&gt; <i>sum_</i>;                   // exposition only
+
+  public:
+    using iterator_concept = input_iterator_tag;
+    using value_type = <i>ResultType</i>;
+    using difference_type = range_difference_t&lt;<i>Base</i>&gt;;
+
+    <i>iterator</i>() requires default_initializable&lt;iterator_t&lt;<i>Base</i>&gt;&gt; = default;
+    constexpr <i>iterator</i>(<i>Parent</i>& parent, iterator_t&lt;<i>Base</i>&gt; current);
+    constexpr <i>iterator</i>(<i>iterator</i>&lt;!Const&gt; i)
+      requires Const && convertible_to&lt;iterator_t&lt;V&gt;, iterator_t&lt;<i>Base</i>&gt;&gt;;
+
+    constexpr const iterator_t&lt;<i>Base</i>&gt;& base() const & noexcept { return <i>current_</i>; }
+    constexpr iterator_t&lt;<i>Base</i>&gt; base() && { return std::move(<i>current_</i>); }
+
+    constexpr const value_type& operator*() const { return *<i>sum_</i>; }
+
+    constexpr <i>iterator</i>& operator++();
+    constexpr void operator++(int);
+
+    friend constexpr bool operator==(const <i>iterator</i>& x, const <i>iterator</i>& y)
+      requires equality_comparable&lt;iterator_t&lt;<i>Base</i>&gt;&gt;;
+    friend constexpr bool operator==(const <i>iterator</i>& x, default_sentinel_t);
+  };
+}
+</pre>
+
+<pre>
+constexpr <i>iterator</i>(<i>Parent</i>& parent, iterator_t&lt;<i>Base</i>&gt; current);
+</pre>
+1. *Effects*: Initializes <code><i>current_</i></code> with `std::move(current)` and <code><i>parent_</i></code> with <code>addressof(parent)</code>. Then, equivalent to:
+
+<pre>
+if (<i>current_</i> == ranges::end(<i>parent_</i>-&gt;<i>base_</i>)) return;
+if constexpr (K == scan_view_kind::seeded) {
+  <i>sum_</i> = invoke(*<i>parent_</i>-&gt;<i>fun_</i>, *<i>parent_</i>-&gt;<i>init_</i>, *<i>current_</i>);
+} else {
+  <i>sum_</i> = *<i>current_</i>;
+}
+</pre>
+
+<pre>
+constexpr <i>iterator</i>(<i>iterator</i>&lt;!Const&gt; i)
+  requires Const && convertible_to&lt;iterator_t&lt;V&gt;, iterator_t&lt;<i>Base</i>&gt;&gt;;
+</pre>
+2. *Effects*: Initializes <code><i>current_</i></code> with <code>std::move(i.<i>current_</i>)</code>, <code><i>parent_</i></code> with <code>std::move(i.<i>parent_</i>)</code>, and <code><i>sum_</i></code> with <code>std::move(i.<i>sum_</i>)</code>.
+
+<pre>
+constexpr <i>iterator</i>& operator++();
+</pre>
+3. *Effects*: Equivalent to:
+
+<pre>
+if (++<i>current_</i> != ranges::end(<i>parent_</i>-&gt;<i>base_</i>)) {
+  <i>sum_</i> = invoke(*<i>parent_</i>-&gt;<i>fun_</i>, std::move(*<i>sum_</i>), *<i>current_</i>);
+}
+return *this;
+</pre>
+
+```cpp
+constexpr void operator++(int);
+```
+4. *Effects*: Equivalent to `++*this`.
+
+<pre>
+friend constexpr bool operator==(const <i>iterator</i>& x, const <i>iterator</i>& y)
+  requires equality_comparable&lt;iterator_t&lt;<i>Base</i>&gt;&gt;;
+</pre>
+5. *Effects*: Equivalent to: <code>return x.<i>current_</i> == y.<i>current_</i>;</code>
+
+<pre>
+friend constexpr bool operator==(const <i>iterator</i>& x, default_sentinel_t);
+</pre>
+6. *Effects*: Equivalent to: <code>return x.<i>current_</i> == ranges::end(x.<i>parent_</i>-&gt;<i>base_</i>);</code>
 
 # Poll Results # {#poll-results}
 ## SG9 Review, Wrocław (2024-11) ## {#sg9-review-wroclaw}
@@ -799,4 +954,27 @@ friend constexpr bool operator==(const <i>iterator</i>& x, default_sentinel_t);
 - **Attendance**: 8
 - **Author's Position**: Strongly Favor
 - **Outcome**: Strong consensus in favor.
+
+## LEWG Review, 2026-08-11 Telecon ## {#lewg-review-2026-08-11}
+**Poll 1**: We see value in having the algorithm proposed in [[!P3351R4]] as `views::scan` as a lazy algorithm in the library.
+
+<table>
+    <thead><tr><td>Strongly Favor</td><td>Favor</td><td>Neutral</td><td>Against</td><td>Strongly Against</td></tr></thead>
+    <tbody><tr><td>3</td><td>8</td><td>2</td><td>0</td><td>0</td></tr></tbody>
+</table>
+
+- **Attendance**: 18
+- **Author's Position**: Strongly Favor
+- **Outcome**: Consensus in favor.
+
+**Poll 2**: We approve the design of [[!P3351R4]] `views::scan`.
+
+<table>
+    <thead><tr><td>Strongly Favor</td><td>Favor</td><td>Neutral</td><td>Against</td><td>Strongly Against</td></tr></thead>
+    <tbody><tr><td>3</td><td>9</td><td>1</td><td>0</td><td>0</td></tr></tbody>
+</table>
+
+- **Attendance**: 18
+- **Author's Position**: Strongly Favor
+- **Outcome**: Consensus in favor.
 

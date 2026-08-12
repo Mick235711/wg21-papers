@@ -1,0 +1,11 @@
+Add Flux as prior art
+Add ordering = naming issue (scan may infer unordered sum just like std inclusive_scan, which is why range-v3 used partial_sum; names containing fold may be better)
+Add sequential discussion. The proposal is very clear that the functor is only applied left to right and other orders are not permitted
+It can be technically bidirectional (when you go back you still accumulate/call the functor), but it is not what we want
+Some people doubt the usefulness of this, scan need parallelism and lazy version lack that makes it not that useful
+Remove ranges::scan suggestion
+We see value in adding this to the STL: 3-8-2-0-0
+Approve the design of P3351R4: 3-9-1-0-0
+Wording: need to clearly show dependency on P3117, show two wording case depending on if this gets in before 3117 (then never borrowed) or not
+Scannable-impl is exactly the same as indirectly-binary-left-foldable-impl? Reuse that (only movable<T> is different, which we need to have anyways)
+Should scan_view_kind be expo-only? Maybe and maybe not, subrange_kind is not
